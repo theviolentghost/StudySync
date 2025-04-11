@@ -1,5 +1,6 @@
 import hnswlib from 'hnswlib-node';
 import { pipeline } from '@xenova/transformers';
+import { note } from 'pos/lexicon';
 
 class VectorDatabase {
   constructor(embeddingDimension = 384, maxElements = 10000) {
@@ -8,30 +9,28 @@ class VectorDatabase {
     this.index.initIndex(this.maxElements, 16, 200);
     
     this.chunks = [];
-    this.currentId = 0;
+    this.currentID = 0;
   }
 
   async inititializeEmbeddingModel() {
     this.embedder = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
   }
 
-  async addLectureChunk(chunkText, timestamp, slideId = null) {
-    // Generate embedding
-    // console.log(chunkText);
-    const embedding = await this.generateEmbedding(chunkText);
+  async addChunk(content, data = {}) {
+    const embedding = await this.generateEmbedding(toEmbed);
     
     // Add to index
-    this.index.addPoint(embedding, this.currentId);
+    this.index.addPoint(embedding, this.currentID);
     
     // Store metadata
     this.chunks.push({
-      id: this.currentId,
-      text: chunkText,
-      timestamp,
-      slideId
+      id: this.currentID,
+      content: content,
+      embedding: embedding,
+      data: data,
     });
     
-    return this.currentId++;
+    return this.currentID++;
   }
 
   async generateEmbedding(text) {
@@ -57,7 +56,7 @@ class VectorDatabase {
       
       // Process results
       for (let i = 0; i < searchResults.neighbors.length; i++) {
-        const idx = searchResults.neighbors[i];
+        const chunkIndex = searchResults.neighbors[i];
         const distance = searchResults.distances[i];
         
         // Calculate score (lower distance is better)
@@ -65,16 +64,15 @@ class VectorDatabase {
         const weightedScore = similarityScore * queryWeight;
         
         // Get the chunk
-        const chunk = this.chunks[idx];
+        const chunk = this.chunks[chunkIndex];
         
         // Add to results
         results.push({
-          chunkId: chunk.id,
-          text: chunk.text,
-          timestamp: chunk.timestamp,
-          slideId: chunk.slideId,
+          chunkID: chunk.id,
+          content: chunk.content,
           score: weightedScore,
-          query: queryText
+          query: queryText,
+          data: chunk.data,
         });
       }
     }
@@ -113,4 +111,32 @@ class VectorDatabase {
   }
 }
 
-export default VectorDatabase;
+class NotesDatabase extends VectorDatabase {
+  constructor(embeddingDimension = 384, maxElements = 5000) {
+    super(embeddingDimension, maxElements);
+  }
+
+  async addNoteChunk(noteText, metadata = {}) {
+    return super.addChunk(noteText, metadata);
+  }
+
+  async search(queries, topK = 5) {
+    return super.search(queries, topK);
+  }
+}
+
+class TranscriptDatabase extends VectorDatabase {
+  constructor(embeddingDimension = 384, maxElements = 5000) {
+    super(embeddingDimension, maxElements);
+  }
+
+  async addTranscriptChunk(transcriptText, metadata = {}) {
+    return super.addChunk(transcriptText, metadata);
+  }
+
+  async search(queries, topK = 5) {
+    return super.search(queries, topK);
+  }
+}
+
+export { VectorDatabase, NotesDatabase, TranscriptDatabase };
