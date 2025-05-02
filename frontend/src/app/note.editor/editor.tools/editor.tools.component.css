@@ -1,0 +1,19 @@
+:host {
+    position: relative;
+    grid-column: 1;
+    grid-row: 2 / -1;
+    background-color: blue;
+}
+
+.tool-workspace-slider {
+    position: absolute;
+    right: 0;
+    width: var(--slider-thickness);
+    height: 100%;
+    background-color: white;
+    cursor:ew-resize;
+    z-index: 1;
+}
+.tool-workspace-slider.active {
+    background-color: red;
+}

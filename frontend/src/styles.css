@@ -13,6 +13,8 @@
     --line-height-base: 1.5;
     --font-weight-normal: 400;
     --font-weight-bold: 700;
+
+    --slider-thickness: 15px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -26,6 +28,26 @@
     }
   }
 
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font: inherit;
+    vertical-align: baseline;
+    text-decoration: none;
+    list-style: none;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+  }
+
+.no-select {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none; /* iOS Safari */
+}
 
 body {
     font-family: var(--font-family-base);

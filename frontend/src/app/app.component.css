@@ -1,8 +1,6 @@
 .square {
     position: relative;
-    width:100px;
-    height:100px;
+    width: 100vw;
+    height:100dvh;
     background:var(--color-primary);
-    border-radius: 16px;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
 }
