@@ -1,6 +1,5 @@
 import hnswlib from 'hnswlib-node';
 import { pipeline } from '@xenova/transformers';
-import { note } from 'pos/lexicon';
 
 class VectorDatabase {
   constructor(embeddingDimension = 384, maxElements = 10000) {
@@ -17,14 +16,14 @@ class VectorDatabase {
   }
 
   async addChunk(content, data = {}) {
-    const embedding = await this.generateEmbedding(toEmbed);
+    const embedding = await this.generateEmbedding(content);
     
     // Add to index
     this.index.addPoint(embedding, this.currentID);
     
     // Store metadata
     this.chunks.push({
-      id: this.currentID,
+      ID: this.currentID,
       content: content,
       embedding: embedding,
       data: data,
@@ -68,7 +67,7 @@ class VectorDatabase {
         
         // Add to results
         results.push({
-          chunkID: chunk.id,
+          chunkID: chunk.ID,
           content: chunk.content,
           score: weightedScore,
           query: queryText,
@@ -80,13 +79,13 @@ class VectorDatabase {
     // Merge duplicate chunks and sum their scores
     const mergedResults = {};
     for (const result of results) {
-      const chunkId = result.chunkId;
-      if (mergedResults[chunkId]) {
-        mergedResults[chunkId].score += result.score;
-        mergedResults[chunkId].matchedQueries.push(result.query);
+      const chunkID = result.chunkID;
+      if (mergedResults[chunkID]) {
+        mergedResults[chunkID].score += result.score;
+        mergedResults[chunkID].matchedQueries.push(result.query);
       } else {
         result.matchedQueries = [result.query];
-        mergedResults[chunkId] = result;
+        mergedResults[chunkID] = result;
       }
     }
     
@@ -139,4 +138,4 @@ class TranscriptDatabase extends VectorDatabase {
   }
 }
 
-export { VectorDatabase, NotesDatabase, TranscriptDatabase };
+export default { VectorDatabase, NotesDatabase, TranscriptDatabase };

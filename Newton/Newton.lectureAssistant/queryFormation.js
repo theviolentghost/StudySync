@@ -121,15 +121,15 @@ class QueryFormation {
     }
     
     // Handle definition queries
-    if (contentType.isDefinition) {
-      const subject = await this.extractDefinitionSubject(currentSentence);
-      if (subject) {
-        queries.push({
-          text: `definition of ${subject}`,
-          weight: 0.8
-        });
-      }
-    }
+    // if (contentType.isDefinition) {
+    //   const subject = await this.extractDefinitionSubject(currentSentence);
+    //   if (subject) {
+    //     queries.push({
+    //       text: `definition of ${subject}`,
+    //       weight: 0.8
+    //     });
+    //   }
+    // }
     
     return queries;
   }

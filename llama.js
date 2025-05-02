@@ -27,21 +27,30 @@ async function run(buffer, model, prompt = "Hello Newt!", paramaters = []) {
 
         const LlamaConfiguration = readJSONfile(path.resolve(ModelDirectory, model, "configuration.json"));
 
+        if(LlamaConfiguration.useGrammar) {
+            LlamaConfiguration.config.push("--grammar-file");
+            LlamaConfiguration.config.push(path.resolve(ModelDirectory, model, "grammar.gbnf"));
+        }
+
         return new Promise((resolve, reject) => {
             const llama = spawn(path.join(LlamaBinDirectory, 'llama-cli'), [
-                '--model', path.resolve(ModelDirectory, model, "model.gguf"),
-                '-p', LlamaConfiguration.prompt.replace("{{prompt}}", prompt), // includes role
+                '--model', path.resolve(ModelDirectory, "model" , `${LlamaConfiguration.modelName}.gguf`),
+                '-p', prompt,
                 ...LlamaConfiguration.config,
                 ...paramaters
             ]);
 
             llama.stdout.on('data', (data) => {
-                buffer.push(data);
+                buffer.push(data.toString());
+            });
+
+            llama.stderr.on('data', (data) => {
+                console.error(`Error: ${data.toString()}`);
             });
 
             llama.on('close', (code) => {
                 if (code === 0) resolve(); 
-                else reject(new Error(`Llama process exited with code ${code}`)); 
+                else reject(`Llama process exited with code ${code}`); 
             });
         });
     } catch (error) {
@@ -54,10 +63,16 @@ async function createServer(model, port = 8080) {
         if(!model) throw new Error("no model provided");
         const LlamaConfiguration = readJSONfile(path.resolve(ModelDirectory, model, "configuration.json"));
 
+        if(LlamaConfiguration.useGrammar) {
+            LlamaConfiguration.config.push("--grammar-file");
+            LlamaConfiguration.config.push(path.resolve(ModelDirectory, model, "grammar.gbnf"));
+        }
+
         return new Promise((resolve, reject) => {
             const llama = spawn(path.join(LlamaBinDirectory, 'llama-server'), [
-                '--model', path.resolve(ModelDirectory, model, "model.gguf"),
+                '--model', path.resolve(ModelDirectory, "model", `${LlamaConfiguration.modelName}.gguf`),
                 '--port', port,
+                '--host', '127.0.0.1',
                 ...LlamaConfiguration.config
             ]);
 
@@ -68,4 +83,13 @@ async function createServer(model, port = 8080) {
     }
 }
 
-export default { run, createServer };
+function stopServer(server = null) {
+    if(!server) return;
+
+    server.on('exit', (code) => {
+        console.log(`Llama server exited with code ${code}`);
+    });
+    server.kill('SIGINT');
+}
+
+export default { run, createServer, stopServer };

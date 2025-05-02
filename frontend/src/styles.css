@@ -1,0 +1,39 @@
+:root {
+    --color-primary: #ff7a28;          /* Orange */
+    --color-secondary: #ffb716;        /* Yellow */
+    --color-background: #fdf7ec;       /* Creamy light background */
+    --color-surface: #ffffff;          /* Card / surface */
+    --color-text-primary: #463f3a;     /* Taupe for text */
+    --color-text-secondary: #6e665e;   /* Muted taupe */
+    --color-border: #e6dfd8;           /* Light border */
+    --color-accent: #ffac68;           /* Accent / hover */
+
+    --font-family-base: "Inter", sans-serif;
+    --font-size-base: 16px;
+    --line-height-base: 1.5;
+    --font-weight-normal: 400;
+    --font-weight-bold: 700;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+      --color-background: #463f3a;       /* Taupe dark background */
+      --color-surface: #3b3532;          /* Slightly darker taupe */
+      --color-text-primary: #fdcd49;     /* Yellow text */
+      --color-text-secondary: #ff6542;   /* Orange accents */
+      --color-border: #5a504b;           /* Dark border */
+      --color-accent: #fdcd49;           /* Accent on dark */
+    }
+  }
+
+
+body {
+    font-family: var(--font-family-base);
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-base);
+    font-weight: var(--font-weight-normal);
+    color: var(--color-text-primary);
+    background-color: var(--color-background);
+    margin: 0;
+    padding: 0;
+}
