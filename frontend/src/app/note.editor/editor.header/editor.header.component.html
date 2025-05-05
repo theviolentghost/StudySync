@@ -1,1 +1,25 @@
-<p>editor.header works!</p>
+<div class="return-button">
+    <a href="/">
+        <img src="/logo/main.png" alt="Back">
+    </a>
+</div>
+<div class="project-tools">
+    <header-button 
+        *ngFor="let tool of projectTools"
+            [name]="tool.name"
+            [icon]="tool.icon"
+            [action]="tool.action"
+    >
+    </header-button>
+</div>
+<div class="vertical-line-break"></div>
+<div class="file-tools"> <!--tools for the current file open-->
+    <header-button 
+        *ngFor="let tool of projectTools"
+            [name]="tool.name"
+            [icon]="tool.icon"
+            [action]="tool.action"
+    >
+    </header-button>
+</div>
+

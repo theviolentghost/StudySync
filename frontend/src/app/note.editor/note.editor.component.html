@@ -1,8 +1,19 @@
 <editor-header></editor-header>
 <editor-tools></editor-tools>
 <div class="workspace-container">
-    <editor-tabs></editor-tabs>
-    <workspace></workspace>
+    <editor-tabs
+        [tabs]="tabs"
+        [activeTabId]="activeTabId" 
+        (tabSelected)="selectTab($event)"
+        (tabClosed)="closeTab($event)"
+
+    ></editor-tabs>
+    <workspace 
+        class="enable-select"
+        [activeTabId]="activeTabId"
+        [tabs]="tabs"
+    ></workspace>
 </div>
+<editor-console></editor-console>
 
 

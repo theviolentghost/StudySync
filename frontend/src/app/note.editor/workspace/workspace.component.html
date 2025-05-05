@@ -1,1 +1,33 @@
-<p>workspace works!</p>
+<ng-container *ngIf="activeTab; else noTabOpen">
+    <div [ngSwitch]="activeTab.fileType">
+        <document-workspace
+            *ngSwitchCase="'sdoc'"
+            
+        ></document-workspace>
+        
+        <drawing-workspace
+            *ngSwitchCase="'sdraw'"
+            
+        ></drawing-workspace>
+        
+        <study-workspace
+            *ngSwitchCase="'sstudy'"
+            
+        ></study-workspace>
+        
+        
+        <!-- Default case for unknown file types -->
+        <div *ngSwitchDefault class="unknown-file-type">
+            <!-- <p>Unknown file type: {{ activeTab.fileType }}</p> -->
+        </div>
+    </div>
+</ng-container>
+
+<ng-template #noTabOpen>
+    <div class="empty-workspace">
+        <p>No file is currently open.</p>
+        <p>Select a tab or create a new file to begin.</p>
+    </div>
+</ng-template>
+
+<div class="loading-element"></div>

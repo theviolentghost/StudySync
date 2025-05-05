@@ -1,0 +1,19 @@
+<div class="tools-container">
+    <ng-container *ngFor="let group of toolGroups; let isLast = last">
+        <div class="tool-group">
+            <div class="tools-wrapper">
+                <button 
+                    class="tool" 
+                    *ngFor="let tool of group.tools"
+                        [ngClass]="{'active': tool.active, 'disabled': !tool.active}"
+                        (click)="tool.action()"
+                        [attr.aria-label]="tool.name"
+                        [title]="tool.tooltip ? `${tool.name} (${tool.tooltip})` : tool.name"
+                >
+                    <img [src]="`/icons/${tool.icon}.svg`" [alt]="tool.name">
+                </button>
+            </div>
+        </div>
+        <div class="group-divider" *ngIf="!isLast"></div>
+    </ng-container>
+</div>

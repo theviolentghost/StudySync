@@ -1,4 +1,71 @@
 :host {
+    position: relative;
     grid-row: 1;
-    background-color: purple;
+    background-color: var(--color-background);
+    display: flex;
+    flex-direction: row;
+    padding: 0;
+    padding-right: var(--space-md);
+    gap: var(--space-md);
+    color: var(--color-text-primary);
+    overflow: visible;
+}
+
+.tab-carousel {
+    display: flex;
+    flex-direction: row;
+    gap: 0;
+    flex: 1;
+    background-color: var(--color-background);
+    overflow-x: auto;
+    overflow-y: visible;
+    z-index: 1;
+}
+/* .tab-carousel::-webkit-scrollbar {
+    display: none;
+} */
+.tab-carousel .tab-element:first-child {
+    border-left: none;
+}
+.tab-element {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    border: solid 1px var(--color-accent-200);
+    border-top: none;
+    border-bottom: none;
+    padding: var(--space-xxs) var(--space-md);
+    cursor: pointer;
+    color: var(--color-text-primary);
+    gap: var(--space-xs);
+    text-align: center;
+    text-overflow: ellipsis;
+    text-rendering: optimizeSpeed;
+    white-space: nowrap;
+}
+.tab-element.active {
+    background-color: var(--color-workspace-background);
+    border-bottom: solid 1px var(--color-workspace-background);
+    border-top: solid 2px var(--color-primary);
+    cursor: default;
+}
+
+.tab-element img {
+    margin-right: var(--space-sm);
+}
+.tab-element .closeTab {
+    margin-left: var(--space-sm);
+    cursor: pointer;
+    visibility: hidden;
+    height: var(--space-lg);
+    max-height: 80%;
+    aspect-ratio: 1 / 1;
+    border-radius: var(--space-xxs);
+}
+.tab-element.active:hover .closeTab {
+    visibility: visible;
+}
+.tab-element.active:hover .closeTab {
+    background-color: var(--color-accent-200);
 }

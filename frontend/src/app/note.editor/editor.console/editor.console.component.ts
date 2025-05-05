@@ -2,42 +2,42 @@ import { Component, ElementRef, HostListener, OnInit } from '@angular/core';
 import { PanelResizeService } from '../panel.resize.service';
 
 @Component({
-  selector: 'editor-tools',
+  selector: 'editor-console',
   imports: [],
-  templateUrl: './editor.tools.component.html',
-  styleUrl: './editor.tools.component.css'
+  templateUrl: './editor.console.component.html',
+  styleUrl: './editor.console.component.css'
 })
-export class EditorToolsComponent implements OnInit {
-    private panelId = 'editorTools';
+export class EditorConsoleComponent implements OnInit {
+    private panelId = 'consolePanel';
 
     resizing: boolean = false;
     positionDragOffset: number = 0;
-    defaultWindowWidth: number = 180; // default
-
-    toolList: any = []; // Placeholder for tool list
-    toolWindowMinWidth: number = 60; // minimum width of the tool extension window px 
-    toolWindowMaxWidth: number = 380; // maximum width of the tool extension window px
-    toolExtensionTolerance: number = 90; // distance the mouse must exceed to trigger a collapse of tool extension window px
-    toolExtensionMinWidth: number = this.toolWindowMinWidth + 120; // minimum width of the tool extension window px
+    defaultWindowWidth: number = 0;
+    windowMinWidth: number = 0;
+    windowMaxWidth: number = 9999; 
+    collapseTolerance: number = 95; 
+    collapseWidth: number = 170; // minimum width of the tool extension window px
     sliderWidth: number = 0; // width of the slider px
 
     constructor(
-        private elementRef: ElementRef,
-        private panelResizeService: PanelResizeService
+      private elementRef: ElementRef,
+      private panelResizeService: PanelResizeService
     ) {}
 
     ngOnInit(): void {
+        this.setCSSvariables();
+
         // Set initial width
         this.panelResizeService.registerPanel({
             panelId: this.panelId,
             width: this.defaultWindowWidth,
-            minWidth: this.toolWindowMinWidth,
-            maxWidth: this.toolWindowMaxWidth,
-            collapseTolerance: this.toolExtensionTolerance,
-            collapseWidth: this.toolExtensionMinWidth,
+            minWidth: this.windowMinWidth,
+            maxWidth: this.windowMaxWidth,
+            collapseTolerance: this.collapseTolerance,
+            collapseWidth: this.collapseWidth,
             sliderWidth: this.sliderWidth,
-            position: "left",
-            priority: 1,
+            position: "right",
+            priority: 2,
             element: this.elementRef.nativeElement
         });
     }
@@ -63,7 +63,7 @@ export class EditorToolsComponent implements OnInit {
         }
     }
     onStart(clientX: number) {
-        this.positionDragOffset = (this.elementRef.nativeElement.getBoundingClientRect().right || 0) - clientX;
+        this.positionDragOffset = clientX - (this.elementRef.nativeElement.getBoundingClientRect().left || 0);
 
         this.resizing = true;
         this.panelResizeService.onSliderDragStart(this.panelId);
@@ -71,13 +71,13 @@ export class EditorToolsComponent implements OnInit {
 
     onMouseMove(event: MouseEvent) {
         if(this.resizing) {
-            this.setWidth(event.clientX + this.positionDragOffset);
+            this.setWidth(window.innerWidth - event.clientX + this.positionDragOffset);
         }
     }
     onTouchMove(event: TouchEvent) {
         if(this.resizing) {
             const touch = event.touches[0];
-            this.setWidth(touch.clientX + this.positionDragOffset);
+            this.setWidth(window.innerWidth - touch.clientX + this.positionDragOffset);
         }
     }
 
@@ -103,10 +103,8 @@ export class EditorToolsComponent implements OnInit {
         this.resizing = false;
         this.panelResizeService.onSliderDragEnd(this.panelId);
     }
-    // to remove vvvv
     setCSSvariables(): void {
         this.sliderWidth = Math.ceil(parseFloat(this.getGlobalCSSVariable('--slider-thickness'))) || 0;
-        this.toolWindowMinWidth = Math.ceil(parseFloat(this.getLocalCSSVariable('--tool-bar-width'))) || 0;
     }
     getGlobalCSSVariable(variableName: string): string {
         const rootStyles = getComputedStyle(document.documentElement);

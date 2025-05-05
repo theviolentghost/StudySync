@@ -1,1 +1,15 @@
-<p>editor.tabs works!</p>
+<div class="tab-carousel">
+    <div 
+        class="tab-element"
+        *ngFor="let tab of tabs"
+            [ngClass]="{'active': tab.id === activeTabId}"
+            (click)="selectTab(tab.id);"
+    >
+        <img src="/"> 
+        {{tab.title}}
+        <button class="closeTab" (click)="closeTab(tab.id); $event.stopPropagation();">
+            <img src="/">
+        </button>
+    </div>
+</div>
+<button>More</button>

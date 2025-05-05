@@ -1,15 +1,23 @@
 :host {
+    --minimum-workspace-width: 200px;
+    --tool-bar-width: 60px;
+    --color-workspace-background: var(--color-background-100);
+    --color-tabs-text: var(--color-text);
+
     display: grid;
-    grid-template-columns: auto 1fr 1fr;
+    grid-template-columns: auto minmax(var(--minimum-workspace-width), 1fr) auto;
     grid-template-rows: auto 1fr;
     width: 100%;
     height: 100%;
     background-color: green;
+    overflow: hidden;
 }
 
 .workspace-container {
-    grid-column: 2 / -1;
+    grid-column: 2;
     grid-row: 2;
     display: grid;
     grid-template-rows: auto 1fr;
+    min-width: var(--minimum-workspace-width);
+    overflow: auto;
 }

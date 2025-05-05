@@ -1,0 +1,13 @@
+:host {
+
+}
+
+.tools-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm);
+    width: 100%;
+    text-rendering: geometricPrecision;
+}
