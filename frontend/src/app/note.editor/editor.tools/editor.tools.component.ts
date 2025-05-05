@@ -1,9 +1,20 @@
 import { Component, ElementRef, HostListener, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { PanelResizeService } from '../panel.resize.service';
+
+interface Tool {
+    id: string;
+    name: string;
+    icon: string;
+    action?: () => void;
+    darkIcon?: boolean;
+}
 
 @Component({
   selector: 'editor-tools',
-  imports: [],
+  imports: [
+    CommonModule
+  ],
   templateUrl: './editor.tools.component.html',
   styleUrl: './editor.tools.component.css'
 })
@@ -14,12 +25,18 @@ export class EditorToolsComponent implements OnInit {
     positionDragOffset: number = 0;
     defaultWindowWidth: number = 180; // default
 
-    toolList: any = []; // Placeholder for tool list
     toolWindowMinWidth: number = 60; // minimum width of the tool extension window px 
     toolWindowMaxWidth: number = 380; // maximum width of the tool extension window px
     toolExtensionTolerance: number = 90; // distance the mouse must exceed to trigger a collapse of tool extension window px
     toolExtensionMinWidth: number = this.toolWindowMinWidth + 120; // minimum width of the tool extension window px
     sliderWidth: number = 0; // width of the slider px
+
+    toolList: Tool[] = [
+        { id: 'files', name: 'Files', icon: 'file-earmark-text-fill', darkIcon: true },
+        { id: 'collaborators', name: 'Collaborators', icon: 'people-fill', darkIcon: true  },
+    ]; 
+    activeToolId: string = 'files'; // default
+
 
     constructor(
         private elementRef: ElementRef,

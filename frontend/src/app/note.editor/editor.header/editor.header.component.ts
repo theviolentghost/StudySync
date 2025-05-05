@@ -25,7 +25,7 @@ export class EditorHeaderComponent {
           name: 'Project', icon: 'null', 
         },
         {
-          name: 'PlaceHolder', icon: 'null', 
+          name: 'View', icon: 'null', 
         },
     ]; 
     fileTools: ProjectTool[] = [
@@ -33,7 +33,7 @@ export class EditorHeaderComponent {
           name: 'File', icon: 'null', 
         },
         {
-          name: 'PlaceHolder', icon: 'null', 
+          name: 'Insert', icon: 'null', 
         },
     ];
 }

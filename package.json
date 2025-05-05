@@ -5,7 +5,8 @@
     "main": "server.js",
     "type": "module",
     "scripts": {
-        "start": "concurrently \"node server.js\" \"cd frontend && ng serve\""
+        "start": "concurrently \"node server.js\" \"cd frontend && ng serve\"",
+        "frontend": "concurrently \"cd frontend && ng serve\""
     },
     "dependencies": {
         "@xenova/transformers": "^2.17.2",

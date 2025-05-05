@@ -86,6 +86,10 @@
     --color-accent: #303030;
 }
 
+.image-icon-light {
+    filter: invert(1);
+}
+
 @media (prefers-color-scheme: dark) {
     :root {
         --color-text-50: #0e0c0c;
@@ -154,6 +158,10 @@
         --color-primary: #d64f00;
         --color-secondary: #eba400;
         --color-accent: #cfcfcf;
+    }
+
+    .image-icon-dark {
+        filter: invert(1);
     }
 }
 

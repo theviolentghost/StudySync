@@ -30,7 +30,7 @@ export class WorkspaceComponent implements OnChanges, OnInit {
         this.activeTab = this.tabs.find(tab => tab.id === this.activeTabId);
         this.loadingElement = this.elementRef.nativeElement.getElementsByClassName('loading-element')[0];
 
-        this.startLoadingFileAnimation();
+        // this.startLoadingFileAnimation();
     }
 
     startLoadingFileAnimation() {

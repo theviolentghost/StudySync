@@ -1,4 +1,6 @@
 :host {
+    --slider-thickness-multiplier: 1;
+
     position: relative;
     grid-column: 3;
     grid-row: 2 / -1;
@@ -8,10 +10,16 @@
     border-left: 1px solid var(--color-accent-200);
 }
 
+@media (pointer: coarse) {
+    :host {
+        --slider-thickness-multiplier: 2.2;
+    }
+}
+
 .window-slider {
     position: absolute;
     left: 0px;
-    width: var(--slider-thickness);
+    width: calc(var(--slider-thickness) * var(--slider-thickness-multiplier));
     height: 100%;
     background-color: transparent;
     cursor: col-resize;
@@ -29,7 +37,7 @@
     background-color: var(--color-accent-200);
 }
 .window-slider.active, .window-slider.active:hover {
-    background-color: var(--color-primary);
+    background-color: var(--color-secondary);
 }
 
 .container {

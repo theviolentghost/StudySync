@@ -1,20 +1,27 @@
 :host {
+    --slider-thickness-multiplier: 1;
+
     position: relative;
     grid-column: 1;
     grid-row: 2 / -1;
     background-color: var(--color-background);
     overflow: visible;
 }
+@media (pointer: coarse) {
+    :host {
+        --slider-thickness-multiplier: 2.2;
+    }
+}
 
 .window-slider {
     position: absolute;
     right: 0;
-    width: var(--slider-thickness);
+    width: calc(var(--slider-thickness) * var(--slider-thickness-multiplier));
     height: 100%;
     background-color: transparent;
     cursor: col-resize;
     z-index: 1;
-    transition: background-color 0.1s ease;
+    transition: background-color 0.1s ease 0s, width 0s linear 0s;
     transform: translateX(50%);
     z-index: 100000;
 }
@@ -25,9 +32,11 @@
 */
 .window-slider:hover {
     background-color: var(--color-accent-200);
+    width: var(--slider-thickness);
+    transition: background-color 0.1s ease 0s, width 0s linear 0.1s
 }
 .window-slider.active, .window-slider.active:hover {
-    background-color: var(--color-primary);
+    background-color: var(--color-secondary);
 }
 
 .container {
@@ -37,14 +46,58 @@
     grid-template-columns: var(--tool-bar-width) 1fr;
 }
 .tool-bar, .tool-extension {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+    align-items: center;
     height: 100%;
     width: 100%;
 }
 .tool-bar {
+    margin: var(--space-lg) 0;
     background-color: var(--color-background);
     border-right: 1px solid var(--color-accent-200);
 }
 .tool-extension {
     background-color: var(--color-background);
     border-right: 1px solid var(--color-accent-200);
+}
+.tool-bar-element {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    position: relative;
+    display: flex;
+    cursor: pointer;
+    text-align: center;
+    text-overflow: ellipsis;
+    text-rendering: optimizeSpeed;
+    white-space: nowrap;
+    font-size: .9rem;
+}
+.tool-bar-element img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+    filter: brightness(.5);
+    scale: .6;
+}
+.tool-bar-element img.image-icon-dark {
+    filter: invert(1) brightness(.5);
+}
+.tool-bar-element:hover img {
+    filter: brightness(.6);
+}
+.tool-bar-element:hover img.image-icon-dark {
+    filter: invert(1) brightness(.5);
+}
+.tool-bar-element.active {
+    border-left: solid 2px var(--color-secondary);
+}
+.tool-bar-element.active img {
+    filter: brightness(1);
+}
+.tool-bar-element.active img.image-icon-dark {
+    filter: invert(1) brightness(1);
 }

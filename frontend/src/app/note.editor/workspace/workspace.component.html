@@ -1,4 +1,4 @@
-<ng-container *ngIf="activeTab; else noTabOpen">
+<ng-container *ngIf="activeTab; else noTabOpen" style="width: 100%; height: 100%;">
     <div [ngSwitch]="activeTab.fileType">
         <document-workspace
             *ngSwitchCase="'sdoc'"

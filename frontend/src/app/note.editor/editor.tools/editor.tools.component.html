@@ -1,7 +1,21 @@
 <div class="window-slider"></div>
 <div class="container">
     <div class="tool-bar">
-        
+        <div 
+            class="tool-bar-element"
+            *ngFor="let tool of toolList"
+                [ngClass]="{
+                    'active': tool.id === activeToolId,
+                }"
+        >
+            <img 
+                src="/icons/{{ tool.icon }}.svg" alt="{{ tool.name }}" 
+                [ngClass]="{
+                    'image-icon-dark': tool.darkIcon === true,
+                    'image-icon-light': tool.darkIcon === false,
+                }"
+            />
+        </div>
     </div>
     <div class="tool-extension">
 

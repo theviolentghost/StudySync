@@ -1,13 +1,42 @@
 :host {
+    position: relative;
 
+    --page-width: 8.26in;
+    --page-height: 11.69in;
+    --page-color: #fff;
+    --default-text-color: #000;
+    --default-margin: 0.5in 1in;
+
+    width: 100%;
+    overflow: scroll;
 }
 
 .tools-container {
     display: flex;
     flex-direction: row;
     align-items: center;
+    justify-content: center;
     gap: var(--space-sm);
-    padding: var(--space-sm);
+    padding: var(--space-md) var(--space-sm);
     width: 100%;
     text-rendering: geometricPrecision;
+    border-bottom: solid 1px var(--color-accent-200);
+}
+
+.page-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-sm);
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+}
+.page {
+    width: var(--page-width);
+    height: var(--page-height);
+    background-color: var(--page-color);
+    color: var(--default-text-color);
+    box-shadow: 0 0 0.5rem var(--page-color);
+    padding: var(--default-margin);
 }
