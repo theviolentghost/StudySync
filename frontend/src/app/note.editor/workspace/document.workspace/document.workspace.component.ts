@@ -1,4 +1,14 @@
-import { Component } from '@angular/core';
+import { 
+    Component, 
+    AfterViewInit, 
+    ViewChildren, 
+    QueryList, 
+    ElementRef, 
+    OnInit, 
+    HostListener,
+    ChangeDetectorRef,
+    NgZone
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 interface Tool {
@@ -15,6 +25,11 @@ interface ToolGroup {
     tools: Tool[];
 }
 
+interface DocumentPage {
+    content: string;
+    element?: HTMLElement; 
+}
+
 @Component({
     selector: 'document-workspace',
     imports: [
@@ -23,7 +38,7 @@ interface ToolGroup {
     templateUrl: './document.workspace.component.html',
     styleUrl: './document.workspace.component.css'
 })
-export class DocumentWorkspaceComponent {
+export class DocumentWorkspaceComponent implements AfterViewInit, OnInit {
     toolGroups: ToolGroup[] = [
         {
             title: "Text Formatting",
@@ -41,5 +56,18 @@ export class DocumentWorkspaceComponent {
         }
     ];
 
-    constructor() {}
+    document: string = '<p>Your initial document content here...</p>';
+    pages: DocumentPage[] = []; 
+    currentPage = 0;
+    currentPosition = 0;
+
+    @ViewChildren('pageContent') pageElements!: QueryList<ElementRef>;
+
+    ngOnInit() {
+        this.pages = [{ content: this.document }];
+    }
+
+    ngAfterViewInit() {}
+
+    
 }

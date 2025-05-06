@@ -18,7 +18,13 @@
     </ng-container>
 </div>
 <div class="page-container">
-    <div class="page">
-        text text text text text
+    <div class="page" *ngFor="let page of pages; let i = index">
+        <div #pageContent 
+            class="page-content" 
+            [innerHTML]="page.content"
+            contenteditable="true"
+        >
+        </div>
     </div>
+    <!-- (input)="onContentChange($event, i)"> -->
 </div>

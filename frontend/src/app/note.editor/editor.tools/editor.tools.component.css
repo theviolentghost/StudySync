@@ -21,7 +21,7 @@
     background-color: transparent;
     cursor: col-resize;
     z-index: 1;
-    transition: background-color 0.1s ease 0s, width 0s linear 0s;
+    transition: background-color 0.1s ease 0s, width 0s linear .1s;
     transform: translateX(50%);
     z-index: 100000;
 }
@@ -33,7 +33,7 @@
 .window-slider:hover {
     background-color: var(--color-accent-200);
     width: var(--slider-thickness);
-    transition: background-color 0.1s ease 0s, width 0s linear 0.1s
+    transition: background-color 0.1s ease 0s, width 0s linear 0s;
 }
 .window-slider.active, .window-slider.active:hover {
     background-color: var(--color-secondary);

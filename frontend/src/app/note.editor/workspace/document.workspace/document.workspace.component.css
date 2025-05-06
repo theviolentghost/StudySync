@@ -1,42 +1,65 @@
 :host {
     position: relative;
+    display: block;
 
     --page-width: 8.26in;
     --page-height: 11.69in;
     --page-color: #fff;
-    --default-text-color: #000;
+    --default-text-color: #2d2d2d;
     --default-margin: 0.5in 1in;
 
     width: 100%;
-    overflow: scroll;
+    height: 100%;
+    overflow: auto;
 }
 
 .tools-container {
+    position: sticky;
+    z-index: 1000;
+    background-color: var(--color-workspace-background);
+    top: 0;
+    left: 0;
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: center;
     gap: var(--space-sm);
     padding: var(--space-md) var(--space-sm);
-    width: 100%;
     text-rendering: geometricPrecision;
     border-bottom: solid 1px var(--color-accent-200);
+    width: 100%;
 }
 
 .page-container {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: var(--space-sm);
-    width: 100%;
-    height: 100%;
+    min-width: max-content;
     overflow: auto;
+    min-height: calc(100% - 50px);
 }
 .page {
+    position: relative;
     width: var(--page-width);
     height: var(--page-height);
     background-color: var(--page-color);
     color: var(--default-text-color);
     box-shadow: 0 0 0.5rem var(--page-color);
     padding: var(--default-margin);
+    flex-shrink: 0;
+}
+.page-content {
+    font-family: 'Calibri', 'Roboto', 'Segoe UI', Arial, sans-serif;
+    font-size: 11pt;
+    line-height: 1.2;
+    flex: 1;
+    overflow: hidden; 
+    outline: none; 
+    white-space: pre-wrap; 
+    word-wrap: break-word; 
+    line-height: 1.5;
+    width: 100%;
+    height: 100%;
 }
