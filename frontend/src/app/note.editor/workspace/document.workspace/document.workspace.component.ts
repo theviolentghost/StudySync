@@ -5,9 +5,8 @@ import {
     QueryList, 
     ElementRef, 
     OnInit, 
-    HostListener,
-    ChangeDetectorRef,
-    NgZone
+    OnDestroy,
+    ViewEncapsulation
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
@@ -36,14 +35,16 @@ interface DocumentPage {
         CommonModule,
     ],
     templateUrl: './document.workspace.component.html',
-    styleUrl: './document.workspace.component.css'
+    styleUrl: './document.workspace.component.css',
+
+    // encapsulation: ViewEncapsulation.None
 })
 export class DocumentWorkspaceComponent implements AfterViewInit, OnInit {
     toolGroups: ToolGroup[] = [
         {
             title: "Text Formatting",
             tools: [
-                { name: "Bold", icon: "type-bold", tooltip: "Ctrl+B", action: () => console.log("Bold clicked") },
+                { name: "Bold", icon: "type-bold", tooltip: "Ctrl+B", action: this._ToolOnClick_bold.bind(this), active: true },
                 { name: "Italic", icon: "type-italic", action: () => console.log("Italic clicked") },
                 { name: "Underline", icon: "type-underline", action: () => console.log("Underline clicked") }
             ]
@@ -58,16 +59,50 @@ export class DocumentWorkspaceComponent implements AfterViewInit, OnInit {
 
     document: string = '<p>Your initial document content here...</p>';
     pages: DocumentPage[] = []; 
-    currentPage = 0;
-    currentPosition = 0;
 
-    @ViewChildren('pageContent') pageElements!: QueryList<ElementRef>;
+    savedRange: Range | null = null; // To save the range before button click
 
     ngOnInit() {
         this.pages = [{ content: this.document }];
     }
 
-    ngAfterViewInit() {}
+    ngAfterViewInit() {
+        const toolbar = document.querySelector('.tools-container');
+        if (toolbar) {
+            toolbar.addEventListener('mousedown', this.saveSelectionBeforeButtonClick);
+        }
+    }
+    
+    ngOnDestroy() {
+        const toolbar = document.querySelector('.tools-container');
+        if (toolbar) {
+            toolbar.removeEventListener('mousedown', this.saveSelectionBeforeButtonClick);
+        }
+    }
+
+    saveSelectionBeforeButtonClick = (event: Event) => {
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0) return;
+        
+        // Save the range object which is more reliable
+        this.savedRange = selection.getRangeAt(0).cloneRange();
+    }
+
+    _ToolOnClick_bold() {
+        console.log(this.savedRange)
+        const pageElement = this.savedRange?.startContainer.parentElement;
+        if (pageElement) {
+            const selectedText = this.savedRange?.toString();
+            if (!selectedText) return;
+
+            const boldElement = document.createElement('span');
+            boldElement.className = 'text-bold';
+            boldElement.textContent = selectedText;
+
+            this.savedRange?.deleteContents();
+            this.savedRange?.insertNode(boldElement);
+        }
+    }
 
     
 }

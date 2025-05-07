@@ -1,4 +1,4 @@
-<div class="tools-container disable-select">
+<div class="tools-container">
     <ng-container *ngFor="let group of toolGroups; let isLast = last">
         <div class="tool-group">
             <div class="tools-wrapper">
@@ -9,9 +9,9 @@
                         (click)="tool.action()"
                         [attr.aria-label]="tool.name"
                         [title]="tool.tooltip ? `${tool.name} (${tool.tooltip})` : tool.name"
-                        [style.mask-image]="`url('/icons/${tool.icon}.svg')`"
+                        
                 >
-                    <!--<img [src]="`/icons/${tool.icon}.svg`" [alt]="tool.name">-->
+                    <div class="tool-icon" [style.mask-image]="`url('/icons/${tool.icon}.svg')`"></div>
                 </button>
             </div>
         </div>
@@ -19,11 +19,10 @@
     </ng-container>
 </div>
 <div class="page-container">
-    <div class="page" *ngFor="let page of pages; let i = index">
+    <div class="page" *ngFor="let page of pages; let i = index" contenteditable="true">
         <div #pageContent 
             class="page-content" 
             [innerHTML]="page.content"
-            contenteditable="true"
         >
         </div>
     </div>

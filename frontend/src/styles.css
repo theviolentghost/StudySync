@@ -171,9 +171,8 @@
     padding: 0;
     border: 0;
     font: inherit;
+    color: inherit;
     vertical-align: baseline;
-    text-decoration: none;
-    list-style: none;
     -webkit-font-smoothing: antialiased;
     overflow: hidden;
   }
@@ -200,4 +199,8 @@ body {
     font-size: var(--font-size-base);
     margin: 0;
     padding: 0;
+}
+
+.text-bold {
+    font-weight: bold;
 }
