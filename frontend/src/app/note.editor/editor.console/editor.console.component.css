@@ -24,7 +24,7 @@
     background-color: transparent;
     cursor: col-resize;
     z-index: 1;
-    transition: background-color 0.1s ease 0s, width 0s linear .1s;
+    transition: background-color 0.1s ease 0s, width 0s linear .15s;
     transform: translateX(-50%);
     z-index: 1000000;
 }
@@ -36,9 +36,11 @@
 .window-slider:hover {
     background-color: var(--color-accent-200);
     transition: background-color 0.1s ease 0s, width 0s linear 0s;
+    width: var(--slider-thickness);
 }
 .window-slider.active, .window-slider.active:hover {
     background-color: var(--color-secondary);
+    transition: background-color 0.1s ease 0s, width 0s linear .15s;
 }
 
 .container {

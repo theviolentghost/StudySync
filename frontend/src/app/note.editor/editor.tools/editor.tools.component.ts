@@ -74,6 +74,7 @@ export class EditorToolsComponent implements OnInit {
         const target = event.target as HTMLElement;
         if(target.classList.contains('window-slider')) {
             this.onStart(event.touches[0].clientX);
+            event.preventDefault();
 
             document.addEventListener('touchmove', this.onTouchMove.bind(this));
             document.addEventListener('touchend', this.onTouchEnd.bind(this));
@@ -95,6 +96,7 @@ export class EditorToolsComponent implements OnInit {
         if(this.resizing) {
             const touch = event.touches[0];
             this.setWidth(touch.clientX + this.positionDragOffset);
+            event.preventDefault();
         }
     }
 

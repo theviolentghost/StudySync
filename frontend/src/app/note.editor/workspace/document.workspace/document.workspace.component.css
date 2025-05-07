@@ -4,13 +4,16 @@
 
     --page-width: 8.26in;
     --page-height: 11.69in;
-    --page-color: #fff;
-    --default-text-color: #2d2d2d;
-    --default-margin: 0.5in 1in;
+    --page-color: transparent;
+    --default-text-color: var(--color-primary);
+    --default-margin: var(--space-lg) var(--space-md);
 
     width: 100%;
     height: 100%;
     overflow: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    overscroll-behavior: contain;
 }
 
 .tools-container {
@@ -24,12 +27,51 @@
     align-items: center;
     justify-content: center;
     gap: var(--space-sm);
-    padding: var(--space-md) var(--space-sm);
+    padding: var(--space-lg) var(--space-sm);
     text-rendering: geometricPrecision;
     border-bottom: solid 1px var(--color-accent-200);
     width: 100%;
+    height: 55px;
 }
-
+.tool-group {
+    position: relative;
+    height: 100%;
+    width: fit-content;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    background-color: transparent;
+}
+.tools-wrapper {
+    position: relative;
+    display: flex;
+    gap: var(--space-xxs);
+    width: 100%;
+    height: 100%;
+}
+.tool {
+    position: relative;
+    height: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: var(--space-sm);
+    background: var(--color-primary);
+    mask-size: cover;
+    mask-repeat: no-repeat;
+    scale: 0.8;
+}
+.tool img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+    scale: .8;
+}
+.group-divider {
+    position: relative;
+    width: 2px;
+    height: 100%;
+    background-color: var(--color-accent-200);
+}
 .page-container {
     position: relative;
     display: flex;
@@ -40,10 +82,15 @@
     overflow: auto;
     min-height: calc(100% - 50px);
 }
+:host::-webkit-scrollbar {
+    display: none;
+}
 .page {
     position: relative;
-    width: var(--page-width);
-    height: var(--page-height);
+    width: 100%;
+    height: 100%;
+    min-width: var(--page-width);
+    min-height: var(--page-height);
     background-color: var(--page-color);
     color: var(--default-text-color);
     box-shadow: 0 0 0.5rem var(--page-color);

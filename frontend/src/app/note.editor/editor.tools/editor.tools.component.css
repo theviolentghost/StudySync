@@ -21,7 +21,7 @@
     background-color: transparent;
     cursor: col-resize;
     z-index: 1;
-    transition: background-color 0.1s ease 0s, width 0s linear .1s;
+    transition: background-color 0.1s ease 0s, width 0s linear .15s;
     transform: translateX(50%);
     z-index: 100000;
 }
@@ -37,6 +37,7 @@
 }
 .window-slider.active, .window-slider.active:hover {
     background-color: var(--color-secondary);
+    transition: background-color 0.1s ease 0s, width 0s linear .15s;
 }
 
 .container {
@@ -55,7 +56,7 @@
     width: 100%;
 }
 .tool-bar {
-    margin: var(--space-lg) 0;
+    padding: var(--space-lg) 0;
     background-color: var(--color-background);
     border-right: 1px solid var(--color-accent-200);
 }
