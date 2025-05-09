@@ -7,6 +7,7 @@
                 [ngClass]="{
                     'active': tool.id === activeToolId,
                 }"
+                (click)="activeToolId = tool.id"
         >
             <img 
                 src="/icons/{{ tool.icon }}.svg" alt="{{ tool.name }}" 
@@ -17,8 +18,19 @@
             />
         </div>
     </div>
-    <div class="tool-extension">
-
+    <div class="tool-extension" [ngSwitch]="activeToolId">
+        <div class="tool-header">
+            {{ headerTitle }}
+        </div>
+        <tools-files
+            *ngSwitchCase="'files'"
+        ></tools-files>
+        <tools-collaborators
+            *ngSwitchCase="'collaborators'"
+        ></tools-collaborators>
+        <tools-search
+            *ngSwitchCase="'search'"
+        ></tools-search>
     </div>
 </div>
 

@@ -19,5 +19,4 @@
     display: grid;
     grid-template-rows: auto 1fr;
     min-width: var(--minimum-workspace-width);
-    overflow: auto;
 }

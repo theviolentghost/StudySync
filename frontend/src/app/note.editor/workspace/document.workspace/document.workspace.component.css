@@ -6,14 +6,15 @@
     --page-height: 11.69in;
     --page-color: transparent;
     --default-text-color: var(--color-primary);
-    --default-margin: var(--space-lg) var(--space-md);
+    --default-margin: var(--space-md);
+    --minimum-page-width: 400px;
 
     width: 100%;
     height: 100%;
-    overflow: auto;
+    overflow: hidden;
     scrollbar-width: none;
     -ms-overflow-style: none;
-    overscroll-behavior: contain;
+    overscroll-behavior: contain auto;
 }
 
 .tools-container {
@@ -53,7 +54,7 @@
     position: relative;
     height: 100%;
     aspect-ratio: 1 / 1;
-    border-radius: var(--space-sm);
+    border-radius: 0;
     background-color: transparent;
     scale: .8;
     transition: background-color 0.15s ease 0s;
@@ -88,37 +89,32 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    align-items: center;
     gap: var(--space-sm);
-    min-width: max-content;
+    width: 100%;
     overflow: auto;
-    min-height: calc(100% - 50px);
+    height: calc(100% - 50px);
+    overscroll-behavior: contain auto;
 }
 :host::-webkit-scrollbar {
     display: none;
 }
 .page {
     position: relative;
+    min-width: var(--minimum-page-width);
     width: 100%;
-    height: 100%;
-    min-width: var(--page-width);
-    min-height: var(--page-height);
+    min-height: 100%;
     background-color: var(--page-color);
     color: var(--default-text-color);
-    box-shadow: 0 0 0.5rem var(--page-color);
     padding: var(--default-margin);
-    flex-shrink: 0;
     outline: none; 
 }
 .page-content {
+    position: relative;
     font-family: 'Calibri', 'Roboto', 'Segoe UI', Arial, sans-serif;
     font-size: 11pt;
     line-height: 1.2;
-    flex: 1;
-    overflow: hidden; 
     white-space: pre-wrap; 
-    word-wrap: break-word; 
+    word-wrap: break-word;
     line-height: 1.5;
-    width: 100%;
-    height: 100%;
+    width: fit-content;
 }

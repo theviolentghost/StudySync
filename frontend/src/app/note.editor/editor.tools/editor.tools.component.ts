@@ -1,6 +1,9 @@
 import { Component, ElementRef, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PanelResizeService } from '../panel.resize.service';
+import { ToolsFilesComponent } from './tools.files/tools.files.component';
+import { ToolsCollaboratorsComponent } from './tools.collaborators/tools.collaborators.component';
+import { ToolsSearchComponent } from './tools.search/tools.search.component';
 
 interface Tool {
     id: string;
@@ -13,7 +16,10 @@ interface Tool {
 @Component({
   selector: 'editor-tools',
   imports: [
-    CommonModule
+    CommonModule,
+    ToolsFilesComponent,
+    ToolsCollaboratorsComponent,
+    ToolsSearchComponent,
   ],
   templateUrl: './editor.tools.component.html',
   styleUrl: './editor.tools.component.css'
@@ -34,8 +40,11 @@ export class EditorToolsComponent implements OnInit {
     toolList: Tool[] = [
         { id: 'files', name: 'Files', icon: 'file-earmark-text-fill', darkIcon: true },
         { id: 'collaborators', name: 'Collaborators', icon: 'people-fill', darkIcon: true  },
+        { id: 'search', name: 'Search', icon: 'null', darkIcon: true},
+        { id: 'todo', name: 'To-Do', icon: 'null', darkIcon: true},
     ]; 
     activeToolId: string = 'files'; // default
+    headerTitle: string = this.toolList[0].name;
 
 
     constructor(

@@ -63,6 +63,7 @@
 .tool-extension {
     background-color: var(--color-background);
     border-right: 1px solid var(--color-accent-200);
+    padding: 0 var(--space-md);
 }
 .tool-bar-element {
     width: 100%;
@@ -101,4 +102,9 @@
 }
 .tool-bar-element.active img.image-icon-dark {
     filter: invert(1) brightness(1);
+}
+
+.tool-header {
+    width: 100%;
+    padding: var(--space-xxs) 0;
 }

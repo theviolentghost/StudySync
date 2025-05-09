@@ -57,7 +57,7 @@ export class DocumentWorkspaceComponent implements AfterViewInit, OnInit {
         }
     ];
 
-    document: string = '<p>Your initial document content here...</p>';
+    document: string = '<p>Your initial document content here...wdneifnei nfinfiwncinw icnwidniwnciwjdinwid nwicnwjdwjciwj hello heell htetx textje jsisjsj skksks</p>';
     pages: DocumentPage[] = []; 
 
     savedRange: Range | null = null; // To save the range before button click

@@ -8,7 +8,8 @@
     padding-right: var(--space-md);
     gap: var(--space-md);
     color: var(--color-text-primary);
-    overflow: visible;
+    overflow: auto;
+    width: 100%;
 }
 
 .tab-carousel {
@@ -42,6 +43,7 @@
     text-rendering: optimizeSpeed;
     white-space: nowrap;
     font-size: .9rem;
+    flex-shrink: 0;
 }
 .tab-element.active {
     background-color: var(--color-workspace-background);
