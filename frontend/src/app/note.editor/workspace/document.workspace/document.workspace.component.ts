@@ -3,12 +3,12 @@ import {
     AfterViewInit, 
     ViewChildren, 
     QueryList, 
-    ElementRef, 
     OnInit, 
+    ElementRef,
     OnDestroy,
-    ViewEncapsulation
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { PanelResizeService, PanelResizeEvent } from '../../panel.resize.service';
 
 interface Tool {
     name: string;
@@ -20,8 +20,10 @@ interface Tool {
 }
 
 interface ToolGroup {
-    title: string;
+    id: string;
+    collapsePriority?: number; // Optional priority for collapsing high = less likely to collapse
     tools: Tool[];
+    active?: boolean; // when collapsed: is open
 }
 
 interface DocumentPage {
@@ -42,7 +44,8 @@ interface DocumentPage {
 export class DocumentWorkspaceComponent implements AfterViewInit, OnInit {
     toolGroups: ToolGroup[] = [
         {
-            title: "Text Formatting",
+            id: "Text Formatting",
+            collapsePriority: 1,
             tools: [
                 { name: "Bold", icon: "type-bold", tooltip: "Ctrl+B", action: this._ToolOnClick_bold.bind(this), active: true },
                 { name: "Italic", icon: "type-italic", action: () => console.log("Italic clicked") },
@@ -50,20 +53,50 @@ export class DocumentWorkspaceComponent implements AfterViewInit, OnInit {
             ]
         },
         {
-            title: "Colors",
+            id: "Colors",
+            collapsePriority: 10,
             tools: [
-                { name: "Text Color", icon: "", tooltip: "", action: () => console.log("Color clicked") },
+                { name: "Text Color", icon: "null", tooltip: "", action: () => console.log("Color clicked") },
+                { name: "Text Color", icon: "null", tooltip: "", action: () => console.log("Color clicked") },
+                { name: "Text Color", icon: "null", tooltip: "", action: () => console.log("Color clicked") },
+                { name: "Text Color", icon: "null", tooltip: "", action: () => console.log("Color clicked") },
+                { name: "Text Color", icon: "type-bold", tooltip: "", action: () => console.log("Color clicked") },
             ]
-        }
+        },
+        {
+            id: "Lists",
+            collapsePriority: 2,
+            tools: [
+                { name: "Text Color", icon: "null", tooltip: "", action: () => console.log("Color clicked") },
+                { name: "Text Color", icon: "null", tooltip: "", action: () => console.log("Color clicked") },
+                { name: "Text Color", icon: "null", tooltip: "", action: () => console.log("Color clicked") },
+                { name: "Text Color", icon: "null", tooltip: "", action: () => console.log("Color clicked") },
+                { name: "Text Color", icon: "type-bold", tooltip: "", action: () => console.log("Color clicked") },
+            ]
+        },
     ];
+
+    @ViewChildren('toolGroup') toolGroupElements!: QueryList<ElementRef>;
+
+    private resizeObserver!: ResizeObserver;
 
     document: string = '<p>Your initial document content here...wdneifnei nfinfiwncinw icnwidniwnciwjdinwid nwicnwjdwjciwj hello heell htetx textje jsisjsj skksks</p>';
     pages: DocumentPage[] = []; 
 
     savedRange: Range | null = null; // To save the range before button click
 
+    constructor(
+        private panelResizeService: PanelResizeService
+    ) {}
+
     ngOnInit() {
         this.pages = [{ content: this.document }];
+
+        window.addEventListener('resize', this.checkAllToolGroupsCollapse.bind(this));
+
+        this.panelResizeService.panelResized.subscribe((panelEvent: PanelResizeEvent) => {
+            this.checkAllToolGroupsCollapse();
+        });
     }
 
     ngAfterViewInit() {
@@ -71,6 +104,8 @@ export class DocumentWorkspaceComponent implements AfterViewInit, OnInit {
         if (toolbar) {
             toolbar.addEventListener('mousedown', this.saveSelectionBeforeButtonClick);
         }
+
+        this.checkAllToolGroupsCollapse();
     }
     
     ngOnDestroy() {
@@ -78,6 +113,49 @@ export class DocumentWorkspaceComponent implements AfterViewInit, OnInit {
         if (toolbar) {
             toolbar.removeEventListener('mousedown', this.saveSelectionBeforeButtonClick);
         }
+        this.panelResizeService.panelResized.unsubscribe();
+    }
+
+    getToolBarSpace(element: HTMLElement, groupsLength: number): number {
+        const style = window.getComputedStyle(element);
+        const paddingLeft = parseFloat(style.paddingLeft);
+        const paddingRight = parseFloat(style.paddingRight);
+        const gap = parseFloat(style.gap) || 0;
+        return element.clientWidth - paddingLeft - paddingRight - (gap * (groupsLength - 1)) - 20; // -20 just for prettiness
+    }
+
+    checkAllToolGroupsCollapse() {
+        const toolGroups = this.toolGroupElements.toArray().sort((a, b) => {
+            let priorityA = parseInt(a.nativeElement.getAttribute('data-group-collapse-priority') || '0');
+            let priorityB = parseInt(b.nativeElement.getAttribute('data-group-collapse-priority') || '0');
+            return priorityA - priorityB;
+        });
+
+
+        let toolGroupsWidth = this.toolGroupElements.reduce((total, group) => {
+            const element = group.nativeElement;
+            element.classList.remove('collapsed'); // Remove the collapsed class
+            return total + element.clientWidth;
+        }, 0);
+
+        let toolBarSpace = this.getToolBarSpace(document.querySelector('.tools-container') as HTMLElement, toolGroups.length);
+
+        let index = 0;
+        while(toolGroupsWidth > toolBarSpace && index < toolGroups.length) {
+            const element = toolGroups[index++].nativeElement;
+            toolGroupsWidth -= element.clientWidth;
+            element.classList.add('collapsed');
+            toolGroupsWidth += element.clientWidth;
+        }
+    }
+
+    toggleToolGroupCollapse(element: HTMLElement) {
+        const groupId = element.getAttribute('data-group-name');
+        if (!groupId) return;
+        const group = this.toolGroups.find(group => group.id === groupId);
+        if (!group) return;
+
+        group.active = !group.active;
     }
 
     saveSelectionBeforeButtonClick = (event: Event) => {
@@ -89,19 +167,52 @@ export class DocumentWorkspaceComponent implements AfterViewInit, OnInit {
     }
 
     _ToolOnClick_bold() {
-        console.log(this.savedRange)
-        const pageElement = this.savedRange?.startContainer.parentElement;
-        if (pageElement) {
-            const selectedText = this.savedRange?.toString();
-            if (!selectedText) return;
+        // use prosemirror
+        // if (!this.savedRange) return;
+        // if (this.savedRange.collapsed) return;
 
-            const boldElement = document.createElement('span');
-            boldElement.className = 'text-bold';
-            boldElement.textContent = selectedText;
+        // console.log(this.savedRange)
 
-            this.savedRange?.deleteContents();
-            this.savedRange?.insertNode(boldElement);
-        }
+        // const isInsideBold = (node: Node): boolean => {
+        //     let parent = node.parentElement;
+        //     while (parent) {
+        //         if (parent.tagName === 'STRONG') return true;
+        //         parent = parent.parentElement;
+        //     }
+        //     return false;
+        // };
+
+        // const startInsideBold = isInsideBold(this.savedRange.startContainer);
+        // const endInsideBold = isInsideBold(this.savedRange.endContainer);
+        
+        // // Extract the selection content
+        // const fragment = this.savedRange.cloneContents();
+        // const selectedText = fragment.textContent;
+        
+        // if (!selectedText) return;
+        
+        // // If selection is fully inside a bold element, remove bold formatting
+        // if (startInsideBold && endInsideBold) {
+        //     // Create document fragment with plain text
+        //     const newFragment = document.createDocumentFragment();
+        //     newFragment.textContent = selectedText;
+            
+        //     this.savedRange.deleteContents();
+        //     this.savedRange.insertNode(newFragment);
+        // } else {
+        //     // Apply bold formatting
+        //     const boldElement = document.createElement('strong');
+        //     boldElement.textContent = selectedText;
+            
+        //     this.savedRange.deleteContents();
+        //     this.savedRange.insertNode(boldElement);
+        // }
+        
+        // // Restore selection
+        // document.getSelection()?.removeAllRanges();
+        // const newRange = document.createRange();
+        // newRange.setStartAfter(this.savedRange.endContainer);
+        // document.getSelection()?.addRange(newRange);
     }
 
     

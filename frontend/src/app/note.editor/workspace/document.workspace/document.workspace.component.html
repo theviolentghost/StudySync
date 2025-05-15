@@ -1,6 +1,15 @@
-<div class="tools-container">
+<div class="tool-container-backdrop"></div>
+<div class="tools-container hide-scrollbar">
     <ng-container *ngFor="let group of toolGroups; let isLast = last">
-        <div class="tool-group">
+        <div class="tool-group collapsed active"
+            #toolGroup
+            [attr.data-group-name]="group.id"
+            [attr.data-group-collapse-priority]="group.collapsePriority"
+            [ngClass]="{
+                'active': group.active,
+            }"
+        >
+            <button class="tool-dropdown-trigger" (click)="toggleToolGroupCollapse(toolGroup)"></button>
             <div class="tools-wrapper">
                 <button 
                     class="tool" 
@@ -18,8 +27,8 @@
         <div class="group-divider" *ngIf="!isLast"></div>
     </ng-container>
 </div>
-<div class="page-container">
-    <div class="page" *ngFor="let page of pages; let i = index" contenteditable="true">
+<div class="page-container hide-scrollbar">
+    <div class="page hide-scrollbar" *ngFor="let page of pages; let i = index" contenteditable="true">
         <div #pageContent 
             class="page-content" 
             [innerHTML]="page.content"

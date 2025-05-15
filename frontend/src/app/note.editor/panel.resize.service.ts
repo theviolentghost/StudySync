@@ -128,6 +128,12 @@ export class PanelResizeService {
         return roundedWidth;
     }
 
+    get workspaceWidth(): number {
+        return this.availableWidth - Array.from(this.panels.values()).reduce((total, panel) => {
+            return total + panel.width;
+        }, 0);
+    }
+
     private recalculatePanels(priorityId?: string): void {
         const sortedPanels = Array.from(this.panels.entries()).sort((a, b) => {
             return a[1].priority - b[1].priority;

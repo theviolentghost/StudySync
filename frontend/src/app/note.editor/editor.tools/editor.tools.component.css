@@ -37,6 +37,7 @@
 }
 .window-slider.active, .window-slider.active:hover {
     background-color: var(--color-secondary);
+    width: var(--slider-thickness);
     transition: background-color 0.1s ease 0s, width 0s linear .15s;
 }
 
