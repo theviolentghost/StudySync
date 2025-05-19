@@ -5,6 +5,7 @@ import { EditorTabsComponent, Tab } from './editor.tabs/editor.tabs.component';
 import { WorkspaceComponent } from './workspace/workspace.component';
 import { EditorConsoleComponent } from './editor.console/editor.console.component';
 import { PanelResizeService } from './panel.resize.service';
+import { File } from './file.manager.service';
 
 @Component({
   selector: 'note-editor',
@@ -24,21 +25,31 @@ import { PanelResizeService } from './panel.resize.service';
 export class NoteEditorComponent {
     minimumWorspaceWidth: number = 0; // px
 
-    tabs: Tab[] = [
-        {
-            id: 'tab1',
-            title: 'Tab 1',
-            fileType: 'sdoc',
-            data: null
-        },
-        {
-            id: 'tab2',
-            title: 'Tab 2',
-            fileType: 'txt',
-            data: null
-        }
-    ];
-    activeTabId: string | null = "tab1"; //temp
+    files: File[] = [];
+
+    // tabs: Tab[] = [
+    //     {
+    //         id: 'document 1',
+    //         title: 'Tab 1',
+    //         fileType: 'sdoc',
+    //         directory: '/',
+    //         data: null
+    //     },
+    //     {
+    //         id: 'draw',
+    //         title: 'drawing',
+    //         fileType: 'sdraw',
+    //         directory: '/',
+    //         data: null
+    //     },
+    //     {
+    //         id: 'tab2',
+    //         title: 'Tab 2',
+    //         fileType: 'txt',
+    //         directory: '/',
+    //         data: null
+    //     }
+    // ];
 
     constructor (
         private panelResizeService: PanelResizeService
@@ -48,15 +59,10 @@ export class NoteEditorComponent {
     }
 
     selectTab(tabId: string) {
-        this.activeTabId = tabId;
+        
     }
 
     closeTab(tabId: string) {
-        this.tabs = this.tabs.filter(tab => tab.id !== tabId);
-        if (this.activeTabId === tabId) {
-            this.activeTabId = this.tabs.length > 0 ? this.tabs[0].id : null;
-        }
-        console.log("new tab:", this.activeTabId);
-        console.log("tabs:", this.tabs);
+        
     }
 }

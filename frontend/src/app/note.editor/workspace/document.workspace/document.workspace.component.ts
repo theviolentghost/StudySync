@@ -2,6 +2,7 @@ import {
     Component, 
     AfterViewInit, 
     ViewChildren, 
+    ViewChild,
     QueryList, 
     OnInit, 
     ElementRef,
@@ -9,6 +10,11 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PanelResizeService, PanelResizeEvent } from '../../panel.resize.service';
+import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
+import { Router, ActivatedRoute, ParamMap, NavigationEnd } from '@angular/router';
+import { FileManagerService } from '../../file.manager.service';
+
 
 interface Tool {
     name: string;
@@ -16,11 +22,12 @@ interface Tool {
     tooltip?: string;  // Optional tooltip text
     active?: boolean; 
     color?: string; // Optional color for the tool (underlined)
-    action: () => void;
+    action: (element: HTMLElement) => void;
 }
 
 interface ToolGroup {
     id: string;
+    collapseIcon?: string; // Optional icon for the collapsed state
     collapsePriority?: number; // Optional priority for collapsing high = less likely to collapse
     tools: Tool[];
     active?: boolean; // when collapsed: is open
@@ -33,6 +40,7 @@ interface DocumentPage {
 
 @Component({
     selector: 'document-workspace',
+    standalone: true,
     imports: [
         CommonModule,
     ],
@@ -42,61 +50,147 @@ interface DocumentPage {
     // encapsulation: ViewEncapsulation.None
 })
 export class DocumentWorkspaceComponent implements AfterViewInit, OnInit {
-    toolGroups: ToolGroup[] = [
-        {
-            id: "Text Formatting",
-            collapsePriority: 1,
-            tools: [
-                { name: "Bold", icon: "type-bold", tooltip: "Ctrl+B", action: this._ToolOnClick_bold.bind(this), active: true },
-                { name: "Italic", icon: "type-italic", action: () => console.log("Italic clicked") },
-                { name: "Underline", icon: "type-underline", action: () => console.log("Underline clicked") }
-            ]
-        },
-        {
-            id: "Colors",
-            collapsePriority: 10,
-            tools: [
-                { name: "Text Color", icon: "null", tooltip: "", action: () => console.log("Color clicked") },
-                { name: "Text Color", icon: "null", tooltip: "", action: () => console.log("Color clicked") },
-                { name: "Text Color", icon: "null", tooltip: "", action: () => console.log("Color clicked") },
-                { name: "Text Color", icon: "null", tooltip: "", action: () => console.log("Color clicked") },
-                { name: "Text Color", icon: "type-bold", tooltip: "", action: () => console.log("Color clicked") },
-            ]
-        },
-        {
-            id: "Lists",
-            collapsePriority: 2,
-            tools: [
-                { name: "Text Color", icon: "null", tooltip: "", action: () => console.log("Color clicked") },
-                { name: "Text Color", icon: "null", tooltip: "", action: () => console.log("Color clicked") },
-                { name: "Text Color", icon: "null", tooltip: "", action: () => console.log("Color clicked") },
-                { name: "Text Color", icon: "null", tooltip: "", action: () => console.log("Color clicked") },
-                { name: "Text Color", icon: "type-bold", tooltip: "", action: () => console.log("Color clicked") },
-            ]
-        },
-    ];
-
     @ViewChildren('toolGroup') toolGroupElements!: QueryList<ElementRef>;
-
-    private resizeObserver!: ResizeObserver;
 
     document: string = '<p>Your initial document content here...wdneifnei nfinfiwncinw icnwidniwnciwjdinwid nwicnwjdwjciwj hello heell htetx textje jsisjsj skksks</p>';
     pages: DocumentPage[] = []; 
 
     savedRange: Range | null = null; // To save the range before button click
 
+    toolGroups = [
+        {
+          id: "TextFormatting",
+          collapseIcon: "type-bold",
+          collapsePriority: 1,
+          active: false,
+          tools: [
+            { 
+              name: "Bold", 
+              icon: "type-bold", 
+              tooltip: "Ctrl+B", 
+              active: false,
+              action: (element: HTMLElement) => this.boldText(element)
+            },
+            { 
+              name: "Italic", 
+              icon: "type-italic", 
+              tooltip: "Ctrl+I", 
+              active: false,
+              action: () => console.log("Italic clicked"),
+            },
+            { 
+              name: "Underline", 
+              icon: "type-underline", 
+              tooltip: "Ctrl+U", 
+              active: false,
+              action: () => console.log("Underline clicked"),
+            },
+            { 
+              name: "Strike", 
+              icon: "type-strikethrough", 
+              tooltip: "Ctrl+Shift+X", 
+              active: false,
+              action: () => console.log("Strike clicked"),
+            }
+          ]
+        },
+        {
+          id: "Alignments",
+          collapseIcon: "align-justified",
+          collapsePriority: 3,
+          active: false,
+          tools: [
+            { 
+              name: "Align Left", 
+              icon: "align-left", 
+              tooltip: "", 
+              active: false,
+              action: () => console.log("Align Left clicked"),
+            },
+            { 
+              name: "Align Center", 
+              icon: "align-center", 
+              tooltip: "", 
+              active: false,
+              action: () => console.log("Align Center clicked"),
+            },
+            { 
+              name: "Align Right", 
+              icon: "align-right", 
+              tooltip: "",
+              active: false, 
+              action: () => console.log("Align Right clicked"),
+            },
+            { 
+              name: "Align Justify", 
+              icon: "align-justified", 
+              tooltip: "", 
+              active: false,
+              action: () => console.log("Align Justify clicked"),
+            }
+          ]
+        },
+        {
+          id: "Lists",
+          collapseIcon: "list-numbers",
+          collapsePriority: 2,
+          active: false,
+          tools: [
+            { 
+              name: "Bullet List", 
+              icon: "list", 
+              tooltip: "", 
+              active: false,
+              action: () => console.log("Bullet List clicked"),
+            },
+            { 
+              name: "Ordered List", 
+              icon: "list-numbers", 
+              tooltip: "", 
+              active: false,
+              action: () => console.log("Ordered List clicked"),
+            },
+            { 
+              name: "Task List", 
+              icon: "list-check", 
+              tooltip: "", 
+              active: false,
+              action: () => console.log("Task List clicked"),
+            }
+          ]
+        }
+      ];
+
+    private subscription: Subscription = new Subscription();
+
     constructor(
-        private panelResizeService: PanelResizeService
+        private panelResizeService: PanelResizeService,
+        private router: Router,
+        private route: ActivatedRoute,
+        private fileManager: FileManagerService,
     ) {}
 
     ngOnInit() {
-        this.pages = [{ content: this.document }];
-
         window.addEventListener('resize', this.checkAllToolGroupsCollapse.bind(this));
 
-        this.panelResizeService.panelResized.subscribe((panelEvent: PanelResizeEvent) => {
-            this.checkAllToolGroupsCollapse();
-        });
+        this.subscription.add(
+            this.panelResizeService.panelResized.subscribe((panelEvent: PanelResizeEvent) => {
+                this.checkAllToolGroupsCollapse();
+            })
+        );
+
+        // const currentUrl = this.router.url;
+        // console.log('Current URL:', currentUrl);
+
+        this.subscription.add(
+            this.router.events.pipe(
+              filter(event => event instanceof NavigationEnd)
+            ).subscribe(() => {
+                this.loadDocument();
+            })
+        );
+
+        this.loadDocument();
     }
 
     ngAfterViewInit() {
@@ -113,7 +207,22 @@ export class DocumentWorkspaceComponent implements AfterViewInit, OnInit {
         if (toolbar) {
             toolbar.removeEventListener('mousedown', this.saveSelectionBeforeButtonClick);
         }
-        this.panelResizeService.panelResized.unsubscribe();
+        this.subscription.unsubscribe();
+    }
+
+    private loadDocument() {
+        console.log("hey")
+        if (this.route.snapshot.paramMap.has('filePath')) {
+            console.log("hey2")
+            const filePath = this.route.snapshot.paramMap.get('filePath');
+            const fileContent = this.fileManager.getFileContent(filePath || '');
+            if (fileContent) {
+                console.log("hey3")
+                this.document = fileContent.text;
+            }
+        }
+
+        this.pages = [{ content: this.document }];
     }
 
     getToolBarSpace(element: HTMLElement, groupsLength: number): number {
@@ -166,54 +275,41 @@ export class DocumentWorkspaceComponent implements AfterViewInit, OnInit {
         this.savedRange = selection.getRangeAt(0).cloneRange();
     }
 
-    _ToolOnClick_bold() {
-        // use prosemirror
-        // if (!this.savedRange) return;
-        // if (this.savedRange.collapsed) return;
+    private boldText(element: HTMLElement) {
+        // console.log(this.savedRange); //commonAncestorContainer
+        // if(!this.savedRange) return;
 
-        // console.log(this.savedRange)
-
-        // const isInsideBold = (node: Node): boolean => {
-        //     let parent = node.parentElement;
-        //     while (parent) {
-        //         if (parent.tagName === 'STRONG') return true;
-        //         parent = parent.parentElement;
-        //     }
-        //     return false;
-        // };
-
-        // const startInsideBold = isInsideBold(this.savedRange.startContainer);
-        // const endInsideBold = isInsideBold(this.savedRange.endContainer);
-        
-        // // Extract the selection content
-        // const fragment = this.savedRange.cloneContents();
-        // const selectedText = fragment.textContent;
-        
-        // if (!selectedText) return;
-        
-        // // If selection is fully inside a bold element, remove bold formatting
-        // if (startInsideBold && endInsideBold) {
-        //     // Create document fragment with plain text
-        //     const newFragment = document.createDocumentFragment();
-        //     newFragment.textContent = selectedText;
-            
-        //     this.savedRange.deleteContents();
-        //     this.savedRange.insertNode(newFragment);
-        // } else {
-        //     // Apply bold formatting
-        //     const boldElement = document.createElement('strong');
-        //     boldElement.textContent = selectedText;
-            
-        //     this.savedRange.deleteContents();
-        //     this.savedRange.insertNode(boldElement);
-        // }
-        
-        // // Restore selection
-        // document.getSelection()?.removeAllRanges();
-        // const newRange = document.createRange();
-        // newRange.setStartAfter(this.savedRange.endContainer);
-        // document.getSelection()?.addRange(newRange);
-    }
-
+        // const container = this.savedRange?.commonAncestorContainer;
     
+        // // If the container is a text node, use its parent
+        // const targetElement = (container?.nodeType === Node.TEXT_NODE 
+        //     ? container.parentElement 
+        //     : container as HTMLElement);
+        
+        // if (!targetElement) {
+        //     console.log("No valid container element found");
+        //     return;
+        // }
+
+        // console.log(targetElement.innerHTML);
+
+        // let strongElements = Array.from(targetElement.querySelectorAll('strong'));
+        // if(targetElement.tagName === 'STRONG') {
+        //     strongElements.push(targetElement);
+        // }
+        // console.log(`Found ${strongElements.length} <strong> elements:`, strongElements);
+        
+        // Process each strong element
+        // strongElements.forEach((strongEl, index) => {
+        //     console.log(`Strong element ${index}:`, {
+        //         content: strongEl.textContent,
+        //         innerHTML: strongEl.innerHTML,
+        //         outerHTML: strongEl.outerHTML
+        //     });
+            
+        //     // Example: You could modify them here
+        //     // strongEl.style.color = 'red'; // Just an example modification
+        // });
+
+    }
 }

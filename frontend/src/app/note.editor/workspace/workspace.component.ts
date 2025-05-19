@@ -1,36 +1,34 @@
 import { Component, Input, OnChanges, SimpleChanges, OnInit, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Tab } from '../editor.tabs/editor.tabs.component';
-import { DocumentWorkspaceComponent } from './document.workspace/document.workspace.component';
-import { DrawingWorkspaceComponent } from './drawing.workspace/drawing.workspace.component';
-import { StudyWorkspaceComponent } from './study.workspace/study.workspace.component';
+import { RouterModule, Router, ActivatedRoute, NavigationEnd } from '@angular/router';
 
 @Component({
   selector: 'workspace',
+  standalone: true,
   imports: [
       CommonModule,
-      DocumentWorkspaceComponent,
-      DrawingWorkspaceComponent,
-      StudyWorkspaceComponent
+      RouterModule,
   ],
   templateUrl: './workspace.component.html',
   styleUrl: './workspace.component.css'
 })
-export class WorkspaceComponent implements OnChanges, OnInit {
-    @Input() tabs: any[] = [];
-    @Input() activeTabId: string | null = null;
-
-    activeTab: Tab | null = null;
+export class WorkspaceComponent implements OnInit {
+    @Input() files: File[] = [];
 
     loadingElement: HTMLElement | null = null;
 
-    constructor(private elementRef: ElementRef) {}
+    currentFileType: string | null = null;
+    currentFileId: string | null = null;
+
+    constructor(
+        private elementRef: ElementRef,
+        private router: Router, 
+        private route: ActivatedRoute 
+    ) {}
 
     ngOnInit() {
-        this.activeTab = this.tabs.find(tab => tab.id === this.activeTabId);
+        // this.activeTab = this.tabs.find(tab => tab.id === this.activeTabId);
         this.loadingElement = this.elementRef.nativeElement.getElementsByClassName('loading-element')[0];
-
-        // this.startLoadingFileAnimation();
     }
 
     startLoadingFileAnimation() {
@@ -41,10 +39,16 @@ export class WorkspaceComponent implements OnChanges, OnInit {
         this.loadingElement?.classList.remove('loading');
     }
 
-    ngOnChanges(changes: SimpleChanges) {
-        if (changes['activeTabId']) {
-            this.activeTab = this.tabs.find(tab => tab.id === this.activeTabId);
-        }
-    }
+    // ngOnChanges(changes: SimpleChanges) {
+    //     if (changes['activeTabId']) {
+    //         const previousTab = this.activeTab;
+    //         this.activeTab = this.tabs.find(tab => tab.id === this.activeTabId);
+            
+    //         // Only update if the tab actually changed
+    //         if (this.activeTab?.id !== previousTab?.id) {
+    //             this.updateCurrentFile(this.activeTab);
+    //         }
+    //     }
+    // }
 
 }

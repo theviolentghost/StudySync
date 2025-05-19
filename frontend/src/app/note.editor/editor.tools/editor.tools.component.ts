@@ -1,6 +1,7 @@
 import { Component, ElementRef, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PanelResizeService } from '../panel.resize.service';
+import { ToolsWorkspaceComponent } from './tools.workspace/tools.workspace.component';
 import { ToolsFilesComponent } from './tools.files/tools.files.component';
 import { ToolsCollaboratorsComponent } from './tools.collaborators/tools.collaborators.component';
 import { ToolsSearchComponent } from './tools.search/tools.search.component';
@@ -17,6 +18,7 @@ interface Tool {
   selector: 'editor-tools',
   imports: [
     CommonModule,
+    ToolsWorkspaceComponent,
     ToolsFilesComponent,
     ToolsCollaboratorsComponent,
     ToolsSearchComponent,
@@ -32,19 +34,20 @@ export class EditorToolsComponent implements OnInit {
     defaultWindowWidth: number = 180; // default
 
     toolWindowMinWidth: number = 60; // minimum width of the tool extension window px 
-    toolWindowMaxWidth: number = 380; // maximum width of the tool extension window px
+    toolWindowMaxWidth: number = 500; // maximum width of the tool extension window px
     toolExtensionTolerance: number = 90; // distance the mouse must exceed to trigger a collapse of tool extension window px
     toolExtensionMinWidth: number = this.toolWindowMinWidth + 120; // minimum width of the tool extension window px
     sliderWidth: number = 0; // width of the slider px
 
     toolList: Tool[] = [
-        { id: 'files', name: 'Files', icon: 'file-earmark-text-fill', darkIcon: true },
-        { id: 'collaborators', name: 'Collaborators', icon: 'people-fill', darkIcon: true  },
-        { id: 'search', name: 'Search', icon: 'null', darkIcon: true},
-        { id: 'todo', name: 'To-Do', icon: 'null', darkIcon: true},
+        { id: 'workspace', name: 'Workspace', icon: 'tools' },
+        { id: 'files', name: 'Files', icon: 'files' },
+        { id: 'collaborators', name: 'Collaborators', icon: 'people-fill'  },
+        { id: 'search', name: 'Search', icon: 'file-search'},
+        { id: 'todo', name: 'To-Do', icon: 'null'},
     ]; 
     activeToolId: string = 'files'; // default
-    headerTitle: string = this.toolList[0].name;
+    headerTitle: string = this.toolList[1].name;
 
 
     constructor(

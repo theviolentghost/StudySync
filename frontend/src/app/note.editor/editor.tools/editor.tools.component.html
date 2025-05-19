@@ -11,17 +11,17 @@
         >
             <img 
                 src="/icons/{{ tool.icon }}.svg" alt="{{ tool.name }}" 
-                [ngClass]="{
-                    'image-icon-dark': tool.darkIcon === true,
-                    'image-icon-light': tool.darkIcon === false,
-                }"
+                class="image-icon-dark"
             />
         </div>
     </div>
-    <div class="tool-extension" [ngSwitch]="activeToolId">
+    <div class="tool-extension show-scrollbar" [ngSwitch]="activeToolId">
         <div class="tool-header">
             {{ headerTitle }}
         </div>
+        <tools-workspace
+            *ngSwitchCase="'workspace'"
+        ></tools-workspace>
         <tools-files
             *ngSwitchCase="'files'"
         ></tools-files>

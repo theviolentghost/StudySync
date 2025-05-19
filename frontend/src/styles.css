@@ -76,14 +76,25 @@
     --font-size-base: 16px;
 
     --slider-thickness: 6px;
+
+    --workspace-workcolor-1: var(--color-secondary); /* different colors for workspaces e.i. people cursor colors, folder border color, etc */
+    --workspace-workcolor-2: #00e988;
+    --workspace-workcolor-3: #00a2ff;
+    --workspace-workcolor-4: #ff00a2;
+    --workspace-workcolor-5: #ee291a;
+    --workspace-workcolor-6: #ffdd00;
 }
 
 :root {
     --color-text: #080707;
     --color-background: #ffffff;
     --color-primary: #ff7729;
+    --color-primary-opacity-75: rgba(255, 119, 41, 0.75);
+    --color-primary-opacity-50: rgba(255, 119, 41, 0.50);
+    --color-primary-opacity-25: rgba(255, 119, 41, 0.25);
     --color-secondary: #ffb914;
     --color-accent: #303030;
+    --color-image-icon: #080707;
 }
 
 .image-icon-light {
@@ -156,12 +167,21 @@
         --color-text: #f8f7f7;
         --color-background: #181818;
         --color-primary: #d64f00;
+        --color-primary-opacity-75: rgba(214, 79, 0, 0.75);
+        --color-primary-opacity-50: rgba(214, 79, 0, 0.50);
+        --color-primary-opacity-25: rgba(214, 79, 0, 0.25);
         --color-secondary: #eba400;
         --color-accent: #cfcfcf;
+        --color-image-icon: #f8f7f7;
     }
 
-    .image-icon-dark {
+    .image-icon-dark { 
+        /* for non svg images */
         filter: invert(1);
+    }
+
+    .image-icon-light {
+        filter: invert(0);
     }
 }
 
@@ -198,6 +218,13 @@
 .hide-scrollbar::-webkit-scrollbar {
     display: none;
 }
+.show-scrollbar {
+    -ms-overflow-style: auto;  /* IE and Edge */
+    scrollbar-width: auto; /* Firefox */
+}
+.show-scrollbar::-webkit-scrollbar {
+    display: block;
+}
 
 body {
     font-family: 'Avenir', 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif;
@@ -210,4 +237,25 @@ body {
 
 strong {
     font-weight: bold !important;
+}
+i {
+    font-style: italic !important;
+}
+underline {
+    text-decoration: underline !important;
+}
+strikethrough {
+    text-decoration: line-through !important;
+}
+text-right {
+    text-align: right !important;
+}
+.text-center {
+    text-align: center !important;
+}
+.text-left {
+    text-align: left !important;
+}
+.text-justify {
+    text-align: justify !important;
 }

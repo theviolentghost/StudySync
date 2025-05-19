@@ -1,0 +1,129 @@
+:host {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin-top: var(--space-xxs);
+    overflow-y: auto;
+}
+.tab-element {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    background-color: transparent;
+    flex-shrink: 0;
+    height: 1.4rem;
+    align-items: center;
+    cursor: pointer;
+    outline-width: 0;
+    transition: background-color 0.15s ease 0s, outline-width 0.15s ease 0s;
+}
+.tab-element .icon {
+    margin-left: var(--space-xxs);
+    position: relative;
+    height: 1rem;
+    aspect-ratio: 1 / 1;
+    align-self: center;
+    background-image: 
+        url('/icons/chevron-right.svg'),
+        url('/icons/chevron-down.svg');
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+.tab-element p {
+    margin: 0 var(--space-xxs);
+    text-overflow: ellipsis;
+    text-rendering: optimizeSpeed;
+    white-space: nowrap;
+    font-size: .9rem;
+    color: var(--color-text);
+}
+.tab-element:hover {
+    background-color: var(--color-primary-opacity-25);
+    outline: solid 1px var(--color-primary);
+    outline-offset: -1px;
+}
+.tab-element.folder {
+    --folder-group-color: var(--color-text); /* color of the left border for each folder */
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-rows: 1fr auto;
+    height: auto;
+}
+.tab-element.folder::before {
+    content: '';
+    position: absolute;
+    top: 1.3rem;
+    left: calc(1rem - 1px);
+    width: 100%;
+    height: calc(100% - 1px - 1.3rem);
+    background-color: transparent;
+    border-left: solid 1px var(--folder-group-color);
+    /* border-bottom: solid 1px var(--folder-group-color);
+    border-top: solid 1px var(--folder-group-color); */
+}
+@media (prefers-color-scheme: light) {
+    .tab-element.folder::before {
+        border-left: solid 2px var(--folder-group-color);
+    }
+}
+.tab-element.folder .action {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-rows: 1fr;
+    width: 100%;
+    grid-row: 1;
+    grid-column: 1 / -1;
+}
+.tab-element.folder .icon {
+    grid-row: 1;
+    grid-column: 1;
+    min-width: 1rem;
+}
+.tab-element.folder p {
+    grid-row: 1;
+    grid-column: 2;
+}
+.tab-element.folder .actions {
+    position: relative;
+    display: none;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-xxs);
+    min-width: fit-content;
+    grid-row: 1;
+    grid-column: 3;
+    height: .9rem;
+    align-self: center;
+    margin-right: 1px;
+}
+.tab-element.folder .actions button {
+    height: 100%;
+    aspect-ratio: 1 / 1;
+    background-color: red;
+    border-radius: var(--space-xxs);
+    cursor: pointer;
+}
+.tab-element.folder .children {
+    grid-row: 2;
+    grid-column: 1 / -1;
+    padding-left: 1rem; /* icon width */
+}
+.tab-element.folder .children .tab-element.file:hover {
+    background-color: var(--color-primary-opacity-25); /* make the file darker */
+}
+.tab-element.folder:hover:has(.tab-element.folder:hover)  {
+    background-color: transparent;
+    outline: none;
+}
+.tab-element.folder:hover .action:hover .actions  {
+    display: flex;
+}
+@media (pointer: coarse) {
+    .tab-element.actions {
+        display: none; /* mobile users will only have add file at top */
+    }
+}

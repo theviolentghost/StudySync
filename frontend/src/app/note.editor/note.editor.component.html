@@ -2,16 +2,13 @@
 <editor-tools></editor-tools>
 <div class="workspace-container">
     <editor-tabs
-        [tabs]="tabs"
-        [activeTabId]="activeTabId" 
+        [files]="files"
         (tabSelected)="selectTab($event)"
         (tabClosed)="closeTab($event)"
 
     ></editor-tabs>
     <workspace 
         class="enable-select"
-        [activeTabId]="activeTabId"
-        [tabs]="tabs"
     ></workspace>
 </div>
 <editor-console></editor-console>

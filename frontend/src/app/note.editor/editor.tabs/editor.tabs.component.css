@@ -44,6 +44,7 @@
     white-space: nowrap;
     font-size: .9rem;
     flex-shrink: 0;
+    cursor: pointer;
 }
 .tab-element.active {
     background-color: var(--color-workspace-background);
@@ -53,11 +54,18 @@
     color: var(--color-secondary-500);
 }
 
-.tab-element img {
-    margin-right: var(--space-sm);
+.tab-element .icon {
+    margin-right: var(--space-xxs);
+    height: 80%;
+    aspect-ratio: 1 / 1;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
 }
 .tab-element .closeTab {
+    position: relative;
     margin-left: var(--space-sm);
+    background-color: transparent;
     cursor: pointer;
     visibility: hidden;
     height: var(--space-lg);
@@ -66,19 +74,11 @@
     border-radius: var(--space-xxs);
     padding: 0;
     display: flex;
+    background-image: url("/icons/x.svg");
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
 }
 .tab-element.active .closeTab {
-    position: relative;
     visibility: visible;
-    background-color: var(--color-accent-200);
-}
-.tab-element.active .closeTab img {
-    position: relative;
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    object-fit: contain;
-    object-position: center;
-    scale: 0.8;
 }

@@ -1,24 +1,13 @@
-import { Component, Input, Output, EventEmitter  } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit  } from '@angular/core';
 import { CommonModule } from '@angular/common'; 
+import { Router } from '@angular/router';
+import { File, FileManagerService } from '../file.manager.service';
 
 export interface Tab {
-    id: string;
-    title: string;
-    fileType: 'sdoc' | 'sdraw' | 'sstudy ' | 'txt' | 'md';
-    data: BaseFile | null;
-}
-export interface BaseFile {
-    name: string;
-    type: string;
-    lastModified: Date;
-    size: number;
-    content: any | null;
-}
-export interface SDocumentFile extends BaseFile {
-    type: 'sdoc';
-    content: {
-        text: string // temp
-    };
+    id: string; // file name
+    directory: string; // directory name
+    title: string; 
+    fileType: string;
 }
 
 // export type FileContent = SDocumentFile | SDrawFile | SStudyFile | BaseFile;
@@ -31,21 +20,73 @@ export interface SDocumentFile extends BaseFile {
   templateUrl: './editor.tabs.component.html',
   styleUrl: './editor.tabs.component.css'
 })
-export class EditorTabsComponent {
-    @Input() tabs: Tab[] = [];
-    @Input() activeTabId: string | null = null;
+export class EditorTabsComponent implements OnInit{
+    @Input() files: File[] = []; 
+    tabs: Tab[] = [
+        {
+            id: 'welcome',
+            title: 'Get Started',
+            fileType: 'WELCOME',
+            directory: '/',
+        }
+    ];
+    activeTabId: string | null = "welcome";
 
     @Output() tabSelected = new EventEmitter<string>();
     @Output() tabClosed = new EventEmitter<string>();
 
-    constructor() {}
+    constructor(
+        private router: Router,
+        private fileManager: FileManagerService
+    ) {}
+
+    ngOnInit(): void {
+        this.fileManager.openNewTabInWorkspace.subscribe((file: File) => {
+            this.openNewTabFromFile(file);
+        });
+    }
+
+    openNewTabFromFile(file: File) {
+        const tab: Tab = {
+            id: file.name,
+            title: file.name,
+            fileType: file.type,
+            directory: file.directory,
+        };
+
+        this.tabs.push(tab);
+        this.selectTab(file.name);
+    }
 
     selectTab(tabId: string) {
-        // this.activeTabId = tabId;
-        this.tabSelected.emit(tabId);
+        this.activeTabId = tabId;
+
+        const tabSelected = this.tabs.find(tab => tab.id === tabId);
+        if (!tabSelected) return;
+
+        // this.tabSelected.emit(tabId);
+
+        this.router.navigate([{ 
+            outlets: { 
+              workspace: [tabSelected.fileType, `${tabSelected.directory}${tabId}.${tabSelected.fileType}`] 
+            } 
+          }], { skipLocationChange: true });
+
     }
 
     closeTab(tabId: string) {
-        this.tabClosed.emit(tabId);
+        const tabIndex = this.tabs.findIndex(tab => tab.id === tabId);
+        if (tabIndex !== -1) {
+            this.tabs.splice(tabIndex, 1);
+            this.tabClosed.emit(tabId);
+
+            // If the closed tab was active, select the first tab
+            if (this.activeTabId === tabId && this.tabs.length > 0) {
+                this.selectTab(this.tabs[tabIndex - 1].id);
+            }
+            else {
+                this.selectTab("");
+            }
+        }
     }
 }

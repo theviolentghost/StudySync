@@ -70,13 +70,54 @@
     overflow: visible;
 }
 .tool-dropdown-trigger {
+    padding: var(--space-xxs);
     position: relative;
     width: 100%;
     aspect-ratio: 1 / 1;
-    background: red;
     flex-shrink: 0;
     z-index: 2;
     cursor: pointer;
+    background-color: transparent;
+    border-radius: var(--space-sm);
+    transition: background-color 0.15s ease 0s;
+}
+.tool-dropdown-trigger .icon {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background-color: var(--color-primary);
+    mask-position: center;
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    z-index: 1;
+}
+.tool-dropdown-trigger::before {
+    content: '';
+    position: absolute;
+    bottom: -20%;
+    right: -20%;
+    width: 40%;
+    height: 40%;
+    transform: translate(-50%, -50%);
+    background-color: var(--color-workspace-background);
+    z-index: 2;
+    border-top-left-radius: var(--space-sm);
+}
+.tool-dropdown-trigger::after {
+    content: '';
+    position: absolute;
+    bottom: -20%;
+    right: -20%;
+    width: 40%;
+    height: 40%;
+    transform: translate(-50%, -50%);
+    mask-image: url('/icons/chevron-down.svg');
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    background-color: var(--color-primary);
+    z-index: 2;
+}
+.tool-group.collapsed .tools-wrapper {
+    opacity: 0;
 }
 .tool-group.collapsed.active .tools-wrapper {
     position: relative;
@@ -85,7 +126,8 @@
     background: var(--color-background);
     z-index: 3;
     flex-direction: column;
-    /* padding: var(--space-sm); */
+    border-radius: var(--space-sm);
+    opacity: 1;
 }
 .tool-dropdown-trigger, .tool-group.collapsed .tools-wrapper {
     display: none;
@@ -101,6 +143,7 @@
     width: 100%;
     height: 100%;
     flex-shrink: 0;
+    transition: opacity 0.15s ease 0s;
 }
 .tool {
     position: relative;
@@ -113,6 +156,11 @@
     transition: background-color 0.15s ease 0s;
     cursor: pointer;
     flex-shrink: 0;
+    border-radius: var(--space-md);
+    transition: background-color 0.15s ease 0s;
+}
+.tool:hover, .tool-dropdown-trigger:hover {
+    background-color: var(--color-primary-opacity-25);
 }
 .tool .tool-icon {
     width: 100%;
@@ -132,7 +180,6 @@
     mask-size: cover;
     mask-repeat: no-repeat;
 }
-
 .group-divider {
     position: relative;
     width: 2px;
@@ -165,10 +212,27 @@
 .page-content {
     position: relative;
     font-family: 'Calibri', 'Roboto', 'Segoe UI', Arial, sans-serif;
-    font-size: 11pt;
+    font-size: 12pt;
     line-height: 1.2;
     white-space: pre-wrap; 
     word-wrap: break-word;
     line-height: 1.5;
     width: fit-content;
+}
+::selection {
+    background-color: var(--color-primary-opacity-75); 
+    color: var(--color-text); 
+}
+.page-content::selection {
+    background-color: var(--color-primary-opacity-75); 
+    color: var(--color-text);
+}
+.page-content *::selection {
+    background-color: var(--color-primary-opacity-75);
+    color: var(--color-text);
+}
+.page-content::-moz-selection,
+.page-content *::-moz-selection {
+    background-color: var(--color-primary-opacity-75);
+    color: var(--color-text);
 }

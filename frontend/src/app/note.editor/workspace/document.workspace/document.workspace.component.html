@@ -9,16 +9,18 @@
                 'active': group.active,
             }"
         >
-            <button class="tool-dropdown-trigger" (click)="toggleToolGroupCollapse(toolGroup)"></button>
+            <button class="tool-dropdown-trigger" (click)="toggleToolGroupCollapse(toolGroup)">
+                <div class="icon" [style.mask-image]="`url('/icons/${group.collapseIcon}.svg')`"></div>
+            </button>
             <div class="tools-wrapper">
                 <button 
+                    #toolButton
                     class="tool" 
                     *ngFor="let tool of group.tools"
                         [ngClass]="{'active': tool.active, 'disabled': !tool.active}"
-                        (click)="tool.action()"
+                        (click)="tool.action(toolButton)"
                         [attr.aria-label]="tool.name"
                         [title]="tool.tooltip ? `${tool.name} (${tool.tooltip})` : tool.name"
-                        
                 >
                     <div class="tool-icon" [style.mask-image]="`url('/icons/${tool.icon}.svg')`"></div>
                 </button>
