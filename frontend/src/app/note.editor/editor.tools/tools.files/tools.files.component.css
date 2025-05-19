@@ -5,6 +5,7 @@
     width: 100%;
     margin-top: var(--space-xxs);
     overflow-y: auto;
+    touch-action: manipulation;
 }
 .tab-element {
     position: relative;
@@ -19,6 +20,7 @@
     cursor: pointer;
     outline-width: 0;
     transition: background-color 0.15s ease 0s, outline-width 0.15s ease 0s;
+    touch-action: default;
 }
 .tab-element .icon {
     margin-left: var(--space-xxs);
@@ -41,11 +43,6 @@
     font-size: .9rem;
     color: var(--color-text);
 }
-.tab-element:hover {
-    background-color: var(--color-primary-opacity-25);
-    outline: solid 1px var(--color-primary);
-    outline-offset: -1px;
-}
 .tab-element.folder {
     --folder-group-color: var(--color-text); /* color of the left border for each folder */
     display: grid;
@@ -62,6 +59,7 @@
     height: calc(100% - 1px - 1.3rem);
     background-color: transparent;
     border-left: solid 1px var(--folder-group-color);
+    pointer-events: none;
     /* border-bottom: solid 1px var(--folder-group-color);
     border-top: solid 1px var(--folder-group-color); */
 }
@@ -71,12 +69,15 @@
     }
 }
 .tab-element.folder .action {
+    position: relative;
     display: grid;
     grid-template-columns: auto 1fr auto;
     grid-template-rows: 1fr;
     width: 100%;
     grid-row: 1;
     grid-column: 1 / -1;
+    z-index: 10;
+    pointer-events: auto;
 }
 .tab-element.folder .icon {
     grid-row: 1;
@@ -103,7 +104,7 @@
 .tab-element.folder .actions button {
     height: 100%;
     aspect-ratio: 1 / 1;
-    background-color: red;
+    background-color: transparent;
     border-radius: var(--space-xxs);
     cursor: pointer;
 }
@@ -112,18 +113,31 @@
     grid-column: 1 / -1;
     padding-left: 1rem; /* icon width */
 }
-.tab-element.folder .children .tab-element.file:hover {
-    background-color: var(--color-primary-opacity-25); /* make the file darker */
-}
-.tab-element.folder:hover:has(.tab-element.folder:hover)  {
-    background-color: transparent;
-    outline: none;
-}
-.tab-element.folder:hover .action:hover .actions  {
-    display: flex;
-}
+
 @media (pointer: coarse) {
+    /* mobile */
     .tab-element.actions {
         display: none; /* mobile users will only have add file at top */
+    }
+}
+@media (hover: hover) and (pointer: fine) {
+    /* desktop */
+    .tab-element:hover {
+        background-color: var(--color-primary-opacity-25);
+        outline: solid 1px var(--color-primary);
+        outline-offset: -1px;
+    }
+    .tab-element.file:hover {
+        background-color: var(--color-primary-opacity-50);
+    }
+    .tab-element.folder .children .tab-element.file:hover {
+        background-color: var(--color-primary-opacity-25); /* make the file darker */
+    }
+    .tab-element.folder:hover:has(.tab-element.folder:hover)  {
+        background-color: transparent;
+        outline: none;
+    }
+    .tab-element.folder:hover .action:hover .actions  {
+        display: flex;
     }
 }

@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { File, FileManagerService  } from '../../file.manager.service';
+import { File, Folder, FileManagerService  } from '../../file.manager.service';
 
 @Component({
   selector: 'tools-files',
@@ -18,7 +18,11 @@ export class ToolsFilesComponent {
     ) {}
     
     get files(): File[] {
-        return this.fileManager.getAllFiles();
+        return this.fileManager.getRootChildren();
+    }
+
+    getFilesFromFolder(folder: Folder): File[] {
+        return this.fileManager.getChildrenOfFolder(folder);
     }
 
     getFolderColor(depth: number): string {

@@ -34,7 +34,7 @@
             <!-- Recursive call with incremented depth -->
             <div class="children" *ngIf="!file.collapsed">
                 <ng-container *ngTemplateOutlet="filesTemplate; 
-                    context: { $implicit: file.content, depth: (depth || 0) + 1 }">
+                    context: { $implicit: getFilesFromFolder(file), depth: (depth || 0) + 1 }">
                 </ng-container>
             </div>
         </div>

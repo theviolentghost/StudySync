@@ -1,3 +1,4 @@
+<div *ngIf="tabs.length > 0" style="display:flex;flex-direction: row; width: 100%;">
 <div class="tab-carousel hide-scrollbar">
     <div 
         class="tab-element"
@@ -15,4 +16,6 @@
         <button class="closeTab image-icon-dark" (click)="closeTab(tab.id); $event.stopPropagation();"></button>
     </div>
 </div>
-<button>More</button>
+<button class="actions">More</button>
+
+</div>

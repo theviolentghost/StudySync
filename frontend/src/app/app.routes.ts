@@ -18,6 +18,11 @@ export const routes: Routes = [
         outlet: 'workspace',
     },
     {
+        path: 'SELECTFILE',
+        component: WelcomeWorkspaceComponent,
+        outlet: 'workspace', // change
+    },
+    {
         path: 'sdoc/:filePath',
         component: DocumentWorkspaceComponent,
         outlet: 'workspace',

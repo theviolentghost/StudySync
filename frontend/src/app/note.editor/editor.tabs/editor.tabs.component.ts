@@ -42,11 +42,12 @@ export class EditorTabsComponent implements OnInit{
 
     ngOnInit(): void {
         this.fileManager.openNewTabInWorkspace.subscribe((file: File) => {
+            if(this.selectTab(file.name)) return;
             this.openNewTabFromFile(file);
         });
     }
 
-    openNewTabFromFile(file: File) {
+    openNewTabFromFile(file: File): void {
         const tab: Tab = {
             id: file.name,
             title: file.name,
@@ -58,11 +59,21 @@ export class EditorTabsComponent implements OnInit{
         this.selectTab(file.name);
     }
 
-    selectTab(tabId: string) {
+    setNoTabSelectedState(): void {
+        this.activeTabId = null;
+        
+        this.router.navigate([{
+            outlets: {
+                workspace: ['SELECTFILE']
+            }
+        }], {skipLocationChange: true});
+    }
+
+    selectTab(tabId: string): boolean {
         this.activeTabId = tabId;
 
         const tabSelected = this.tabs.find(tab => tab.id === tabId);
-        if (!tabSelected) return;
+        if (!tabSelected) return false;
 
         // this.tabSelected.emit(tabId);
 
@@ -71,7 +82,7 @@ export class EditorTabsComponent implements OnInit{
               workspace: [tabSelected.fileType, `${tabSelected.directory}${tabId}.${tabSelected.fileType}`] 
             } 
           }], { skipLocationChange: true });
-
+        return true; // in future you could check if the tab was actually reached
     }
 
     closeTab(tabId: string) {
@@ -85,7 +96,7 @@ export class EditorTabsComponent implements OnInit{
                 this.selectTab(this.tabs[tabIndex - 1].id);
             }
             else {
-                this.selectTab("");
+                this.setNoTabSelectedState();
             }
         }
     }

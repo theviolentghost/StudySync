@@ -30,7 +30,7 @@ interface PanelData {
 })
 
 export class PanelResizeService {
-    private _minimumWorkspaceWidth = 240; // Default value
+    private _minimumWorkspaceWidth = 120; // Default value
 
     get minimumWorkspaceWidth(): number {
         return this._minimumWorkspaceWidth;

@@ -53,7 +53,9 @@
     cursor: default;
     color: var(--color-secondary-500);
 }
-
+.tab-element p {
+    flex-shrink: 0;
+}
 .tab-element .icon {
     margin-right: var(--space-xxs);
     height: 80%;
@@ -69,7 +71,7 @@
     cursor: pointer;
     visibility: hidden;
     height: var(--space-lg);
-    max-height: 80%;
+    max-height: 100%;
     aspect-ratio: 1 / 1;
     border-radius: var(--space-xxs);
     padding: 0;
@@ -78,6 +80,8 @@
     background-position: center;
     background-repeat: no-repeat;
     background-size: contain;
+    flex-shrink: 0;
+    flex-grow: 1;
 }
 .tab-element.active .closeTab {
     visibility: visible;

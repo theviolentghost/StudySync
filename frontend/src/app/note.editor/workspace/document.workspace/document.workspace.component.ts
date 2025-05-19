@@ -211,13 +211,10 @@ export class DocumentWorkspaceComponent implements AfterViewInit, OnInit {
     }
 
     private loadDocument() {
-        console.log("hey")
         if (this.route.snapshot.paramMap.has('filePath')) {
-            console.log("hey2")
             const filePath = this.route.snapshot.paramMap.get('filePath');
             const fileContent = this.fileManager.getFileContent(filePath || '');
             if (fileContent) {
-                console.log("hey3")
                 this.document = fileContent.text;
             }
         }
