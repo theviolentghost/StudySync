@@ -5,6 +5,7 @@ import { DrawingWorkspaceComponent } from './note.editor/workspace/drawing.works
 import { StudyWorkspaceComponent } from './note.editor/workspace/study.workspace/study.workspace.component';
 import { WelcomeWorkspaceComponent } from './note.editor/workspace/welcome.workspace/welcome.workspace.component';
 import { FileTypeNotKnownWorkspaceComponent } from './note.editor/workspace/file-type-not-known.workspace/file-type-not-known.workspace.component';
+import { SelectFileWorkspaceComponent } from './note.editor/workspace/select.file.workspace/select.file.workspace.component';
 
 export const routes: Routes = [
     {
@@ -19,7 +20,7 @@ export const routes: Routes = [
     },
     {
         path: 'SELECTFILE',
-        component: WelcomeWorkspaceComponent,
+        component: SelectFileWorkspaceComponent,
         outlet: 'workspace', // change
     },
     {

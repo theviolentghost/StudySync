@@ -2,7 +2,7 @@
 <ng-template #filesTemplate let-files let-depth="depth">
     <ng-container *ngFor="let file of files">
         <!-- File Element -->
-        <div class="tab-element file" *ngIf="file.type != 'FOLDER'" (click)="openFile(file)">
+        <div class="file-element file" *ngIf="file.type != 'FOLDER'" (click)="openFile(file)">
             <div 
                 class="icon" 
                 [ngStyle]="{'background-image': file.type ? 
@@ -13,7 +13,7 @@
         </div>
 
         <!-- Folder Element -->
-        <div class="tab-element folder" *ngIf="file.type == 'FOLDER'" 
+        <div class="file-element folder" *ngIf="file.type == 'FOLDER'" 
             [ngClass]="{'collapsed': file.collapsed}"
             [style.--folder-group-color]="getFolderColor(depth)"
         >

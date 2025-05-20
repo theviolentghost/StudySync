@@ -10,9 +10,9 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PanelResizeService, PanelResizeEvent } from '../../panel.resize.service';
-import { Subscription } from 'rxjs';
-import { filter } from 'rxjs/operators';
-import { Router, ActivatedRoute, ParamMap, NavigationEnd } from '@angular/router';
+import { Subject, Subscription } from 'rxjs';
+import { debounceTime, distinctUntilChanged, filter } from 'rxjs/operators';
+import { Router, ActivatedRoute, ParamMap, NavigationEnd, NavigationStart } from '@angular/router';
 import { FileManagerService } from '../../file.manager.service';
 
 
@@ -51,9 +51,18 @@ interface DocumentPage {
 })
 export class DocumentWorkspaceComponent implements AfterViewInit, OnInit {
     @ViewChildren('toolGroup') toolGroupElements!: QueryList<ElementRef>;
+    @ViewChild('pageContent') pageContent!: ElementRef;
+    private mutationObserver: MutationObserver | null = null;
+
+    private inactivityTimeTillSave: number = 2000; //ms
 
     document: string = '<p>Your initial document content here...wdneifnei nfinfiwncinw icnwidniwnciwjdinwid nwicnwjdwjciwj hello heell htetx textje jsisjsj skksks</p>';
-    pages: DocumentPage[] = []; 
+
+    private currentFilePath: string | null = null;
+    private documentChanges = new Subject<string>();
+    private autoSaveSubscription: Subscription = new Subscription();
+    private panelResizeSubscription: Subscription = new Subscription();
+    private routerSubscription: Subscription = new Subscription();
 
     savedRange: Range | null = null; // To save the range before button click
 
@@ -161,8 +170,6 @@ export class DocumentWorkspaceComponent implements AfterViewInit, OnInit {
         }
       ];
 
-    private subscription: Subscription = new Subscription();
-
     constructor(
         private panelResizeService: PanelResizeService,
         private router: Router,
@@ -171,22 +178,45 @@ export class DocumentWorkspaceComponent implements AfterViewInit, OnInit {
     ) {}
 
     ngOnInit() {
+        this.currentFilePath = this.route.snapshot.paramMap.get('filePath');
+        this.loadDocument();
         window.addEventListener('resize', this.checkAllToolGroupsCollapse.bind(this));
 
-        this.subscription.add(
+        this.panelResizeSubscription.add(
             this.panelResizeService.panelResized.subscribe((panelEvent: PanelResizeEvent) => {
                 this.checkAllToolGroupsCollapse();
             })
         );
 
-        // const currentUrl = this.router.url;
-        // console.log('Current URL:', currentUrl);
-
-        this.subscription.add(
+        this.routerSubscription.add(
             this.router.events.pipe(
-              filter(event => event instanceof NavigationEnd)
+                filter(event => event instanceof NavigationStart)  // <-- Changed to NavigationStart
+            ).subscribe((event: NavigationStart) => {
+                // When navigation starts, save the CURRENT document
+                if (this.currentFilePath) {
+                    console.log('Saving current document:', this.currentFilePath);
+                    this.saveDocument(this.getTextContent(), this.currentFilePath);
+                }
+            })
+        );
+    
+        // Handle successful navigation to update the current path
+        this.routerSubscription.add(
+            this.router.events.pipe(
+                filter(event => event instanceof NavigationEnd)
             ).subscribe(() => {
+                // After navigation completes, update current path and load new document
+                this.currentFilePath = this.route.snapshot.paramMap.get('filePath');
                 this.loadDocument();
+            })
+        );
+
+        this.autoSaveSubscription.add(
+            this.documentChanges.pipe(
+                debounceTime(this.inactivityTimeTillSave),  
+                distinctUntilChanged() 
+            ).subscribe(content => {
+                this.saveDocument(content);
             })
         );
 
@@ -199,6 +229,19 @@ export class DocumentWorkspaceComponent implements AfterViewInit, OnInit {
             toolbar.addEventListener('mousedown', this.saveSelectionBeforeButtonClick);
         }
 
+        this.mutationObserver = new MutationObserver((mutations) => {
+            // Get content after change
+            const content = this.pageContent.nativeElement.innerHTML;
+            this.documentChanges.next(content);
+        });
+          
+        // Start observing
+        this.mutationObserver.observe(this.pageContent.nativeElement, {
+            characterData: true,
+            childList: true,
+            subtree: true
+        });
+
         this.checkAllToolGroupsCollapse();
     }
     
@@ -207,7 +250,16 @@ export class DocumentWorkspaceComponent implements AfterViewInit, OnInit {
         if (toolbar) {
             toolbar.removeEventListener('mousedown', this.saveSelectionBeforeButtonClick);
         }
-        this.subscription.unsubscribe();
+        if (this.mutationObserver) {
+            this.mutationObserver.disconnect();
+            this.mutationObserver = null;
+        }
+        this.panelResizeSubscription.unsubscribe();
+        this.routerSubscription.unsubscribe();
+        this.autoSaveSubscription.unsubscribe();
+
+        window.removeEventListener('resize', this.checkAllToolGroupsCollapse.bind(this));
+        this.saveDocument(this.getTextContent());
     }
 
     private loadDocument() {
@@ -218,8 +270,18 @@ export class DocumentWorkspaceComponent implements AfterViewInit, OnInit {
                 this.document = fileContent.text;
             }
         }
+    }
+    private saveDocument(content: string, path: string | null = null) {
+        if (!content || content.trim() === '') return;
+        this.document = content;
 
-        this.pages = [{ content: this.document }];
+        console.log('Saving document...');
+
+        const filePath = path || this.currentFilePath || '';
+        this.fileManager.saveFileContent(filePath,  {text: this.document});
+    }
+    private getTextContent() {
+        return this.pageContent.nativeElement.innerHTML;
     }
 
     getToolBarSpace(element: HTMLElement, groupsLength: number): number {

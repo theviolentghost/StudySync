@@ -64,7 +64,13 @@ export class FileManagerService {
             content: {
                 text: "hellow gaunt"
             }
-        })
+        });
+        this.addEntryToFiles("/docs/", {
+            name: "studying is taking place here",
+            type: 'sstudy',
+            directory: "/docs/",
+            content: {}
+        });
         // alert(this.getChildrenOfFolder(this.root)[0]?.name)
         // alert(this.getFileByPath('/docs/1/hello.sdoc')?.content?.text);
     }
@@ -183,5 +189,17 @@ export class FileManagerService {
         const file = this.getFileFromDirectory(directory, pathParts.fullFileName);
 
         return file ? file.content : null;
+    }
+    saveFileContent(filePath: string, content: any): void {
+        const pathParts = this.getPartsOfPath(filePath);
+        const directory = this.getWorkingDirectory(pathParts);
+        if(!directory) return;
+        const file = this.getFileFromDirectory(directory, pathParts.fullFileName);
+
+        if(file) {
+            file.content = content;
+            file.lastModified = new Date();
+            file.size = JSON.stringify(content).length; // size in bytes
+        }
     }
 }

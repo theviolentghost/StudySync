@@ -30,10 +30,10 @@
     </ng-container>
 </div>
 <div class="page-container hide-scrollbar">
-    <div class="page hide-scrollbar" *ngFor="let page of pages; let i = index" contenteditable="true">
+    <div class="page hide-scrollbar" contenteditable="true">
         <div #pageContent 
             class="page-content" 
-            [innerHTML]="page.content"
+            [innerHTML]="document"
         >
         </div>
     </div>

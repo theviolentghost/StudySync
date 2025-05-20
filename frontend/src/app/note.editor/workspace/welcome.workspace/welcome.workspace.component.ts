@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 
 @Component({
-  selector: 'app-welcome.workspace',
+  selector: 'welcome.workspace',
   imports: [],
   templateUrl: './welcome.workspace.component.html',
   styleUrl: './welcome.workspace.component.css'

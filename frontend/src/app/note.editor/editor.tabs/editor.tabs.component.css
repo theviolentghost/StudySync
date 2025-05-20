@@ -45,6 +45,8 @@
     font-size: .9rem;
     flex-shrink: 0;
     cursor: pointer;
+    max-width: 250px;
+    overflow-x: auto;
 }
 .tab-element.active {
     background-color: var(--color-workspace-background);
@@ -58,7 +60,7 @@
 }
 .tab-element .icon {
     margin-right: var(--space-xxs);
-    height: 80%;
+    height: var(--space-xl);
     aspect-ratio: 1 / 1;
     background-position: center;
     background-repeat: no-repeat;
