@@ -236,10 +236,10 @@ body {
 }
 
 strong {
-    font-weight: bold !important;
+    font-weight: bold;
 }
 i {
-    font-style: italic !important;
+    font-style: italic;
 }
 underline {
     text-decoration: underline !important;

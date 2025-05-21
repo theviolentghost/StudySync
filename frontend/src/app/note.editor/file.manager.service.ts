@@ -71,6 +71,20 @@ export class FileManagerService {
             directory: "/docs/",
             content: {}
         });
+        this.addEntryToFiles("/", {
+            name: "bolding",
+            type: 'sdoc',
+            directory: "/",
+            content: {
+                text: "<strong style='color:red;'>bold</strong>\n<i>italic</i>\n<u>underline</u>\n<em>emphasis</em>\n<mark>highlight</mark>\n<del>deleted</del>\n<ins>inserted</ins>\n<sub>subscript</sub>\n<sup>superscript</sup>\n<small>small text</small>\n<big>big text</big>\n<pre>preformatted text</pre>\n<code>code</code>".replaceAll("\n", "<br>")
+            }
+        });
+        this.addEntryToFiles("/", {
+            name: "study",
+            type: 'sstudy',
+            directory: "/",
+            content: {}
+        });
         // alert(this.getChildrenOfFolder(this.root)[0]?.name)
         // alert(this.getFileByPath('/docs/1/hello.sdoc')?.content?.text);
     }

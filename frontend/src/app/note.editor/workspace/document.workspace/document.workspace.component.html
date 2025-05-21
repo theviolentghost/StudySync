@@ -30,12 +30,19 @@
     </ng-container>
 </div>
 <div class="page-container hide-scrollbar">
-    <div class="page hide-scrollbar" contenteditable="true">
-        <div #pageContent 
+    <div class="dynamic-scroll-view">
+        <div class="content" #scrollContent></div>
+    </div>
+    <div 
+        class="page hide-scrollbar" 
+        contenteditable="true" 
+        #pageContent
+    >
+        <!--<div 
             class="page-content" 
             [innerHTML]="document"
         >
-        </div>
+        </div>-->
     </div>
     <!-- (input)="onContentChange($event, i)"> -->
 </div>

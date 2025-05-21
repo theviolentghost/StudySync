@@ -156,11 +156,14 @@
     transition: background-color 0.15s ease 0s;
     cursor: pointer;
     flex-shrink: 0;
-    border-radius: var(--space-md);
-    transition: background-color 0.15s ease 0s;
+    /*border-radius: var(--space-xxs);*/
+    transition: background-color 0.15s ease 0s, border-radius 0s ease 0.15s;
+    overflow: hidden;
 }
 .tool:hover, .tool-dropdown-trigger:hover {
+    border-radius: var(--space-md);
     background-color: var(--color-primary-opacity-25);
+    transition: background-color 0.15s ease 0s, border-radius 0s ease 0s;
 }
 .tool .tool-icon {
     width: 100%;
@@ -169,6 +172,8 @@
     mask-size: cover;
     mask-repeat: no-repeat;
     transition: inherit;
+    align-self: center;
+    justify-self: center;
 }
 .tool.active {
     background-color: var(--color-primary);
@@ -204,35 +209,68 @@
     min-height: 100%;
     height: fit-content;
     background-color: var(--page-color);
-    color: var(--default-text-color);
+    color: var(--color-primary);
     padding: var(--default-margin);
     outline: none; 
     overflow: auto;
-}
-.page-content {
-    position: relative;
-    font-family: 'Calibri', 'Roboto', 'Segoe UI', Arial, sans-serif;
     font-size: 12pt;
-    line-height: 1.2;
-    white-space: pre-wrap; 
-    word-wrap: break-word;
     line-height: 1.5;
-    width: fit-content;
+    text-rendering: geometricPrecision;
+    padding: var(--space-sm) var(--space-md);
+}
+.page * {
+    color: inherit;
+    font-size: inherit;
+    line-height: inherit;
 }
 ::selection {
     background-color: var(--color-primary-opacity-75); 
     color: var(--color-text); 
 }
-.page-content::selection {
+.page::selection {
     background-color: var(--color-primary-opacity-75); 
     color: var(--color-text);
 }
-.page-content *::selection {
+.page *::selection {
     background-color: var(--color-primary-opacity-75);
     color: var(--color-text);
 }
-.page-content::-moz-selection,
-.page-content *::-moz-selection {
+.page::-moz-selection,
+.page *::-moz-selection {
     background-color: var(--color-primary-opacity-75);
     color: var(--color-text);
+}
+
+.dynamic-scroll-view {
+    display: flex;
+    --view-scale: 0.5;
+    position: absolute;
+    top: 0;
+    right: 0;
+    /*min-width: 35px;
+    width: 8%;
+    max-width: 80px;*/
+    width: 100px;
+    background-color: var(--color-workspace-background);
+    height: 100%;
+    z-index: 100;
+    border-left: solid 1px var(--color-accent-200);
+    overflow-x: visible;
+}
+.dynamic-scroll-view .content {
+    position: relative;
+    min-width: calc(100% / var(--view-scale));
+    height: calc(100% / var(--view-scale));
+    position: relative;  
+    transform: scale(var(--view-scale));
+    transform-origin: top left;
+}
+.dynamic-scroll-view .content .text-block {
+    text-decoration: none;
+    position: relative;
+    width: fit-content;
+    text-rendering: optimizeSpeed;
+    white-space: nowrap;
+    overflow: hidden;
+    color: white;
 }

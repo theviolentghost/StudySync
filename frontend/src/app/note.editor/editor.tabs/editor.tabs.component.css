@@ -58,6 +58,10 @@
 .tab-element p {
     flex-shrink: 0;
 }
+/*.tab-element.active {
+    transform: translateY(-1px);
+    padding-bottom: 1px;
+}*/
 .tab-element .icon {
     margin-right: var(--space-xxs);
     height: var(--space-xl);
@@ -88,3 +92,6 @@
 .tab-element.active .closeTab {
     visibility: visible;
 }
+/*.tab-element:not(.active) {
+    border-bottom: solid 1px var(--color-accent-200);
+}*/
