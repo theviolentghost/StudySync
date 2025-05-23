@@ -24,12 +24,40 @@ function generateToken(user) {
         if (!user || !user.email) {
             throw new Error('User object with an email is required');
         }
-        const payload = { email: user.email };
+        const payload = { 
+            email: user.email,
+            newton: {
+                chat: true,
+                sdoc: {
+                    assistance: true,
+                },
+                sdraw: {
+                    assistance: false, // not implemented yet
+                },
+                sstudy: {
+                    assistance: false, // not implemented yet
+                }
+            } 
+        };
         const options = { expiresIn: process.env.AUTHENTICATION_TOKEN_EXPIRATION };
         return JWT.sign(payload, process.env.AUTHENTICATION_SECRET, options);
     } catch (error) {
         console.error('Error generating token:', error);
         throw new Error('Token generation failed');
+    }
+}
+
+function generateRefreshToken(user) {
+    try {
+        if (!user || !user.email) {
+            throw new Error('User object with an email is required');
+        }
+        const payload = { email: user.email };
+        const options = { expiresIn: process.env.AUTHENTICATION_REFRESH_TOKEN_EXPIRATION };
+        return JWT.sign(payload, process.env.AUTHENTICATION_REFRESH_SECRET, options);
+    } catch (error) {
+        console.error('Error generating refresh token:', error);
+        throw new Error('Refresh token generation failed');
     }
 }
 
@@ -42,6 +70,18 @@ function verifyToken(token) {
     } catch (error) {
         console.error('Error verifying token:', error);
         throw new Error('Token verification failed');
+    }
+}
+
+function verifyRefreshToken(token) {
+    try {
+        if (!token) {
+            throw new Error('Token is required');
+        }
+        return JWT.verify(token, process.env.AUTHENTICATION_REFRESH_SECRET);
+    } catch (error) {
+        console.error('Error verifying refresh token:', error);
+        throw new Error('Refresh token verification failed');
     }
 }
 
@@ -127,14 +167,47 @@ async function isEmailInUse(req, res, next) {
     }
 }
 
+//
+//
+// newton specific
+
+async function validateNewtonChatAuthorization(req, res, next) {
+    const token = req.headers['authorization']?.split(' ')[1];
+    if (!token) {
+        return res.status(401).json({ error: 'No token provided' });
+    }
+
+    try {
+        const authorized = verifyToken(token);
+        if (!authorized) {
+            return res.status(401).json({ error: 'Invalid token' });
+        }
+
+        // Check if the user has chat access
+        if (!authorized.newton.chat) {
+            return res.status(403).json({ error: 'Chat access denied' });
+        }
+
+        next();
+    } catch (error) {
+        console.error('Error validating chat token:', error);
+        return res.status(401).json({ error: 'Invalid token' });
+    }
+}
+
 export default {
     hashPassword,
     verifyPassword,
     generateToken,
+    generateRefreshToken,
     verifyToken,
+    verifyRefreshToken,
     validateAuthorization,
     sanatizeUserData,
     validateLoginRegistrationInput,
     authenticateUser,
     isEmailInUse,
+    newton: {
+        validateChatAuthorization: validateNewtonChatAuthorization,
+    }
 }

@@ -6,8 +6,24 @@
     <base href="/">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <style>
+        /* loader styling */
+        #page-loader {
+            display: none;
+        }
+    </style>
 </head>
 <body>
+    <div id="page-loader"></div>
+
     <app-root></app-root>
+
+    <script>
+        // loader script
+        document.addEventListener("DOMContentLoaded", function() {
+            const loader = document.getElementById("page-loader");
+            // hide it
+        });
+    </script>
 </body>
 </html>

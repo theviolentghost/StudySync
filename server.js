@@ -26,10 +26,11 @@ app.post('/register',
             }
 
             const token = Authentication.generateToken({ email });
-            if (!token) {
+            const refreshToken = Authentication.generateRefreshToken({ email });
+            if (!token || !refreshToken) {
                 // delete user from database if token generation fails
                 Database.users.deleteByEmail(email);
-                return res.status(401).json({ error: 'Token generation failed' });
+                return res.status(500).json({ error: 'Registration failed' });
             }
 
             const newUserData = await Database.users.findByEmail(email);
@@ -50,17 +51,31 @@ app.post('/login',
     Authentication.authenticateUser,
     (req, res) => {
         const user = req.user;
+        try {
 
-        const token = Authentication.generateToken(user);
-        if (!token) {
-            return res.status(401).json({ error: 'Token generation failed' });
+            const token = Authentication.generateToken(user);
+            const refreshToken = Authentication.generateRefreshToken(user);
+            if (!token || !refreshToken) {
+                return res.status(401).json({ error: 'Token generation failed' });
+            }
+
+            res.status(200).json({
+                message: 'Login successful',
+                token,
+                refreshToken,
+                user: Authentication.sanatizeUserData(user),
+            });
+        } catch (error) {
+            console.error('Error during login:', error);
+            res.status(500).json({ error: 'Internal server error' });
         }
-
-        res.status(200).json({
-            message: 'Login successful',
-            token,
-            user: Authentication.sanatizeUserData(user),
-        });
+    }
+);
+app.delete('/logout',
+    Authentication.validateAuthorization,
+    (req, res) => {
+        const { email } = req.user;
+       
     }
 );
 app.get('/projects', 
@@ -69,6 +84,18 @@ app.get('/projects',
         
     }
 );
+app.get('/projects/:id',
+    Authentication.validateAuthorization,
+    (req, res) => {
+        
+    }
+);
+app.post('/newton/chat',
+    Authentication.newton.validateChatAuthorization,
+    (req, res) => {
+        // Handle chat request
+    }
+)
 
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
