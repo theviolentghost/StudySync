@@ -242,35 +242,23 @@
 }
 
 .dynamic-scroll-view {
-    display: flex;
-    --view-scale: 0.5;
+    display: none;
     position: absolute;
     top: 0;
     right: 0;
-    /*min-width: 35px;
-    width: 8%;
-    max-width: 80px;*/
-    width: 100px;
+    min-width: 35px;
+    width: 12%;
+    max-width: 120px;
     background-color: var(--color-workspace-background);
     height: 100%;
     z-index: 100;
     border-left: solid 1px var(--color-accent-200);
     overflow-x: visible;
 }
-.dynamic-scroll-view .content {
-    position: relative;
-    min-width: calc(100% / var(--view-scale));
-    height: calc(100% / var(--view-scale));
-    position: relative;  
-    transform: scale(var(--view-scale));
-    transform-origin: top left;
-}
-.dynamic-scroll-view .content .text-block {
-    text-decoration: none;
-    position: relative;
-    width: fit-content;
-    text-rendering: optimizeSpeed;
-    white-space: nowrap;
-    overflow: hidden;
-    color: white;
+.dynamic-scroll-view #dynamic-scroll-view {
+    /* width: 100%;
+    height: 100%; */
+    width: 400px;
+    height: 400px;
+    background: white;
 }

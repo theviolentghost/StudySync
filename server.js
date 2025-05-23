@@ -1,139 +1,75 @@
-// import https from 'https';
-// import fs from 'fs';
-// import url from 'url';
-// import API from './api.js';
+import env from 'dotenv';
+env.config();
+import Express from 'express';
+import CORS from 'cors';
+import Authentication from './authentication.js';
+import Database from './database.js';
 
-// const PORT = process.env.PORT || 3000;
+const app = Express();
 
-// const options = {
-//     key: fs.readFileSync('./certificates/key.pem'),
-//     cert: fs.readFileSync('./certificates/cert.pem')
-// };
+const port = process.env.PORT || 8080;
 
-// const server = https.createServer(options, async (req, res) => {
-//     // Set CORS headers
-//     res.setHeader('Access-Control-Allow-Origin', '*');
-//     res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
-//     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-    
-//     // Parse URL
-//     const parsedUrl = url.parse(req.url, true);
-//     const path = parsedUrl.pathname;
+app.use(CORS());
+app.use(Express.json());
+app.use(Express.urlencoded({ extended: true }));
 
-//     switch(req.method.toLocaleLowerCase()) {
-//         case 'get': handlerGet(req, res, path); break;
-//         case 'post': handlePost(req, res, path); break;
-//         default: {
-//             res.writeHead(405, { 'Content-Type': 'application/json' });
-//             res.end(JSON.stringify({ error: 'Method not allowed' }));
-//             return;
-//         }
-//     }
-// });
+app.post('/register',
+    Authentication.validateLoginRegistrationInput,
+    Authentication.isEmailInUse,
+    async (req, res) => {
+        const { email, password, displayName } = req.body;
 
-// // add rate limiting in future
-// async function handlePost(req, res, path) {
-//     try {
-//         let body = '';
+        try {
+            const result = await Database.users.register(email, password, displayName);
+            if (!result) {
+                return res.status(500).json({ error: 'Registration failed' });
+            }
 
-//         req.on('data', chunk => {
-//             body += chunk.toString();
-//         });
+            const token = Authentication.generateToken({ email });
+            if (!token) {
+                // delete user from database if token generation fails
+                Database.users.deleteByEmail(email);
+                return res.status(401).json({ error: 'Token generation failed' });
+            }
 
-//         req.on('end', async () => {
-//             const data = JSON.parse(body);
+            const newUserData = await Database.users.findByEmail(email);
 
-//             console.log(path)
+            res.status(201).json({
+                message: 'User registered successfully',
+                token,
+                user: Authentication.sanatizeUserData(newUserData),
+            });
+        } catch (error) {
+            console.error('Error during registration:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+);
+app.post('/login',
+    Authentication.validateLoginRegistrationInput,
+    Authentication.authenticateUser,
+    (req, res) => {
+        const user = req.user;
 
-//             if(path.startsWith('/api/')) return API.handlePost(res, path, data);
-            
-            
-//             // default
-//             res.writeHead(404, { 'Content-Type': 'application/json' });
-//             res.end(JSON.stringify({ error: 'Not found' }));
-//         });
-//     } 
-//     catch(error) {
-//         res.writeHead(500, { 'Content-Type': 'application/json' });
-//         res.end(JSON.stringify({ error: error.message }));
-//     }
-// }
+        const token = Authentication.generateToken(user);
+        if (!token) {
+            return res.status(401).json({ error: 'Token generation failed' });
+        }
 
-// async function handlerGet(req, res, path) {
-//     const WEBSITE_ROOT = './website';
+        res.status(200).json({
+            message: 'Login successful',
+            token,
+            user: Authentication.sanatizeUserData(user),
+        });
+    }
+);
+app.get('/projects', 
+    Authentication.validateAuthorization,
+    (req, res) => {
+        
+    }
+);
 
-//     try {
-//         if(path.startsWith('/api/')) return API.handleGet(res, path, {});
-
-//         if(path === '/' || path === '') {
-//             path = '/index.html';
-//         }
-
-//         let filePath = WEBSITE_ROOT + path;
-
-//         fs.access(filePath, fs.constants.R_OK, (error) => {
-//             if(error) {
-//                 fs.readFile(WEBSITE_ROOT + '/error/404.html', (error, data) => {
-//                     if (error) {
-//                       // No custom 404 page available
-//                       res.writeHead(404, { 'Content-Type': 'text/plain' });
-//                       res.end('404 Not Found');
-//                       return;
-//                     }
-//                     res.writeHead(404, { 'Content-Type': 'text/html' });
-//                     res.end(data);
-//                   });
-//                   return;
-//             }
-
-//             fs.readFile(filePath, (err, data) => {
-//                 if(err) {
-//                     res.writeHead(500, { 'Content-Type': 'text/plain' });
-//                     res.end('500 Internal Server Error');
-//                 } else {
-//                     const ext = path.split('.').pop().toLowerCase();
-//                     const contentType = getContentType(ext);
-                    
-//                     res.writeHead(200, { 'Content-Type': contentType });
-//                     res.end(data);
-//                 }
-//             });
-//         });
-//     }
-//     catch (error) {
-//         res.writeHead(500, { 'Content-Type': 'application/json' });
-//         res.end(JSON.stringify({ error: error.message }));
-//     }
-// }
-
-// function getContentType(extension) {
-//     const contentTypes = {
-//       'html': 'text/html',
-//       'css': 'text/css',
-//       'js': 'text/javascript',
-//       'json': 'application/json',
-//       'png': 'image/png',
-//       'jpg': 'image/jpeg',
-//       'jpeg': 'image/jpeg',
-//       'gif': 'image/gif',
-//       'svg': 'image/svg+xml',
-//       'ico': 'image/x-icon',
-//       'pdf': 'application/pdf',
-//       'txt': 'text/plain',
-//       'mp4': 'video/mp4',
-//       'webm': 'video/webm',
-//       'mp3': 'audio/mpeg',
-//       'woff': 'font/woff',
-//       'woff2': 'font/woff2',
-//       'ttf': 'font/ttf',
-//       'otf': 'font/otf',
-//       'eot': 'application/vnd.ms-fontobject'
-//     };
-    
-//     return contentTypes[extension] || 'application/octet-stream';
-//   }
-
-//   server.listen(PORT, () => {
-//     console.log(`HTTPS server running on https://127.0.0.1:${PORT}`);
-//   });
-
+app.listen(port, () => {
+    console.log(`Server is running on http://localhost:${port}`);
+});

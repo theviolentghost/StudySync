@@ -16,11 +16,10 @@
     width: var(--tool-bar-width);
     aspect-ratio: 1 / 1;
 }
-.return-button img{
+.return-button img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    scale: 1.25;
+    object-fit: contain;
 }
 .project-tools, .file-tools {
     display: flex;
