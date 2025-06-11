@@ -3,7 +3,7 @@ env.config();
 import Express from 'express';
 import CORS from 'cors';
 import Authentication from './authentication.js';
-import Database from './database.js';
+import Database from './database/users.js';
 
 const app = Express();
 
@@ -12,6 +12,10 @@ const port = process.env.PORT || 8080;
 app.use(CORS());
 app.use(Express.json());
 app.use(Express.urlencoded({ extended: true }));
+
+//
+//
+// Auth
 
 app.post('/auth/register',
     Authentication.validateLoginRegistrationInput,
@@ -164,20 +168,94 @@ app.get('/auth/userinfo',
     }
 );
 
+//
+//
+// Projects
+
 app.get('/user/:userId/projects', 
     Authentication.validateAuthorization,
     async (req, res) => {
-        
+        try {
+            // use userId so other users can access public projects
+            const userId = req.params.userId;
+            
+            const projects = await Database.project.findAllUserProjects(userId);
+            if(!projects || projects.length === 0) {
+                return res.status(404).json({ error: 'No projects found for this user' });
+            }
+
+            res.json(projects);
+        } catch (error) {
+            console.error('Error fetching projects:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
     }
 );
-app.get('/user/:userId/projects/:id',
+app.get('/user/projects/:projectId',
     Authentication.validateAuthorization,
     async (req, res) => {
-        
+        try {
+            const projectId = req.params.projectId;
+
+            const project = await Database.project.findById(projectId);
+            if (!project) {
+                return res.status(404).json({ error: 'Project not found' });
+            }
+
+            const files = await Database.file.findFilesByProjectId(projectId);
+            if (!files) {
+                return res.status(404).json({ error: 'No files found for this project' });
+            }
+
+            res.json({ ...project, files });
+        } catch(error) {
+            console.error('Error fetching project:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+);
+app.get('/user/projects/:projectId/files',
+    Authentication.validateAuthorization,
+    async (req, res) => {
+        try {
+            const projectId = req.params.projectId;
+
+            const files = await Database.file.findFilesByProjectId(projectId);
+            if (!files || files.length === 0) {
+                return res.status(404).json({ error: 'No files found for this project' });
+            }
+
+            res.json(files);
+        } catch (error) {
+            console.error('Error deleting project:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+);
+app.get('/user/files/:fileId',
+    Authentication.validateAuthorization,
+    async (req, res) => {
+        try {
+            const fileId = req.params.fileId;
+            if (!fileId) {
+                return res.status(400).json({ error: 'File ID is required' });
+            }
+            const file = await Database.files.findById(fileId);
+            if (!file) {
+                return res.status(404).json({ error: 'File not found' });
+            }
+
+            res.json(file);
+        } catch (error) {
+            console.error('Error fetching file:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
     }
 );
 
-
+//
+//
+// Newton
 
 app.post('/newton/chat',
     Authentication.newton.validateChatAuthorization,

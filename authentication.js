@@ -1,6 +1,6 @@
 import JWT from 'jsonwebtoken';
 import Bcrypt, { hash } from 'bcryptjs';
-import Database from './database.js'; 
+import Database from './database/users.js'; 
 
 async function hashPassword(password) {
     try {
@@ -182,7 +182,7 @@ async function validateNewtonChatAuthorization(req, res, next) {
         }
 
         // Check if the user has chat access
-        if (!authorized.newton.chat) {
+        if (authorized.newton.chat !== true) {
             return res.status(403).json({ error: 'Chat access denied' });
         }
 
