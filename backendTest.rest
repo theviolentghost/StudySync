@@ -1,6 +1,6 @@
 ### register
 
-POST http://localhost:3000/register
+POST http://localhost:3000/auth/register
 Content-Type: application/json
 
 {
@@ -10,10 +10,19 @@ Content-Type: application/json
 
 ### login
 
-POST http://localhost:3000/login
+POST http://localhost:3000/auth/login
 Content-Type: application/json
 
 {
   "email": "test7@gmail.com", 
   "password": "password123"
+}
+
+### refresh token
+
+POST http://localhost:3000/auth/token
+Content-Type: application/json
+
+{
+  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3Q3QGdtYWlsLmNvbSIsImlhdCI6MTc0ODgyODk2MywiZXhwIjoxNzQ4ODI5MTQzfQ.1GBVdj8kgY0bqXSynlknJkxnej9eHaD5Y8cj7tsUdtY"
 }

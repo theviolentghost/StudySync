@@ -1,1 +1,30 @@
-<p>login works!</p>
+<div class="grid">
+    <div class="infomration-panel-container">
+        <div class="information-panel" data-custom-cursor-scrollable="true">
+            <div style="display: flex; flex-direction: column; width: 100%; overflow: visible; align-items: center;">
+                <button class="return image-icon-dark" routerLink=""></button>
+                <div class="header"><span>Login</span></div>
+                <div class="subheader">Welcome Back!</div>
+                <form action="" style="margin-top: var(--space-5xl);overflow: visible; display: flex; align-items: center; flex-direction: column; width: 100%;">
+                    <div class="form-group" id="email-form-group">
+                        <label for="email">Email<span></span></label>
+                        <input type="email" id="email" name="email" required autocomplete="email" placeholder="Email" (input)="clearEmailError();" data-allow-custom-cursor="true">
+                    </div>
+                    <div class="form-group" id="password-form-group">
+                        <label for="password">Password<span></span></label>
+                        <input type="password" id="password" name="password" required autocomplete="new-password" placeholder="Password" (input)="clearPasswordError();" data-allow-custom-cursor="true">
+                    </div>
+                </form>
+                <button class="submit" style="margin-top: var(--space-sm);" (click)="login();" data-allow-custom-cursor="true">Submit</button>
+                <!-- <button class="submit" style="margin-top: var(--space-lg); background: #E9F1F8; color: #000;" data-allow-custom-cursor="true"> 
+                    <div class="icon" [ngStyle]="{'background-image': 'url(\'company/google.png\')'}"></div><span>Sign Up With Google</span>
+                </button> -->
+                <div class="subheader" style="margin-top: var(--space-xl);">Don't Have an Account? <button class="link" routerLink="/register" data-allow-custom-cursor="true" data-custom-cursor-thickness="2" data-custom-cursor-margin="2">Register Now!</button></div>
+            </div>
+        </div>
+    </div>
+    <div class="space">
+        <div class="cover" #spaceCover></div>
+        <canvas #glCanvas></canvas>
+    </div>
+</div>

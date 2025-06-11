@@ -1,0 +1,110 @@
+<div class="project-navigation">
+    <div class="project-navigation-header cover-custom-cursor" data-custom-cursor-scrollable="true">
+        <div class="project-navigation-search" data-allow-custom-cursor="true" data-custom-cursor-thickness="2" data-custom-cursor-margin="2">
+            <input id="project-search" type="text" placeholder="Search for projects..." />
+            <div class="search-icon"></div>
+        </div>
+    </div>
+    
+    <div class="project-navigation-content disable-select" data-custom-cursor-scrollable="true">
+        <!-- Main recursive template for project folders and items -->
+        <ng-template #projects_template let-items let-depth="depth">
+            <ng-container *ngFor="let item of items">
+                
+                <!-- Folder Element - expandable/collapsible -->
+                <div class="folder-container" *ngIf="item.type === 'FOLDER'">
+                    <div class="folder" 
+                         [ngClass]="{'collapsed': item.collapsed, 'expanded': !item.collapsed}"
+                         [style.margin-left.px]="(depth || 0) * 16"
+                         (click)="toggle_folder(item)"
+                         data-allow-custom-cursor="true" 
+                         data-custom-cursor-thickness="2" 
+                         data-custom-cursor-margin="3">
+                        
+                        <div class="folder-icon image-icon-dark" 
+                             [style.background-image]="item.collapsed ? 
+                                 'url(\'/icons/chevron-right.svg\')' : 
+                                 'url(\'/icons/chevron-down.svg\')'"></div>
+                        <div class="folder-name">{{ item.name }}</div>
+                    </div>
+
+                    <!-- Recursive children for folders only -->
+                    <div 
+                        class="folder-children" 
+                        [style.width]="get_group_width(depth)"
+                        [style.margin-left.px]="((depth || 0) + 1) * 16"
+                        *ngIf="!item.collapsed && item.children"
+                    >
+                        <ng-container *ngTemplateOutlet="projects_template; 
+                            context: { $implicit: item.children, depth: (depth || 0) + 1 }">
+                        </ng-container>
+                    </div>
+                </div>
+
+                <!-- Group Element - opens projects in right panel -->
+                <div class="group" *ngIf="item.type === 'GROUP'" 
+                     [ngClass]="{'selected': selected_group_id === item.id}"
+                     (click)="select_group(item)"
+                     data-allow-custom-cursor="true" 
+                     data-custom-cursor-thickness="2" 
+                     data-custom-cursor-margin="3"
+                >
+
+                    <div class="group-name">{{ item.name }}</div>
+                </div>
+            </ng-container>
+        </ng-template>
+
+        <!-- Initial template call to start recursion -->
+        <ng-container *ngTemplateOutlet="projects_template; 
+            context: { $implicit: project_items, depth: 0 }">
+        </ng-container>
+    </div>
+</div>
+
+<div style="flex:1; display: flex; flex-direction: column; overflow: hidden; position: relative;">
+    <div class="project-selection-header">
+        <div class="project-selection-directory hide-scrollbar" data-custom-cursor-scrollable="true">
+            <!-- Dynamic breadcrumb using selected folder path -->
+             <div class="slash">/</div>
+            <ng-container *ngFor="let path of current_path; let last = last">
+                <div class="directory" 
+                     (click)="navigate_to_path(path)"
+                     data-allow-custom-cursor="true" 
+                     data-custom-cursor-thickness="2" 
+                     data-custom-cursor-margin="2"
+                     data-custom-cursor-z-index="99997"
+                >
+                    {{ path }}
+                </div>
+                <div class="slash" *ngIf="!last">/</div>
+            </ng-container>
+        </div>
+    </div>
+    
+    <div class="project-selection-area" data-custom-cursor-scrollable="true">
+        <!-- Display projects from currently selected folder or group -->
+        <ng-container *ngFor="let project of current_folder_projects">
+            <div class="project" 
+                 (click)="open_project(project)"
+                 data-allow-custom-cursor="true" 
+                 data-custom-cursor-thickness="4" 
+                 data-custom-cursor-margin="8">
+                <div class="project-preview">
+                    <div class="project-extra-details">
+                        <div class="extra-detail-icon"></div>
+                    </div>
+                </div>
+                <div class="project-info">
+                    <div class="project-name">{{ project.name }}</div>
+                    <div class="project-meta">
+                        <div class="project-author">{{ project.owner_name ? project.owner_name : project.owner }}</div>
+                        <span>-</span>
+                        <div class="project-date">{{ project.updated_at | date:'short' }}</div>
+                    </div>
+                </div>
+                <div class="project-options" (click)="$event.stopPropagation(); show_project_options(project)"></div>
+            </div>
+        </ng-container>
+    </div>
+</div>

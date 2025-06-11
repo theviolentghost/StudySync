@@ -25,11 +25,7 @@
     transform: translateX(50%);
     z-index: 100000;
 }
-/* :host(.clicked) .tool-workspace-slider:hover {
-    background-color: var(--color-accent-200);
-} 
-    when the console has "focus" then allow hover only then    
-*/
+
 .window-slider:hover {
     background-color: var(--color-accent-200);
     width: var(--slider-thickness);

@@ -27,3 +27,9 @@ build/
 # Ignore llama.cpp and models folder
 llama.cpp/
 models/
+storage/
+Newton/
+
+email.js
+*.rest
+backendTest.rest

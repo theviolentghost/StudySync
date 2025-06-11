@@ -1,0 +1,47 @@
+:host {
+    --color: var(--color-primary);
+    --width: 0px;
+    --height: 0px;
+    --z-index: 99995;
+
+    --cursor-thickness: 4px;
+    --cursor-margin: 4px;
+    --cursor-offset: calc(var(--cursor-thickness) + var(--cursor-margin));
+
+    --transition-time: .15s;
+    --transition-position-time: .15s;
+    --transition-delay: 0s;
+
+    position: fixed;
+    z-index: var(--z-index);
+    background-color: transparent;
+    width: var(--width);
+    height: var(--height);
+    pointer-events: none;
+    overflow: visible;
+    left: -100px;
+    top: -100px;
+    transition: 
+        background-color var(--transition-time) ease-in-out var(--transition-delay),
+        left var(--transition-position-time) ease-in-out var(--transition-delay),
+        top var(--transition-position-time) ease-in-out var(--transition-delay),
+        width var(--transition-time) ease-in-out var(--transition-delay),
+        height var(--transition-time) ease-in-out var(--transition-delay);
+}
+.left, .right {
+    position: absolute;
+    height: calc(var(--height) + var(--cursor-offset) * 2);
+    aspect-ratio: 1 / 4;
+    background-color: var(--color);
+    transition: inherit;
+}
+.left {
+    transform: translate(calc(-1 * var(--cursor-offset)), calc(-1 * var(--cursor-offset)));
+    left: 0;
+    clip-path: polygon(0 0, 100% 0, 100% var(--cursor-thickness), var(--cursor-thickness) var(--cursor-thickness), var(--cursor-thickness) calc(100% - var(--cursor-thickness)), 100% calc(100% - var(--cursor-thickness)), 100% 100%, 0 100%);
+}
+.right {
+    transform: translate(var(--cursor-offset), calc(-1 * var(--cursor-offset)));
+    right: 0;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 0 calc(100% - var(--cursor-thickness)), calc(100% - var(--cursor-thickness)) calc(100% - var(--cursor-thickness)), calc(100% - var(--cursor-thickness)) var(--cursor-thickness), 0% var(--cursor-thickness));
+}

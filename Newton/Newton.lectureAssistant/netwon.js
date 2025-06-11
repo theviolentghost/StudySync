@@ -77,45 +77,31 @@ class NewtonLectureAssistant extends Newton {
     }
     async getSuggestions(res) {
         try {
-
             let prompt = this.promptTemplate;
             prompt = prompt.replace("{{transcript}}", this.uncheckedTranscriptChunks.join(" "));
             prompt = prompt.replace("{{notes}}", this.uncheckedNoteChunks.join(" "));
-    
+
             console.log("Generating suggestions from prompt...");
             console.log("Prompt: ", prompt);
-            
-            // Set up headers for SSE (Server-Sent Events)
-            res.writeHead(200, {
-                'Content-Type': 'text/event-stream',
-                'Cache-Control': 'no-cache',
-                'Connection': 'keep-alive'
-            });
-            
-            // Send a connection established event
-            // res.write('event: connected\ndata: Connection established\n\n');
 
-            console.log("hey")
-            
             // Make request to AI service
-            axios.post("http://127.0.0.1:8080/completion", {
+            const response = await axios.post("http://127.0.0.1:8080/completion", {
                 prompt: prompt,
                 // stream: true,
             }, {
                 // responseType: 'stream' // Important for streaming
-            })
-            .then(async (response) => {
-                console.log("Response: ", response.data);
             });
+
+            console.log("Response: ", response.data);
         } catch (error) {
             console.error('Error getting suggestions:', error);
-            
+
             // If response object is available, send error
             if (res && typeof res.writeHead === 'function') {
                 res.writeHead(500, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ error: 'Failed to generate suggestions' }));
             }
-            
+
             throw error;
         }
     }

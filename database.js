@@ -1,8 +1,11 @@
+import jwt from 'jsonwebtoken';
 import Database from 'better-sqlite3';
-const db = new Database('storage/users.sqlite', {});
+import moment from 'moment';
+const db = new Database('storage/database.sqlite', {});
 
 import Authentication from "./authentication.js";
 
+console.log('Database initializing...');
 db.exec(`
     CREATE TABLE IF NOT EXISTS users (
         id           INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -27,6 +30,17 @@ db.exec(`
 db.exec(`
     CREATE INDEX IF NOT EXISTS idx_files_user_id ON files (user_id);
 `);
+db.exec(`
+    CREATE TABLE IF NOT EXISTS refresh_tokens (
+        id           INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id      INTEGER NOT NULL,
+        token        TEXT NOT NULL,
+        created_at   DATETIME DEFAULT CURRENT_TIMESTAMP,
+        expires_at   DATETIME,
+        FOREIGN KEY(user_id) REFERENCES users(id)
+    );
+`);
+console.log('Database initialized successfully.');
 
 /*
 
@@ -41,7 +55,50 @@ CREATE TABLE IF NOT EXISTS identities (
 
 */
 
+//
+//
+// tokens
 
+function getTokenExpiration(token) {
+    const decoded = jwt.decode(token);
+    if (decoded && decoded.exp) {
+        // exp is in seconds since epoch
+        return moment(new Date()).format('YYYY-MM-DD HH:mm:ss');
+    }
+    return null;
+}
+async function storeRefreshToken(userId, token) {
+    const stmt = db.prepare(`
+        INSERT INTO refresh_tokens (user_id, token, expires_at)
+        VALUES (?, ?, ?)
+    `);
+    return stmt.run(userId, token, getTokenExpiration(token));
+}
+async function findRefreshToken(token) {
+    const stmt = db.prepare(`
+        SELECT * FROM refresh_tokens WHERE token = ?
+    `);
+    return stmt.get(token);
+}
+async function deleteRefreshToken(token) {
+    const stmt = db.prepare(`
+        DELETE FROM refresh_tokens WHERE token = ?
+    `);
+    return stmt.run(token);
+}
+async function deleteAllRefreshTokensForUser(userId) {
+    const stmt = db.prepare(`
+        DELETE FROM refresh_tokens WHERE user_id = ?
+    `);
+    return stmt.run(userId);
+}
+async function deleteExpiredRefreshTokens() {
+    const now = new Date().toISOString();
+    const stmt = db.prepare(`DELETE FROM refresh_tokens WHERE expires_at < ?`);
+    stmt.run(now);
+}
+setInterval(deleteExpiredRefreshTokens, 24 * 60 * 60 * 1000); // every 24 hours
+deleteExpiredRefreshTokens(); // cold start - clean up
 
 //
 //
@@ -112,5 +169,11 @@ export default {
     },
     files: {
         allUserFiles: findAllUsersFiles,
+    },
+    refreshTokens: {
+        store: storeRefreshToken,
+        find: findRefreshToken,
+        delete: deleteRefreshToken,
+        deleteAllForUser: deleteAllRefreshTokensForUser,
     }
 }

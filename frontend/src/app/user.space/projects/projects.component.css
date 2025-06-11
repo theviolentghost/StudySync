@@ -1,0 +1,276 @@
+:host {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+.project-selection-area {
+    flex: 1;
+    height: 100%;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    grid-auto-rows: min-content; 
+    gap: var(--space-md);
+    padding: var(--space-3xl);
+    background-color: var(--color-background);
+    overflow-y: auto;
+}
+.project {
+    --aspect-ratio: 3 / 4;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start; 
+    width: 100%;
+    height: auto;
+    min-height: 140px;
+    max-width: 230px; 
+    
+    background-color: var(--color-accent-100);
+    border-radius: var(--space-lg);
+    cursor: pointer;
+    padding: var(--space-md);
+}
+.project * {
+    pointer-events: none;;
+}
+.project .project-preview {
+    position: relative;
+    width: 100%;
+    aspect-ratio: var(--aspect-ratio); 
+    margin-bottom: var(--space-sm);
+    background-color: var(--color-accent-200);
+    border-radius: var(--space-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.project .project-extra-details {
+    position: relative;
+    align-self: flex-end;
+    width: 100%;
+    height: fit-content;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    margin: var(--space-sm);
+}
+.project .project-extra-details .extra-detail-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: var(--space-sm);
+    background: red;
+}
+.project .project-info {
+    position: relative;
+    width: 100%;
+    min-height: 3rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 0 var(--space-md);
+    padding-bottom: var(--space-sm);
+}
+.project .project-name {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--color-text);
+    text-align: left;
+    overflow-x: auto;
+    white-space: nowrap;
+}
+.project .project-meta {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    gap: 0 var(--space-xs);
+    font-size: 0.7rem;
+    color: var(--color-text-700);
+    overflow-x: auto;
+}
+.project .project-meta * {
+    display: flex;
+    white-space: nowrap;
+    min-width: fit-content;
+}
+.project .project-options {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--color-accent-100);
+    border-radius: var(--space-sm);
+    opacity: 0;
+    transition: opacity 0.15s ease-in-out;
+}
+.project:hover .project-options {
+    opacity: 1;
+}
+.project-selection-header {
+    width: 100%;
+    height: 50px;
+    display: flex;
+    background-color: var(--color-background);
+    border-bottom: 1px solid var(--color-accent-200);
+    z-index: 99996;
+}
+.project-selection-directory {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    font-size: 1.8rem;
+    line-height: 2rem;
+    color: var(--color-text);
+    font-weight: bolder;
+    overflow-x: auto;
+    overflow-y: visible;
+    padding: 0 4px;
+}
+.project-selection-directory * {
+    margin: 0 2px;
+}
+.slash {
+    font-size: 2.2rem;
+    flex-grow: 0;
+    flex-shrink: 0;
+}
+.directory {
+    position: relative;
+    display: inline-block;
+    align-items: center;
+    gap: var(--space-xs);
+    cursor: pointer;
+    height: 1.8rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+    flex-grow: 0;
+    width: fit-content;
+    overflow: visible
+}
+.project-navigation {
+    position: relative;
+    width: 250px;
+    min-width: 200px;
+    max-width: 300px;
+    height: 100%;
+    background-color: var(--color-background);
+    border-right: 1px solid var(--color-accent-200);
+    overflow-y: auto;
+}
+.project-navigation-header {
+    width: 100%;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--color-background);
+    border-bottom: 1px solid var(--color-accent-200);
+    padding: 0 var(--space-md);
+}
+.project-navigation-search {
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: var(--space-xs) var(--space-md);
+    width: 100%;
+    height: 1.8rem;
+    border-radius: var(--space-sm);
+    background-color: var(--color-accent-100);
+    color: var(--color-text);
+    transition: background-color 0.15s ease-in-out;
+    font-size: 1rem;
+    gap: var(--space-sm);
+}
+.project-navigation-search input {
+    flex: 1;
+    height: 100%;
+    background-color: transparent;
+    border: none;
+    color: var(--color-text);
+    font-size: 1rem;
+    outline: none;
+    pointer-events: fill;
+}
+.project-navigation-search:has(input:focus) {
+    outline: none;
+    background-color: var(--color-background);
+}
+.project-navigation-search .search-icon {
+    position: relative;
+    background-color: var(--color-background);
+    border-radius: var(--space-sm);
+    height: 100%;
+    aspect-ratio: 1 / 1;
+    flex-grow: 0;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+.project-navigation-content {
+    width: 100%;
+    height: calc(100% - 50px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--space-md);
+    overflow-y: auto;
+}
+.folder-container {
+    position: relative;
+    width: 100%;
+}
+.folder, .group {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    padding: var(--space-xs);
+    border-radius: var(--space-sm);
+    margin: var(--space-xs);
+    cursor: pointer;
+    transition: filter 0.15s ease-in-out, background-color 0.15s ease-in-out;
+    background-color: var(--color-background-200);
+}
+.group {
+    margin-left: 0;
+}
+.folder-children {
+    position: relative;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+.folder *, .group * {
+    pointer-events: none;
+}
+.folder:hover, .group:hover, .group.selected{
+    background-color: var(--color-background-50);
+}
+.folder .folder-icon {
+    width: 1.2rem;
+    height: 1.2rem;
+    flex-shrink: 0;
+    margin-right: var(--space-xs);
+    background-image: url('/icons/chevron-right.svg');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-color: transparent;
+}
+.folder .folder-name, .group .group-name  {
+    font-size: 600;
+    font-size: 1.1rem;
+    color: var(--color-text);
+}

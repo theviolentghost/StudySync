@@ -26,6 +26,7 @@ function generateToken(user) {
         }
         const payload = { 
             email: user.email,
+            id: user.id,
             newton: {
                 chat: true,
                 sdoc: {
@@ -52,11 +53,11 @@ function generateRefreshToken(user) {
         if (!user || !user.email) {
             throw new Error('User object with an email is required');
         }
-        const payload = { email: user.email };
+        const payload = { email: user.email, id: user.id };
         const options = { expiresIn: process.env.AUTHENTICATION_REFRESH_TOKEN_EXPIRATION };
         return JWT.sign(payload, process.env.AUTHENTICATION_REFRESH_SECRET, options);
     } catch (error) {
-        console.error('Error generating refresh token:', error);
+        // console.error('Error generating refresh token:', error);
         throw new Error('Refresh token generation failed');
     }
 }
@@ -68,7 +69,7 @@ function verifyToken(token) {
         }
         return JWT.verify(token, process.env.AUTHENTICATION_SECRET);
     } catch (error) {
-        console.error('Error verifying token:', error);
+        // console.error('Error verifying token:', error);
         throw new Error('Token verification failed');
     }
 }
@@ -97,6 +98,8 @@ function validateAuthorization(req, res, next) {
             return res.status(401).json({ error: 'Invalid token' });
         }
 
+        req.authorization = authorized; // Attach the authorized user to the request object
+
         next();
     } catch (error) {
         console.error('Error validating token:', error);
@@ -106,17 +109,13 @@ function validateAuthorization(req, res, next) {
 
 function validateLoginRegistrationInput(req, res, next) {
     const { email, password } = req.body;
-    if (!email || !password) {
+    if (!email || !password || typeof email !== 'string' || typeof password !== 'string' || email.trim() === '' || password.trim() === '') {
         return res.status(400).json({ error: 'Email and password are required' });
     }
-    if (typeof email !== 'string' || typeof password !== 'string') {
-        return res.status(400).json({ error: 'Email and password must be strings' });
-    }
-    if (email.trim() === '' || password.trim() === '') {
-        return res.status(400).json({ error: 'Email and password cannot be empty' });
-    }
 
-    // any specific validation logic can be added here
+    if( password.length < 4) {
+        return res.status(400).json({ error: 'Password too short' });
+    }
     next();
 }
 
@@ -134,7 +133,6 @@ function sanatizeUserData(databaseUserData) {
 async function authenticateUser(req, res, next) {
     const { email, password } = req.body;
     try {
-        // Simulate user retrieval from database
         const user = await Database.users.findByEmail(email);
         if (!user) {
             return res.status(401).json({ error: 'Invalid email or password' });
@@ -198,10 +196,6 @@ async function validateNewtonChatAuthorization(req, res, next) {
 export default {
     hashPassword,
     verifyPassword,
-    generateToken,
-    generateRefreshToken,
-    verifyToken,
-    verifyRefreshToken,
     validateAuthorization,
     sanatizeUserData,
     validateLoginRegistrationInput,
@@ -209,5 +203,15 @@ export default {
     isEmailInUse,
     newton: {
         validateChatAuthorization: validateNewtonChatAuthorization,
+    },
+    JWT: {
+        token: {
+            verify: verifyToken,
+            generate: generateToken
+        },
+        refreshToken: {
+            verify: verifyRefreshToken,
+            generate: generateRefreshToken,
+        }
     }
 }

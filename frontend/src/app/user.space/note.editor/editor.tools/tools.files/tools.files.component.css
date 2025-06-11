@@ -127,9 +127,9 @@
         outline: solid 1px var(--color-primary);
         outline-offset: -1px;
     }
-    .file-element.file:hover {
+    /* .file-element.file:hover {
         background-color: var(--color-primary-opacity-50);
-    }
+    } */
     .file-element.folder .children .file-element.file:hover {
         background-color: var(--color-primary-opacity-25); /* make the file darker */
     }

@@ -1,0 +1,243 @@
+:host {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    overflow: visible;
+}
+.space {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    background-color: var(--color-background);
+}
+.cover {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--color-background);
+    z-index: 10;
+    opacity: 1;
+}
+canvas {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: block;
+    aspect-ratio: 1 / 1;
+}
+.grid {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+}
+.infomration-panel-container {
+    position: fixed;
+    height: 100%;
+    width: 30vw;
+    min-width: 200px;
+    max-width: 950px;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    z-index: 100;
+    overflow: visible;
+}
+.information-panel {
+    position: relative;
+    width: 100%;
+    height: calc(100% - 40px);
+    right: 20px;
+    border-radius: var(--space-3xl);
+    padding: var(--space-3xl);
+    box-shadow: 0 0 100px rgba(255, 255, 255, 0.2);
+    display: flex;
+    flex-direction: column;
+    padding-top: var(--space-4xl);
+    justify-content: flex-start;
+    align-items: flex-start;
+    overflow-y: auto;
+    overflow: visible;
+    background-color: var(--color-background-opacity-75);
+}
+
+.information-panel form {
+    margin-top: var(--space-lg);
+}
+.header {
+    overflow-x: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.header span {
+    text-transform: capitalize;
+    font-size: 4rem;
+    font-weight: 600;
+    background: linear-gradient(45deg, var(--color-primary), var(--color-secondary)); 
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+}
+.subheader {
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--color-text);
+    margin-bottom: var(--space-lg);
+    text-align: center;
+}
+.subheader .link {
+    color: var(--color-primary);
+    text-decoration: underline;
+    transition: color 0.3s ease;
+    background-color: transparent;
+    font-weight: bold;
+    cursor: pointer;
+}
+.return {
+    position: absolute;
+    top: var(--space-lg);
+    left: 0;
+    background-image: url('/icons/chevron-left.svg');
+    background-repeat: no-repeat;
+    background-size: contain;
+    width: 100%;
+    height: 36px;
+    cursor: pointer;
+    background-color: transparent;
+}
+.form-group {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 400px;
+    margin: var(--space-sm) 0;
+    overflow: visible;
+}
+.form-group label {
+    position: absolute;
+    transform: translateY(var(--space-sm));
+    font-size: 1.2rem;
+    color: var(--color-text);
+    padding: var(--space-sm) var(--space-sm);
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-xs);
+    overflow: visible;
+    border: 1px solid transparent;
+    pointer-events: none;
+}
+.form-group label span {
+    font-size: .8rem;
+    color: var(--color-error);
+    white-space: nowrap;
+    pointer-events: none;
+}
+.form-group input {
+    width: 100%;
+    padding: var(--space-sm) var(--space-sm);
+    margin: var(--space-sm) 0;
+    border-radius: var(--space-sm);
+    color: var(--color-text);
+    font-size: 1.2rem;
+    transition: opacity 0.3s ease, background-color 0.3s ease, border 0.3s ease;
+    background-color: transparent;
+    opacity: 1;
+    border: 1px solid var(--color-accent-300);
+}
+.form-group.has-error input {
+    border: 1px solid var(--color-error);
+}
+.form-group input::placeholder {     
+    opacity: 1;            
+}
+.form-group input:focus, .form-group:has(input:not(:placeholder-shown)) input {
+    outline: none;
+    border: 1px solid transparent;
+    background-color: var(--color-background-100);
+    opacity: 1;
+}
+.form-group.has-error input:focus, .form-group.has-error:has(input:not(:placeholder-shown)) input {
+    border: 1px solid var(--color-error);
+}
+.form-group:has(input:focus) label {
+    opacity: 0;
+    pointer-events: none;
+}
+.form-group:has(input:not(:placeholder-shown)) label, .form-group:has(input:focus):has(input:not(:placeholder-shown)) label {
+    font-size: 0.7rem;
+    opacity: 1;
+    transform: translateY(-1rem);
+    pointer-events: default;
+}
+
+.submit {
+    position: relative;
+    width: 100%;
+    height: calc(1.2rem + 2 * var(--space-md));
+    padding: var(--space-md) var(--space-md);
+    background: linear-gradient(45deg, var(--color-primary) 45%, var(--color-secondary)); 
+    color: var(--color-text);
+    font-size: 1.1rem;
+    border-radius: var(--space-xs);
+    border: none;
+    cursor: pointer;
+    max-width: 400px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: var(--space-md);
+    font-weight: 500;
+}
+.submit * {
+    pointer-events: none;
+}
+.submit:hover {
+    color: var(--color-text-hover);
+}
+.submit .icon {
+    left: 0;
+    height: 100%;
+    aspect-ratio: 1 / 1;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+
+/* mobile users */
+@media (pointer: coarse) {
+    .submit:active {
+        filter: brightness(.85);
+    }
+}
+@media (prefers-color-scheme: light) {
+    .header {
+        text-transform: capitalize;
+        font-size: 4rem;
+        font-weight: 600;
+        background: var(--color-primary);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        color: var(--color-primary);
+    }
+}
