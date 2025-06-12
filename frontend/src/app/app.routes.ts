@@ -44,7 +44,7 @@ export const routes: Routes = [
     {
         path: 'user',
         component: UserSpaceComponent,
-        canActivate: [AuthGuard],
+        // canActivate: [AuthGuard],
         children: [
             {
                 path: '',
