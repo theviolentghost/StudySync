@@ -45,11 +45,11 @@ export const routes: Routes = [
     },
     {
         path: 'contactUs',
-        component: YoutubePageComponent,
+        component: ContactComponent,
     },
     {
         path: 'youtubeHome',
-        component: ContactComponent,
+        component: YoutubePageComponent,
     },
     {
         path: 'user',
