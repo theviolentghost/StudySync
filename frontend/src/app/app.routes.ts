@@ -18,12 +18,18 @@ import { RegisterComponent } from './register/register.component';
 import { LoginComponent } from './login/login.component';
 import { ContactComponent } from './contact/contact.component';
 import { AboutComponent } from './about/about.component';
+import { YoutubePageComponent } from './youtube-page/youtube-page.component';
+import { StylePageComponent } from './style-page/style-page.component';
 
 
 export const routes: Routes = [
     {
         path: '',
         component: LandingComponent,
+    },
+    {
+        path: 'stylePage',
+        component: StylePageComponent,
     },
     {
         path: 'register',
@@ -39,6 +45,10 @@ export const routes: Routes = [
     },
     {
         path: 'contactUs',
+        component: YoutubePageComponent,
+    },
+    {
+        path: 'youtubeHome',
         component: ContactComponent,
     },
     {

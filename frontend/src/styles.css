@@ -196,11 +196,11 @@
     margin: 0;
     padding: 0;
     border: 0;
-    font: inherit;
+    /* font: inherit; */
     color: inherit;
     vertical-align: baseline;
     -webkit-font-smoothing: antialiased;
-    overflow: hidden;
+    /* overflow: hidden; */
 }
 *:focus {
     /* tab users */
