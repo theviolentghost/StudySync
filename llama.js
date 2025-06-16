@@ -75,6 +75,8 @@ class LLama extends EventEmitter {
             '--top-k', this.config.top_k.toString(),
             '--top-p', this.config.top_p.toString(),
             '--repeat-penalty', this.config.repeat_penalty.toString(),
+            '--system-prompt', this.config.system_prompt || '',
+            '--context-size', this.config.context_size.toString(),
         ];
 
         if(this.config.multi_model && this.config.mmproj_model_name) {

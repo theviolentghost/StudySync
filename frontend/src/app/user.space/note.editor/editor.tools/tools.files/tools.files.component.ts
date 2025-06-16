@@ -1,6 +1,9 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { File, Folder, FileManagerService  } from '../../file.manager.service';
+import { ActivatedRoute } from '@angular/router';
+
+import { ProjectService } from '../../../../project.service';
+import { File, Folder, FileSystemEntry, FileManagerService  } from '../../file.manager.service';
 
 @Component({
   selector: 'tools-files',
@@ -10,22 +13,45 @@ import { File, Folder, FileManagerService  } from '../../file.manager.service';
   templateUrl: './tools.files.component.html',
   styleUrl: './tools.files.component.css'
 })
-export class ToolsFilesComponent {
+export class ToolsFilesComponent implements AfterViewInit {
     @Input() name: string = "Files";
 
-    constructor(
-        private fileManager: FileManagerService
-    ) {}
-    
-    get files(): File[] {
-        return this.fileManager.getRootChildren();
+    file_entries: FileSystemEntry[] = [];
+
+    constructor(private file_manager: FileManagerService, private route: ActivatedRoute, private project_service: ProjectService) {}
+
+    ngAfterViewInit(): void {
+        this.route.params.subscribe(params => {
+
+
+            const projectId = params['projectId'];
+            const userId = params['userId'];
+
+            if (projectId && projectId.startsWith('project_')) {
+                this.project_service.project_id = parseInt(projectId.substring('project_'.length), 10);
+            } else if (!isNaN(Number(projectId))) {
+                this.project_service.project_id = Number(projectId);
+            } else {
+                this.project_service.project_id = null;
+            }
+
+            this.project_service.user_id = userId ? parseInt(userId, 10) : null;
+
+            this.file_manager.init_all_file_metadata();
+            this.file_manager.file_system_updated.subscribe((file_entries: FileSystemEntry[]) => {
+                this.file_entries = file_entries;
+                console.log('File entries updated:', this.file_entries);
+            });
+        });
     }
 
-    getFilesFromFolder(folder: Folder): File[] {
-        return this.fileManager.getChildrenOfFolder(folder);
+
+
+    get_children_from_directory(folder: FileSystemEntry): FileSystemEntry[] {
+        return this.file_manager.get_children_from_directory(folder as Folder);
     }
 
-    getFolderColor(depth: number): string {
+    get_folder_color(depth: number): string {
         // Define an array of colors for different depths
         const colors = [
             'var(--workspace-workcolor-1)',
@@ -39,7 +65,7 @@ export class ToolsFilesComponent {
         return colors[depth % colors.length];
     }
 
-    openFile(file: File) {
-        this.fileManager.openFileInWorkspace(file);
+    open_file(file: File) {
+        this.file_manager.open_file_in_workspace(file);
     }
 }

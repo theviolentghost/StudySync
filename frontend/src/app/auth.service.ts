@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { of, throwError, BehaviorSubject } from 'rxjs';
 import { tap, map, catchError, switchMap, filter, take } from 'rxjs/operators';
 
@@ -7,7 +7,7 @@ import { tap, map, catchError, switchMap, filter, take } from 'rxjs/operators';
   providedIn: 'root'
 })
 export class AuthService {
-    private backendURL = "http://localhost:3000";
+    backendURL = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':3000' : ''}`;
     private isRefreshing = false;
     private refreshTokenSubject = new BehaviorSubject<string | null>(null);
     
@@ -16,6 +16,17 @@ export class AuthService {
     private currentUserInfo: any = null;
 
     constructor(private http: HttpClient) { }
+
+    getAuthHeaders(): HttpHeaders {
+        const token = this.getToken();
+        if (!token) {
+            return new HttpHeaders();
+        }
+        return new HttpHeaders({
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        });
+    }
 
     register(userData: any) {
         return this.http.post<any>(`${this.backendURL}/auth/register`, userData).pipe(

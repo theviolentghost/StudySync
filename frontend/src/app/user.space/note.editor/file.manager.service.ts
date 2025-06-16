@@ -1,25 +1,33 @@
 import { Injectable, EventEmitter, Output } from '@angular/core';
 import { Tab } from './editor.tabs/editor.tabs.component';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+
+import { AuthService } from '../../auth.service';
+import { ProjectService } from '../../project.service';
+
+export type FileSystemEntry = File | Folder;
 
 export interface File {
+    id: string; 
     name: string;
-    type: 'WELCOME' | 'FOLDER' | 'sdoc' | 'sdraw' | 'sstudy' | 'txt' | 'md';
-    directory: string;
-    content: any | null;
-    lastModified?: Date;
+    type: 'WELCOME' | 'FOLDER' | 'sdoc' | 'sdraw' | 'sstudy' | 'txt';
+    path: string;
     size?: number;
-    collapsed?: boolean; // for folder view
+    collapsed?: boolean; // for folders, to suppress errors
 }
-export interface Folder extends File {
+export interface Folder {
+    id: string; 
+    name: string;
+    path: string;
+    collapsed: boolean;
     type: 'FOLDER';
-    content: Map<string, File>;
+    content: Map<string, FileSystemEntry>;
 }
-export interface SDocumentFile extends File {
-    type: 'sdoc';
-    content: {
-        text: string // temp
-    };
+export interface FileData {
+    data: any;
 }
+
 interface PathParts {
     path: string;
     fileName: string;
@@ -34,62 +42,31 @@ interface PathParts {
 })
 export class FileManagerService {
     private _root: Folder = {
-        name: 'ROOT',
+        id: 'root',
+        name: 'Root',
+        path: 'root',
         type: 'FOLDER',
-        directory: 'root',
-        content: new Map<string, File>(),
-        collapsed: false
-    };
-    get root(): Folder {
-        return this._root;
+        content: new Map<string, FileSystemEntry>(),
+        collapsed: false,
     }
-    private files: Map<string, File> = new Map<string, File>();
-    @Output() openNewTabInWorkspace: EventEmitter<File> = new EventEmitter<File>();
+    get file_system() : Map<string, FileSystemEntry> {
+        return this._root.content;
+    }
+    private file_system_cache : Map<string, FileData> = new Map<string, FileData>(); // actual file content
+    private file_system_file_index : Map<string, File> = new Map<string, File>(); // file metadata
+    @Output() open_new_tab_in_workspace: EventEmitter<File> = new EventEmitter<File>();
+    @Output() file_system_updated: EventEmitter<FileSystemEntry[]> = new EventEmitter<FileSystemEntry[]>();
 
-    constructor() {
-        this.files.set('root', this.root);
-
-        this.addEntryToFiles("/docs/1/", {
-            name: 'hello',
-            type: 'sdoc',
-            directory: '/docs/1/',
-            content: {
-                text: 'hello'
-            }
-        });
-        this.addEntryToFiles("/docs/1/", {
-            name: "hello",
-            type: 'sdoc',
-            directory: "/docs/1/",
-            content: {
-                text: "hellow gaunt"
-            }
-        });
-        this.addEntryToFiles("/docs/", {
-            name: "studying is taking place here",
-            type: 'sstudy',
-            directory: "/docs/",
-            content: {}
-        });
-        this.addEntryToFiles("/", {
-            name: "bolding",
-            type: 'sdoc',
-            directory: "/",
-            content: {
-                text: "<strong style='color:red;'>bold</strong>\n<i>italic</i>\n<u>underline</u>\n<em>emphasis</em>\n<mark>highlight</mark>\n<del>deleted</del>\n<ins>inserted</ins>\n<sub>subscript</sub>\n<sup>superscript</sup>\n<small>small text</small>\n<big>big text</big>\n<pre>preformatted text</pre>\n<code>code</code>".replaceAll("\n", "<br>")
-            }
-        });
-        this.addEntryToFiles("/", {
-            name: "study",
-            type: 'sstudy',
-            directory: "/",
-            content: {}
-        });
-        // alert(this.getChildrenOfFolder(this.root)[0]?.name)
-        // alert(this.getFileByPath('/docs/1/hello.sdoc')?.content?.text);
+    constructor(private Auth: AuthService, private http: HttpClient, private project_service: ProjectService) {
+        // this.file_system.set(this._root.path, this._root);
     }
 
-    getPartsOfPath(path: string): PathParts {
+    get all_file_metadata(): FileSystemEntry[] {
+        return Array.from(this.file_system.values());
+    }
+    
+
+    get_parts_of_path(path: string): PathParts {
         const subDirectories = path.split('/');
         const fullFileName = subDirectories.pop() || '';
         const fileName = fullFileName.substring(0, fullFileName.lastIndexOf('.'));
@@ -107,9 +84,9 @@ export class FileManagerService {
             directories
         };
     }
-    getWorkingDirectory(data: PathParts): Folder | null {
+    get_working_directory(data: PathParts): Folder | null {
         const { directories } = data;
-        let currentDirectory: Folder | null = this.root;
+        let currentDirectory: Folder | null = this._root;
 
         for(let directory of directories) {
             if(!currentDirectory) return null;
@@ -117,12 +94,13 @@ export class FileManagerService {
             let folder = currentDirectory.content.get(directory);
             if(!folder) {
                 // directory does not exist
-                // create a new folder
-                folder = {
+                // create a new folder, replace this logiuc with server call later
+                folder = { 
+                    id: crypto.randomUUID(), // generate a unique ID for the folder
                     name: directory,
                     type: 'FOLDER',
-                    directory: currentDirectory.directory + '/' + directory,
-                    content: new Map<string, File>(),
+                    path: currentDirectory.path + '/' + directory,
+                    content: new Map<string, FileSystemEntry>(),
                     collapsed: true,
                 }
                 currentDirectory.content.set(directory, folder);
@@ -137,7 +115,7 @@ export class FileManagerService {
 
         return currentDirectory;
     }
-    private getUniqueFileName(directory: Folder, fileName: string, fileType: string): string {
+    private get_unique_file_name(directory: Folder, fileName: string, fileType: string): string {
         let base = fileName;
         let ext = fileType ? `.${fileType}` : '';
         let candidate = base + ext;
@@ -156,64 +134,141 @@ export class FileManagerService {
         }
         return candidate;
     }
-    addEntryToFiles(filePath: string, file: File): void {
-        const pathParts = this.getPartsOfPath(filePath);
-        const directory = this.getWorkingDirectory(pathParts);
-        if(!directory) return;
-        let uniqueFileName = file.name + '.' + file.type;
 
-        if(directory.content.has(uniqueFileName)) {
-            uniqueFileName = this.getUniqueFileName(directory, file.name, file.type);
+    get_children_from_directory(directory: Folder): FileSystemEntry[] {
+        return Array.from(directory.content.values());
+    }
+
+    init_all_file_metadata() {
+        return this.http.get<any[]>(`${this.Auth.backendURL}/user/project/${this.project_service.project_id}/files/meta`, {
+            headers: this.Auth.getAuthHeaders(),
+        }).subscribe(
+            (data: any[]) => {
+                this.file_system.clear(); // clear the existing file system
+                this.file_system_file_index.clear(); // clear the file index
+                this.file_system_cache.clear(); // clear the file cache
+
+                for(let entry of data) {
+                    this.add_entry_to_file_system(this.server_to_client_entry(entry));
+                }
+
+                this.file_system_updated.emit(this.get_children_from_directory(this._root));
+            }
+        );
+    }
+
+    private server_to_client_entry(entry: any): FileSystemEntry {
+        return entry.type === 'FOLDER' ?
+            {
+                id: entry.id,
+                name: entry.file_name,
+                type: entry.file_type,
+                path: entry.file_path,
+                collapsed: true,
+            } as Folder
+            :
+            {
+                id: entry.id,
+                name: entry.file_name,
+                type: entry.file_type,
+                path: entry.file_path,
+            } as File;
+    }
+
+    add_entry_to_file_system(entry: FileSystemEntry): void {
+        const path_parts = this.get_parts_of_path(entry.path);
+        const directory = this.get_working_directory(path_parts);
+        if(!directory) return;
+        let unique_entry_name = entry.name + '.' + entry.type;
+
+        if(directory.content.has(unique_entry_name)) {
+            unique_entry_name = this.get_unique_file_name(directory, entry.name, entry.type);
         }
-        file.name = uniqueFileName.replace('.' + file.type, ''); // remove the extension from the unique name
-        directory.content.set(uniqueFileName, file);
+        entry.name = unique_entry_name.replace('.' + entry.type, ''); // remove the extension from the unique name
+
+        this.add_entry_to_file_index(entry);
+        directory.content.set(unique_entry_name, entry);
     }
-    getRootChildren(): File[] {
-        return Array.from(this.root.content.values());
+
+    private add_entry_to_file_index(entry: FileSystemEntry): void {
+        if ( entry.type === 'FOLDER' ) {
+            for (const child of this.get_children_from_folder(entry as Folder)) {
+                this.add_entry_to_file_index(child);
+            }
+            return;
+        }
+
+        if (entry.type === 'WELCOME') return; // skip welcome files
+        if (this.file_system_file_index.has(entry.id)) return; // already exists in index
+        this.file_system_file_index.set(entry.id, entry as File);
     }
-    getChildrenOfFolder(folder: Folder): File[] {
+
+    get_file_by_id(file_id: string): File | null {
+        return this.file_system_file_index.get(file_id) || null;
+    }
+
+    get_children_from_folder(folder: Folder): FileSystemEntry[] {
         return Array.from(folder.content.values());
     }
-    getFileByPath(path: string): File | null {
-        const pathParts = this.getPartsOfPath(path);
-        const directory = this.getWorkingDirectory(pathParts);
+    get_root_children(): FileSystemEntry[] {
+        return Array.from(this.file_system.values());
+    }
+    async open_file_in_workspace(file: File) {
+        console.log('openiing file in workspace:', file);
+
+
+
+        this.open_new_tab_in_workspace.emit(file);
+    }
+    get_file_id_by_path(path: string): string | null {
+        const path_parts = this.get_parts_of_path(path);
+        const directory = this.get_working_directory(path_parts);
+        console.log(path_parts)
         if(!directory) return null;
 
-        const file = directory.content.get(pathParts.fullFileName);
-        return file || null;
-    }
-    getFileFromDirectory(directory: Folder, fileName: string): File | null {
-        return directory.content.get(fileName) || null;
-    }
+        const file = directory.content.get(path_parts.fullFileName);
+        if(!file) return null;
 
-
-    getAllFiles(): File[] {
-        return this.getChildrenOfFolder(this.root);
+        return file?.id || null;
     }
-    openFileInWorkspace(file: File) {
-        this.openNewTabInWorkspace.emit(file);
-    }
-    getFileContent(filePath: string): any | null {
-        // this should check to see if it is cahced locally first, if not then use server side. logic to be implemented
-
-        // for now just return the file content
-        const pathParts = this.getPartsOfPath(filePath);
-        const directory = this.getWorkingDirectory(pathParts);
-        if(!directory) return null;
-        const file = this.getFileFromDirectory(directory, pathParts.fullFileName);
-
-        return file ? file.content : null;
-    }
-    saveFileContent(filePath: string, content: any): void {
-        const pathParts = this.getPartsOfPath(filePath);
-        const directory = this.getWorkingDirectory(pathParts);
-        if(!directory) return;
-        const file = this.getFileFromDirectory(directory, pathParts.fullFileName);
-
-        if(file) {
-            file.content = content;
-            file.lastModified = new Date();
-            file.size = JSON.stringify(content).length; // size in bytes
+    async get_file_content(file_id: string): Promise<FileData | null> {
+        if (this.file_system_cache.has(file_id)) {
+            console.log('Returning cached file content for:', file_id);
+            console.log(this.file_system_cache.get(file_id));
+            return this.file_system_cache.get(file_id) || null;
         }
+
+        try {
+            const data = await firstValueFrom(
+                this.http.get<FileData>(
+                    `${this.Auth.backendURL}/user/file/${file_id}`,
+                    { headers: this.Auth.getAuthHeaders() }
+                )
+            );
+
+            if (data) {
+                console.log('Fetched file content for:', data);
+                this.file_system_cache.set(file_id, data);
+                return data;
+            }
+            return null;
+        } catch (error) {
+            console.error('Error fetching file content:', error);
+            return null;
+        }
+    }
+    save_file(file_id: string, data: any): void {
+        this.http.put<FileData>(
+            `${this.Auth.backendURL}/user/file/${file_id}`,
+            { data: data },
+            { headers: this.Auth.getAuthHeaders() }
+        ).subscribe(
+            (response: FileData) => {
+                console.log('File saved successfully:', response);
+                this.file_system_cache.set(file_id, response);
+            }
+        , (error) => {
+            console.error('Error saving file:', error);
+        });
     }
 }

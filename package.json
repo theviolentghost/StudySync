@@ -1,12 +1,20 @@
 {
-    "name": "study_sync",
+    "name": "study_sinc",
     "version": "1.0.0",
     "description": "",
     "main": "server.js",
     "type": "module",
     "scripts": {
-        "start": "concurrently \"node server.js\" \"cd frontend && ng serve\"",
-        "frontend": "concurrently \"cd frontend && ng serve\""
+        "dev": "concurrently \"nodemon server.js\" \"cd frontend && ng serve\" \"cd frontend/projects/music && ng serve --port=4201\"",
+        "study": "concurrently \"cd frontend && ng serve --host 0.0.0.0 \"",
+        "music": "concurrently \"cd frontend/projects/music && ng serve --host 0.0.0.0 --port=4201\"",
+        "study:music": "concurrently \"cd frontend && ng serve\" \"cd frontend/projects/music && ng serve --port=4201\"",
+        "backend": "nodemon server.js",
+        "serve": "node server.js",
+        "build:music": "cd frontend/projects/music && ng build --base-href=/music/ --deploy-url=/music/ --configuration production",
+        "build:frontend": "cd frontend && ng build --configuration production",
+        "build:all": "npm run build:frontend && npm run build:music",
+        "build:all:run": "npm run build:all && npm run serve"
     },
     "dependencies": {
         "@google-cloud/local-auth": "^2.1.0",
@@ -31,6 +39,7 @@
         "moment": "^2.30.1",
         "natural": "^8.0.1",
         "node-llama-cpp": "^3.9.0",
+        "nodemon": "^3.1.10",
         "open": "^10.1.2",
         "pos": "^0.4.2",
         "prosemirror-commands": "^1.7.1",
@@ -46,7 +55,9 @@
         "striptags": "^3.2.0",
         "three": "^0.176.0",
         "transformers": "^1.8.3",
-        "url": "^0.11.4"
+        "url": "^0.11.4",
+        "yt-dlp-wrap": "^2.3.12",
+        "ytdlp-nodejs": "^2.3.0"
     },
     "author": "theviolentghost",
     "license": "MIT",

@@ -5,7 +5,7 @@
     --page-width: 8.26in;
     --page-height: 11.69in;
     --page-color: transparent;
-    --default-text-color: var(--color-primary);
+    --default-text-color: white;
     --default-margin: var(--space-md);
     --minimum-page-width: 400px;
 
@@ -209,7 +209,7 @@
     min-height: 100%;
     height: fit-content;
     background-color: var(--page-color);
-    color: var(--color-primary);
+    color: var(--default-text-color);
     padding: var(--default-margin);
     outline: none; 
     overflow: auto;
@@ -219,7 +219,6 @@
     padding: var(--space-sm) var(--space-md);
 }
 .page * {
-    color: inherit;
     font-size: inherit;
     line-height: inherit;
 }

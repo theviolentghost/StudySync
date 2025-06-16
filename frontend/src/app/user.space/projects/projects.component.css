@@ -177,13 +177,15 @@
     background-color: var(--color-background);
     border-bottom: 1px solid var(--color-accent-200);
     padding: 0 var(--space-md);
+    gap: var(--space-md);
 }
 .project-navigation-search {
     position: relative;
     display: flex;
     align-items: center;
+    justify-content: center;
     padding: var(--space-xs) var(--space-md);
-    width: 100%;
+    width: auto;
     height: 1.8rem;
     border-radius: var(--space-sm);
     background-color: var(--color-accent-100);
@@ -193,7 +195,8 @@
     gap: var(--space-sm);
 }
 .project-navigation-search input {
-    flex: 1;
+    position: relative;
+    width: 100%;
     height: 100%;
     background-color: transparent;
     border: none;
@@ -208,7 +211,7 @@
 }
 .project-navigation-search .search-icon {
     position: relative;
-    background-color: var(--color-background);
+    background-color: green;
     border-radius: var(--space-sm);
     height: 100%;
     aspect-ratio: 1 / 1;
@@ -216,6 +219,22 @@
     flex-shrink: 0;
     cursor: pointer;
 }
+.project-action {
+    position: relative;
+    width: 1.3rem;
+    height: 1.3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background-color: red;
+    padding: var(--space-xs);
+    border-radius: var(--space-sm);
+    cursor: pointer;
+}
+
+
+
 .project-navigation-content {
     width: 100%;
     height: calc(100% - 50px);

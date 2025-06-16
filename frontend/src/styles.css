@@ -195,10 +195,7 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    border: 0;
-    font: inherit;
-    color: inherit;
-    vertical-align: baseline;
+    border: none;
     -webkit-font-smoothing: antialiased;
     overflow: hidden;
 }
@@ -252,29 +249,4 @@ body {
 .cover-custom-cursor {
     z-index: 99999 !important;
     position: relative;
-}
-
-strong {
-    font-weight: bold;
-}
-i {
-    font-style: italic;
-}
-underline {
-    text-decoration: underline !important;
-}
-strikethrough {
-    text-decoration: line-through !important;
-}
-text-right {
-    text-align: right !important;
-}
-.text-center {
-    text-align: center !important;
-}
-.text-left {
-    text-align: left !important;
-}
-.text-justify {
-    text-align: justify !important;
 }

@@ -1,30 +1,30 @@
 <!-- Main container with named template -->
-<ng-template #filesTemplate let-files let-depth="depth">
-    <ng-container *ngFor="let file of files">
+<ng-template #filesTemplate let-entries let-depth="depth">
+    <ng-container *ngFor="let entry of entries">
         <!-- File Element -->
-        <div class="file-element file" *ngIf="file.type != 'FOLDER'" (click)="openFile(file)">
+        <div class="file-element file" *ngIf="entry.type != 'FOLDER'" (click)="open_file(entry)">
             <div 
                 class="icon" 
-                [ngStyle]="{'background-image': file.type ? 
-                    'url(\'icons/fileTypes/' + file.type + '.svg\')' : 
+                [ngStyle]="{'background-image': entry.type ? 
+                    'url(\'icons/fileTypes/' + entry.type + '.svg\')' : 
                     'url(\'icons/fileTypes/UNKNOWN.svg\')'}"
             ></div>
-            <p>{{ file.name }}</p>
+            <p>{{ entry.name }}</p>
         </div>
 
         <!-- Folder Element -->
-        <div class="file-element folder" *ngIf="file.type == 'FOLDER'" 
-            [ngClass]="{'collapsed': file.collapsed}"
-            [style.--folder-group-color]="getFolderColor(depth)"
+        <div class="file-element folder" *ngIf="entry.type == 'FOLDER'" 
+            [ngClass]="{'collapsed': entry.collapsed}"
+            [style.--folder-group-color]="get_folder_color(depth)"
         >
-            <div class="action" (click)="file.collapsed = !file.collapsed">
+            <div class="action" (click)="entry.collapsed = !entry.collapsed">
                 <div 
                     class="icon image-icon-dark" 
-                    [ngStyle]="{'background-image': file.collapsed ? 
+                    [ngStyle]="{'background-image': entry.collapsed ? 
                         'url(\'icons/chevron-right.svg\')' : 
                         'url(\'icons/chevron-down.svg\')'}"
                 ></div>
-                <p>{{ file.name }}</p>
+                <p>{{ entry.name }}</p>
                 <div class="actions">
                     <button></button>
                     <button></button>
@@ -32,9 +32,9 @@
             </div>
 
             <!-- Recursive call with incremented depth -->
-            <div class="children" *ngIf="!file.collapsed">
+            <div class="children" *ngIf="!entry.collapsed">
                 <ng-container *ngTemplateOutlet="filesTemplate; 
-                    context: { $implicit: getFilesFromFolder(file), depth: (depth || 0) + 1 }">
+                    context: { $implicit: get_children_from_directory(entry), depth: (depth || 0) + 1 }">
                 </ng-container>
             </div>
         </div>
@@ -42,4 +42,4 @@
 </ng-template>
 
 <!-- Initial template call to start recursion with depth 0 -->
-<ng-container *ngTemplateOutlet="filesTemplate; context: { $implicit: files, depth: 0 }"></ng-container>
+<ng-container *ngTemplateOutlet="filesTemplate; context: { $implicit: file_entries, depth: 0 }"></ng-container>

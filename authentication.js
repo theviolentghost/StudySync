@@ -1,8 +1,9 @@
 import JWT from 'jsonwebtoken';
-import Bcrypt, { hash } from 'bcryptjs';
-import Database from './database/users.js'; 
+import Bcrypt from 'bcryptjs';
+import Database from './database/main.js'; 
+import 'dotenv/config';
 
-async function hashPassword(password) {
+async function hash_password(password) {
     try {
         if (!password || typeof password !== 'string' || password.trim() === '') {
             throw new Error('Password is required');
@@ -15,11 +16,11 @@ async function hashPassword(password) {
     }
 }
 
-async function verifyPassword(password, hashedPassword) {
-    return await Bcrypt.compare(password, hashedPassword);
+async function verify_password(password, hashed_password) {
+    return await Bcrypt.compare(password, hashed_password);
 }
 
-function generateToken(user) {
+function generate_token(user) {
     try {
         if (!user || !user.email) {
             throw new Error('User object with an email is required');
@@ -33,10 +34,10 @@ function generateToken(user) {
                     assistance: true,
                 },
                 sdraw: {
-                    assistance: false, // not implemented yet
+                    assistance: false,
                 },
                 sstudy: {
-                    assistance: false, // not implemented yet
+                    assistance: false,
                 }
             } 
         };
@@ -44,11 +45,10 @@ function generateToken(user) {
         return JWT.sign(payload, process.env.AUTHENTICATION_SECRET, options);
     } catch (error) {
         console.error('Error generating token:', error);
-        throw new Error('Token generation failed');
     }
 }
 
-function generateRefreshToken(user) {
+function generate_refresh_token(user) {
     try {
         if (!user || !user.email) {
             throw new Error('User object with an email is required');
@@ -57,93 +57,91 @@ function generateRefreshToken(user) {
         const options = { expiresIn: process.env.AUTHENTICATION_REFRESH_TOKEN_EXPIRATION };
         return JWT.sign(payload, process.env.AUTHENTICATION_REFRESH_SECRET, options);
     } catch (error) {
-        // console.error('Error generating refresh token:', error);
-        throw new Error('Refresh token generation failed');
+        console.error('Error generating refresh token:', error);
     }
 }
 
-function verifyToken(token) {
+function verify_token(token) {
     try {
         if (!token) {
-            throw new Error('Token is required');
+            return null;
         }
         return JWT.verify(token, process.env.AUTHENTICATION_SECRET);
     } catch (error) {
-        // console.error('Error verifying token:', error);
-        throw new Error('Token verification failed');
+        console.error('Error verifying token:', error);
+        return null;
     }
 }
 
-function verifyRefreshToken(token) {
+function verify_refresh_token(token) {
     try {
         if (!token) {
-            throw new Error('Token is required');
+            return null;
         }
         return JWT.verify(token, process.env.AUTHENTICATION_REFRESH_SECRET);
     } catch (error) {
-        console.error('Error verifying refresh token:', error);
-        throw new Error('Refresh token verification failed');
+        console.error('Error verifying refresh token');
+        return null;
     }
 }
 
-function validateAuthorization(req, res, next) {
+function validate_authorization(req, res, next) {
     const token = req.headers['authorization']?.split(' ')[1];
     if (!token) {
         return res.status(401).json({ error: 'No token provided' });
     }
 
     try {
-        const authorized = verifyToken(token);
+        const authorized = verify_token(token);
         if (!authorized) {
             return res.status(401).json({ error: 'Invalid token' });
         }
 
-        req.authorization = authorized; // Attach the authorized user to the request object
-
+        req.authorization = authorized;
         next();
     } catch (error) {
-        console.error('Error validating token:', error);
+        console.error('Error validating token');
         return res.status(401).json({ error: 'Invalid token' });
     }
 }
 
-function validateLoginRegistrationInput(req, res, next) {
+function validate_login_registration_input(req, res, next) {
     const { email, password } = req.body;
     if (!email || !password || typeof email !== 'string' || typeof password !== 'string' || email.trim() === '' || password.trim() === '') {
         return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    if( password.length < 4) {
+    if (password.length < 4) {
         return res.status(400).json({ error: 'Password too short' });
     }
     next();
 }
 
-function sanatizeUserData(databaseUserData) {
-    if (!databaseUserData) {
+function sanatize_user_data(database_user_data) {
+    if (!database_user_data) {
         return null;
     }
     return {
-        id: databaseUserData.id,
-        email: databaseUserData.email,
-        displayName: databaseUserData.display_name,
+        id: database_user_data.id,
+        email: database_user_data.email,
+        displayName: database_user_data.display_name,
     };
 }
 
-async function authenticateUser(req, res, next) {
+async function authenticate_user(req, res, next) {
     const { email, password } = req.body;
     try {
-        const user = await Database.users.findByEmail(email);
+        const user = await Database.users.find_by_email(email);
         if (!user) {
             return res.status(401).json({ error: 'Invalid email or password' });
         }
 
-        const isPasswordValid = await verifyPassword(password, user.password);
-        if (!isPasswordValid) {
+        const is_password_valid = await verify_password(password, user.password);
+        if (!is_password_valid) {
             return res.status(401).json({ error: 'Invalid email or password' });
         }
 
-        req.user = user; // Attach user to request object
+        req.user = user;
         next();
     } catch (error) {
         console.error('Error authenticating user:', error);
@@ -151,10 +149,10 @@ async function authenticateUser(req, res, next) {
     }
 }
 
-async function isEmailInUse(req, res, next) {
+async function is_email_in_use(req, res, next) {
     const { email } = req.body;
     try {
-        const user = await Database.users.findByEmail(email);
+        const user = await Database.users.find_by_email(email);
         if (user) {
             return res.status(400).json({ error: 'Email already in use' });
         }
@@ -165,23 +163,20 @@ async function isEmailInUse(req, res, next) {
     }
 }
 
-//
-//
 // newton specific
 
-async function validateNewtonChatAuthorization(req, res, next) {
+async function validate_newton_chat_authorization(req, res, next) {
     const token = req.headers['authorization']?.split(' ')[1];
     if (!token) {
         return res.status(401).json({ error: 'No token provided' });
     }
 
     try {
-        const authorized = verifyToken(token);
+        const authorized = verify_token(token);
         if (!authorized) {
             return res.status(401).json({ error: 'Invalid token' });
         }
 
-        // Check if the user has chat access
         if (authorized.newton.chat !== true) {
             return res.status(403).json({ error: 'Chat access denied' });
         }
@@ -194,24 +189,24 @@ async function validateNewtonChatAuthorization(req, res, next) {
 }
 
 export default {
-    hashPassword,
-    verifyPassword,
-    validateAuthorization,
-    sanatizeUserData,
-    validateLoginRegistrationInput,
-    authenticateUser,
-    isEmailInUse,
+    hash_password,
+    verify_password,
+    validate_authorization,
+    sanatize_user_data,
+    validate_login_registration_input,
+    authenticate_user,
+    is_email_in_use,
     newton: {
-        validateChatAuthorization: validateNewtonChatAuthorization,
+        validate_chat_authorization: validate_newton_chat_authorization,
     },
     JWT: {
         token: {
-            verify: verifyToken,
-            generate: generateToken
+            verify: verify_token,
+            generate: generate_token
         },
-        refreshToken: {
-            verify: verifyRefreshToken,
-            generate: generateRefreshToken,
+        refresh_token: {
+            verify: verify_refresh_token,
+            generate: generate_refresh_token,
         }
     }
 }

@@ -3,17 +3,17 @@
         <div 
             class="tab-element"
             *ngFor="let tab of tabs"
-                [ngClass]="{'active': tab.id === activeTabId}"
-                (click)="selectTab(tab.id);"
+                [ngClass]="{'active': tab.id === active_tab_id}"
+                (click)="select_tab(tab.id);"
         >
                 <div 
                     class="icon"  
-                    [ngStyle]="{'background-image': tab.fileType ? 
-                        'url(\'icons/fileTypes/' + tab.fileType + '.svg\')' : 
+                    [ngStyle]="{'background-image': tab.file_type ? 
+                        'url(\'icons/fileTypes/' + tab.file_type + '.svg\')' : 
                         'url(\'icons/fileTypes/UNKNOWN.svg\')'}"
             ></div> 
-            <p>{{tab.title}}</p>
-            <button class="closeTab image-icon-dark" (click)="closeTab(tab.id); $event.stopPropagation();"></button>
+            <p>{{tab.display}}</p>
+            <button class="closeTab image-icon-dark" (click)="close_tab(tab.id); $event.stopPropagation();"></button>
         </div>
     </div>
     <button class="actions">More</button>

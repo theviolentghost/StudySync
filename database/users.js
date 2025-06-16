@@ -30,7 +30,7 @@ user_database.exec(`
 //
 // tokens
 
-function getTokenExpiration(token) {
+function get_token_expiration(token) {
     const decoded = jwt.decode(token);
     if (decoded && decoded.exp) {
         // exp is in seconds since epoch
@@ -38,74 +38,83 @@ function getTokenExpiration(token) {
     }
     return null;
 }
-async function storeRefreshToken(userId, token) {
+
+async function store_refresh_token(user_id, token) {
     const stmt = user_database.prepare(`
         INSERT INTO refresh_tokens (user_id, token, expires_at)
         VALUES (?, ?, ?)
     `);
-    return stmt.run(userId, token, getTokenExpiration(token));
+    return stmt.run(user_id, token, get_token_expiration(token));
 }
-async function findRefreshToken(token) {
+
+async function find_refresh_token(token) {
     const stmt = user_database.prepare(`
         SELECT * FROM refresh_tokens WHERE token = ?
     `);
     return stmt.get(token);
 }
-async function deleteRefreshToken(token) {
+
+async function delete_refresh_token(token) {
     const stmt = user_database.prepare(`
         DELETE FROM refresh_tokens WHERE token = ?
     `);
     return stmt.run(token);
 }
-async function deleteAllRefreshTokensForUser(userId) {
+
+async function delete_all_refresh_tokens_for_user(user_id) {
     const stmt = user_database.prepare(`
         DELETE FROM refresh_tokens WHERE user_id = ?
     `);
-    return stmt.run(userId);
+    return stmt.run(user_id);
 }
-async function deleteExpiredRefreshTokens() {
+
+async function delete_expired_refresh_tokens() {
     const now = new Date().toISOString();
     const stmt = user_database.prepare(`DELETE FROM refresh_tokens WHERE expires_at < ?`);
     stmt.run(now);
 }
-setInterval(deleteExpiredRefreshTokens, 24 * 60 * 60 * 1000); // every 24 hours
-deleteExpiredRefreshTokens(); // cold start - clean up
+setInterval(delete_expired_refresh_tokens, 24 * 60 * 60 * 1000); // every 24 hours
+delete_expired_refresh_tokens(); // cold start - clean up
 
 //
 //
 // users
 
-async function registerUser(email, password, displayName) {
-    const hashedPassword = await Authentication.hashPassword(password);
+async function register_user(email, password, display_name) {
+    const hashed_password = await Authentication.hash_password(password);
 
     const stmt = user_database.prepare(`
         INSERT INTO users (email, password, display_name)
         VALUES (?, ?, ?)
     `);
-    return stmt.run(email, hashedPassword, displayName);
+    return stmt.run(email, hashed_password, display_name);
 }
-async function findUserByEmail(email) {
+
+async function find_user_by_email(email) {
     const stmt = user_database.prepare(`
         SELECT * FROM users
         WHERE email = ?
     `);
     return stmt.get(email);
 }
-async function findUserById(id) {
+
+async function find_user_by_id(id) {
     const stmt = user_database.prepare(`
         SELECT * FROM users
         WHERE id = ?
     `);
     return stmt.get(id);
 }
-async function deleteUserWithId(id) {
+
+async function delete_user_with_id(id) {
     const stmt = user_database.prepare(`
         DELETE FROM users
         WHERE id = ?
     `);
     return stmt.run(id);
 }
-async function deleteUserWithEmail(email) {
+
+async function delete_user_with_email(email) {
     const stmt = user_database.prepare(`
         DELETE FROM users
         WHERE email = ?
@@ -119,15 +128,15 @@ async function deleteUserWithEmail(email) {
 //
 
 export default {
-    register: registerUser,
-    finuser_databaseyEmail: findUserByEmail,
-    finuser_databaseyId: findUserById,
-    deleteById: deleteUserWithId,
-    deleteByEmail: deleteUserWithEmail,
-    refreshTokens: {
-        store: storeRefreshToken,
-        find: findRefreshToken,
-        delete: deleteRefreshToken,
-        deleteAllForUser: deleteAllRefreshTokensForUser,
+    register: register_user,
+    find_by_email: find_user_by_email,
+    find_by_id: find_user_by_id,
+    delete_by_id: delete_user_with_id,
+    delete_by_email: delete_user_with_email,
+    refresh_tokens: {
+        store: store_refresh_token,
+        find: find_refresh_token,
+        delete: delete_refresh_token,
+        delete_all_for_user: delete_all_refresh_tokens_for_user,
     }
 }

@@ -5,12 +5,11 @@ import { File, FileManagerService } from '../file.manager.service';
 
 export interface Tab {
     id: string; // file name
-    directory: string; // directory name
+    path: string; // directory name
+    display: string;
     title: string; 
-    fileType: string;
+    file_type: string;
 }
-
-// export type FileContent = SDocumentFile | SDrawFile | SStudyFile | BaseFile;
 
 @Component({
   selector: 'editor-tabs',
@@ -24,57 +23,73 @@ export class EditorTabsComponent implements OnInit{
     @Input() files: File[] = []; 
     tabs: Tab[] = [
         {
-            id: 'welcome',
+            id: 'WELCOME',
             title: 'Get Started',
-            fileType: 'WELCOME',
-            directory: '/',
+            display: 'Get Started',
+            file_type: 'WELCOME',
+            path: '/',
         }
     ];
-    activeTabId: string | null = "welcome";
-    userId: string | null = null; 
-    projectId: string | null = null;
+    active_tab_id: string | null = "WELCOME";
+    user_id: string | null = null; 
+    project_id: string | null = null;
 
-    @Output() tabSelected = new EventEmitter<string>();
-    @Output() tabClosed = new EventEmitter<string>();
+    @Output() tab_selected = new EventEmitter<string>();
+    @Output() tab_closed = new EventEmitter<string>();
 
     constructor(
         private router: Router,
         private route: ActivatedRoute,
-        private fileManager: FileManagerService
+        private file_manager: FileManagerService
     ) {}
 
     ngOnInit(): void {
-        this.fileManager.openNewTabInWorkspace.subscribe((file: File) => {
-            if(this.selectTab(file.name)) return;
-            this.openNewTabFromFile(file);
+        this.file_manager.open_new_tab_in_workspace.subscribe((file: File) => {
+            if(this.select_tab(file.id)) return;
+            this.open_new_tab_from_file(file);
         });
+
         this.route.params.subscribe(params => {
-            this.projectId = params['projectId'];
-            this.userId = params['userId'];
+            this.project_id = params['projectId'];
+            this.user_id = params['userId'];
         });
     }
 
-    openNewTabFromFile(file: File): void {
-        const tab: Tab = {
-            id: file.name,
+    open_new_tab_from_file(file: File): void {
+        const new_tab: Tab = {
+            id: file.id,
             title: file.name,
-            fileType: file.type,
-            directory: file.directory,
+            display: file.name,
+            file_type: file.type,
+            path: file.path,
         };
 
-        this.tabs.push(tab);
-        this.selectTab(file.name);
+        // check to make sure no other tabs with same title exist
+        // if so include part of the path in the title
+        const copy_cat_tab  = this.tabs.find(tab => tab.display === new_tab.display && tab.file_type === new_tab.file_type);
+        if (copy_cat_tab) {
+            // both tabs shouldnt have same path, // so we can safely use the path to differentiate them
+            const copy_cat_tab_prefix = copy_cat_tab.path.split('/').filter(part => part !== '').pop() || '';
+            copy_cat_tab.display = copy_cat_tab_prefix ? `${copy_cat_tab_prefix}/${copy_cat_tab.display}` : copy_cat_tab.display; // no prefix if empty
+
+            // also change current tab as if it was the copy cat tab
+            const new_tab_prefix = new_tab.path.split('/').filter(part => part !== '').pop() || '';
+            new_tab.display = new_tab_prefix ? `${new_tab_prefix}/${new_tab.display}` : new_tab.display; // no prefix if empty
+        }
+
+        this.tabs.push(new_tab);
+        this.select_tab(file.id);
     }
 
-    selectTab(tabId: string): boolean {
-        this.activeTabId = tabId;
+    select_tab(tab_id: string): boolean {
+        this.active_tab_id = tab_id;
 
-        const tabSelected = this.tabs.find(tab => tab.id === tabId);
-        if (!tabSelected) return false;
+        const tab_selected = this.tabs.find(tab => tab.id === tab_id);
+        if (!tab_selected) return false;
 
         // Handle special case for welcome tab
-        if (tabSelected.fileType === 'WELCOME') {
-            this.router.navigate(['/workspace', this.userId, this.projectId, { 
+        if (tab_selected.file_type === 'WELCOME') {
+            this.router.navigate(['/workspace', this.user_id, this.project_id, { 
                 outlets: { 
                     workspace: ['WELCOME'] 
                 } 
@@ -83,62 +98,62 @@ export class EditorTabsComponent implements OnInit{
         }
 
         // For file tabs, construct the proper route
-        const filePath = `${tabSelected.directory}${tabId}.${tabSelected.fileType}`.replace(/^\//, ''); // Remove leading slash
+        const file_path = `${tab_selected.path}${tab_selected.title}.${tab_selected.file_type}`.replace(/^\//, ''); // Remove leading slash
         
         // Map file types to route prefixes
-        let routePrefix = '';
-        switch (tabSelected.fileType) {
+        let route_prefix = '';
+        switch (tab_selected.file_type) {
             case 'sdoc':
             case 'doc':
             case 'pdf':
-                routePrefix = 'sdoc';
+                route_prefix = 'sdoc';
                 break;
             case 'sdraw':
             case 'draw':
             case 'png':
             case 'jpg':
-                routePrefix = 'sdraw';
+                route_prefix = 'sdraw';
                 break;
             case 'sstudy':
             case 'study':
             case 'md':
-                routePrefix = 'sstudy';
+                route_prefix = 'sstudy';
                 break;
             default:
-                routePrefix = 'sdoc'; // Default fallback
+                route_prefix = 'sdoc'; // Default fallback
         }
 
-        this.router.navigate(['/workspace', this.userId, this.projectId, { 
+        this.router.navigate(['/workspace', this.user_id, this.project_id, { 
             outlets: { 
-                workspace: [routePrefix, filePath] 
+                workspace: [route_prefix, file_path] 
             } 
         }], { skipLocationChange: true });
 
         return true;
     }
 
-    setNoTabSelectedState(): void {
-        this.activeTabId = null;
+    set_no_tab_selected_state(): void {
+        this.active_tab_id = null;
         
-        this.router.navigate(['/workspace', this.userId, this.projectId, {
+        this.router.navigate(['/workspace', this.user_id, this.project_id, {
             outlets: {
                 workspace: ['SELECTFILE']
             }
         }], { skipLocationChange: true });
     }
 
-    closeTab(tabId: string) {
-        const tabIndex = this.tabs.findIndex(tab => tab.id === tabId);
-        if (tabIndex !== -1) {
-            this.tabs.splice(tabIndex, 1);
-            this.tabClosed.emit(tabId);
+    close_tab(tab_id: string) {
+        const tab_index = this.tabs.findIndex(tab => tab.id === tab_id);
+        if (tab_index !== -1) {
+            this.tabs.splice(tab_index, 1);
+            this.tab_closed.emit(tab_id);
 
-            // If the closed tab was active, select the first tab
-            if (this.activeTabId === tabId && this.tabs.length > 0) {
-                this.selectTab(this.tabs[tabIndex - 1].id);
+            // If the closed tab was active, select the previous tab or set no tab selected
+            if (this.active_tab_id === tab_id && this.tabs.length > 0) {
+                this.select_tab(this.tabs[tab_index - 1]?.id ?? this.tabs[0].id);
             }
             else {
-                this.setNoTabSelectedState();
+                this.set_no_tab_selected_state();
             }
         }
     }

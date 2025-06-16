@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, NavigationEnd } from '@angular/router';
 
 import { AuthService } from '../../auth.service';
+import { ProjectService } from '../../project.service';
 
 export interface Project {
     id?: string;
@@ -42,139 +43,20 @@ export class ProjectsComponent implements OnInit {
     current_folder_projects: Project[] = [];
     selected_group_id: string = '';
 
-    constructor(private router: Router, private Auth: AuthService) {}
+    constructor(private router: Router, private Auth: AuthService, private ProjectService: ProjectService) {}
 
     ngOnInit() {
         this.load_project_structure();
     }
 
     load_project_structure() {
-        this.project_items = [
-            {
-                id: 'folder_1',
-                name: 'Web Projects',
-                type: 'FOLDER',
-                collapsed: false,
-                children: [
-                    {
-                        id: 'group_1',
-                        name: 'Active Projects',
-                        type: 'GROUP',
-                        projects: [
-                            {
-                                id: 'project_1',
-                                name: 'My Website',
-                                type: 'project',
-                                created_at: new Date('2024-01-15'),
-                                updated_at: new Date('2024-06-01'),
-                                owner: 1,
-                                owner_name: 'John Doe'
-                            },
-                            {
-                                id: 'project_2',
-                                name: 'E-commerce Site',
-                                type: 'project',
-                                created_at: new Date('2024-02-10'),
-                                updated_at: new Date('2024-05-15'),
-                                owner: 1,
-                                owner_name: 'John Doe'
-                            }, {
-                                id: 'project_1',
-                                name: 'My Website',
-                                type: 'project',
-                                created_at: new Date('2024-01-15'),
-                                updated_at: new Date('2024-06-01'),
-                                owner: 1,
-                                owner_name: 'John Doe'
-                            },
-                            {
-                                id: 'project_2',
-                                name: 'E-commerce Site',
-                                type: 'project',
-                                created_at: new Date('2024-02-10'),
-                                updated_at: new Date('2024-05-15'),
-                                owner: 1,
-                                owner_name: 'John Doe'
-                            }, {
-                                id: 'project_1',
-                                name: 'My Website',
-                                type: 'project',
-                                created_at: new Date('2024-01-15'),
-                                updated_at: new Date('2024-06-01'),
-                                owner: 1,
-                                owner_name: 'John Doe'
-                            },
-                            {
-                                id: 'project_2',
-                                name: 'E-commerce Site',
-                                type: 'project',
-                                created_at: new Date('2024-02-10'),
-                                updated_at: new Date('2024-05-15'),
-                                owner: 1,
-                                owner_name: 'John Doe'
-                            } ,{
-                                id: 'project_1',
-                                name: 'My Website',
-                                type: 'project',
-                                created_at: new Date('2024-01-15'),
-                                updated_at: new Date('2024-06-01'),
-                                owner: 1,
-                                owner_name: 'John Doe'
-                            },
-                            {
-                                id: 'project_2',
-                                name: 'E-commerce Site',
-                                type: 'project',
-                                created_at: new Date('2024-02-10'),
-                                updated_at: new Date('2024-05-15'),
-                                owner: 1,
-                                owner_name: 'John Doe'
-                            }
-                        ]
-                    },
-                    {
-                        id: 'group_2',
-                        name: 'Archived Projects',
-                        type: 'GROUP',
-                        projects: [
-                            {
-                                id: 'project_3',
-                                name: 'Old Portfolio',
-                                type: 'project',
-                                created_at: new Date('2023-01-15'),
-                                updated_at: new Date('2023-12-01'),
-                                owner: 1,
-                                owner_name: 'John Doe'
-                            }
-                        ]
-                    }
-                ]
-            },
-            {
-                id: 'folder_2',
-                name: 'Study Materials',
-                type: 'FOLDER',
-                collapsed: false,
-                children: [
-                    {
-                        id: 'group_3',
-                        name: 'Programming Notes',
-                        type: 'GROUP',
-                        projects: [
-                            {
-                                id: 'study_1',
-                                name: 'Angular Notes',
-                                type: 'study_material',
-                                created_at: new Date('2024-03-01'),
-                                updated_at: new Date('2024-06-05'),
-                                owner: 1,
-                                owner_name: 'John Doe'
-                            }
-                        ]
-                    }
-                ]
+        this.project_items = [];
+        this.ProjectService.get_hierarchy().subscribe(
+            (data: Project_Item[]) => {
+                console.log('Project hierarchy loaded:', data);
+                this.project_items = data;
             }
-        ];
+        );
     }
 
     toggle_folder(folder: Project_Item) {
@@ -222,8 +104,8 @@ export class ProjectsComponent implements OnInit {
     open_project(project: Project) {
         console.log('Opening project:', project.name);
         console.log(this.Auth.getCurrentUserInfo())
-        
-        this.router.navigate(['workspace', this.Auth.getCurrentUserInfo()?.id ?? '#' ,project.id], {});
+
+        this.router.navigate(['workspace', this.Auth.getCurrentUserInfo()?.id || '#' ,project.id], {});
     }
 
     show_project_options(project: Project) {

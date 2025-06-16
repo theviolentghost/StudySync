@@ -28,8 +28,8 @@ build/
 llama.cpp/
 models/
 storage/
+*.sqlite
 Newton/
 
 email.js
 *.rest
-backendTest.rest

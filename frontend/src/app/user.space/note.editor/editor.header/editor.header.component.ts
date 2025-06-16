@@ -17,23 +17,16 @@ interface ProjectTool {
   templateUrl: './editor.header.component.html',
   styleUrl: './editor.header.component.css'
 })
-
 export class EditorHeaderComponent {
     projectName: string = "Project Name"; // Placeholder for project name
     projectTools: ProjectTool[] = [
-        {
-          name: 'Project', icon: 'null', 
-        },
-        {
-          name: 'View', icon: 'null', 
-        },
+        { name: 'Project', icon: 'null' },
+        { name: 'View', icon: 'null' },
     ]; 
     fileTools: ProjectTool[] = [
-        {
-          name: 'File', icon: 'null', 
-        },
-        {
-          name: 'Insert', icon: 'null', 
-        },
+        { name: 'File', icon: 'null' },
+        { name: 'Insert', icon: 'null' },
     ];
+
+    constructor() {}
 }

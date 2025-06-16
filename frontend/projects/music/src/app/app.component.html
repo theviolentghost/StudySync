@@ -1,0 +1,7 @@
+<button (click)="download_audio_blob_to_indexDB('audio/audio.mp3', '1')">Download</button>
+<button (click)="load_audio_blob_from_indexDB_and_play('1')">Load</button>
+
+
+<audio id="player" controls preload="auto">
+    <source src="" type="audio/mp3">
+</audio>

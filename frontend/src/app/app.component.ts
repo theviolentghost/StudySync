@@ -1,6 +1,5 @@
 import { Component } from '@angular/core';
 import { RouterOutlet, RouterModule } from '@angular/router';
-import { NoteEditorComponent } from './user.space/note.editor/note.editor.component';
 import { CursorComponent } from './cursor/cursor.component';
 
 @Component({
@@ -8,7 +7,6 @@ import { CursorComponent } from './cursor/cursor.component';
   imports: [
     RouterOutlet,
     RouterModule,
-    NoteEditorComponent,
     CursorComponent
   ],
   templateUrl: './app.component.html',

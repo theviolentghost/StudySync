@@ -1,0 +1,12 @@
+--ctx-size 8192 \
+  --threads 8 --threads-batch 8 \
+  --cont-batching \
+  --batch-size 512 --ubatch-size 2048 \
+  --parallel 1 \
+  --n-gpu-layers -1 \
+  --mlock --no-mmap \
+  --grp-attn-n 2 --grp-attn-w 512 \
+  --rope-scaling linear --rope-scale 2 \
+  --yarn-orig-ctx 2048 --yarn-ext-factor 0.5 \
+  --yarn-attn-factor 1.0 --yarn-beta-fast 32 \
+  --port 8080 --verbose

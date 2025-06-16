@@ -1,6 +1,6 @@
 <div class="tool-container-backdrop"></div>
 <div class="tools-container hide-scrollbar">
-    <ng-container *ngFor="let group of toolGroups; let isLast = last">
+    <ng-container *ngFor="let group of tool_groups; let isLast = last">
         <div class="tool-group collapsed active"
             #toolGroup
             [attr.data-group-name]="group.id"
@@ -9,7 +9,7 @@
                 'active': group.active,
             }"
         >
-            <button class="tool-dropdown-trigger" (click)="toggleToolGroupCollapse(toolGroup)">
+            <button class="tool-dropdown-trigger" (click)="toggle_tool_group_collapse(toolGroup)">
                 <div class="icon" [style.mask-image]="`url('/icons/${group.collapseIcon}.svg')`"></div>
             </button>
             <div class="tools-wrapper">
