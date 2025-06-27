@@ -1,7 +1,8 @@
-<button (click)="download_audio_blob_to_indexDB('audio/audio.mp3', '1')">Download</button>
-<button (click)="load_audio_blob_from_indexDB_and_play('1')">Load</button>
-
-
-<audio id="player" controls preload="auto">
-    <source src="" type="audio/mp3">
-</audio>
+<router-outlet></router-outlet>
+<media-player></media-player>
+<div class="navigation">
+    <a routerLink="/artists" routerLinkActive="active">Artists</a>
+    <a routerLink="/playlists" routerLinkActive="active">Playlists</a>
+    <a routerLink="/search" routerLinkActive="active">Search</a>
+    <a routerLink="/settings" routerLinkActive="active">Settings</a>
+</div>

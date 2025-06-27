@@ -1,0 +1,29 @@
+:host {
+    display: grid;
+    grid-template-rows: 1fr auto auto;
+    height: 100%;
+    width: 100%;
+}
+
+router-outlet {
+    display: contents;
+}
+
+.navigation {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(0.5rem, 1vw, 1rem);
+    padding: 1rem;
+    padding-bottom: 2.5rem;
+    width: 100%;
+    background-color: var(--color-background-200);
+}
+
+.navigation a {
+    color: var(--color-neutral);
+    text-decoration: none;
+    font-size: var(--font-size-base);
+    font-weight: 500;
+}

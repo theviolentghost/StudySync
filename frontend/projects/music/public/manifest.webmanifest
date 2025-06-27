@@ -1,11 +1,17 @@
 {
-  "name": "music",
-  "short_name": "music",
+  "name": "MusiK",
+  "short_name": "MusiK",
+  "description": "Offline-capable music streaming app",
   "theme_color": "#1976d2",
   "background_color": "#fafafa",
   "display": "standalone",
   "scope": "./",
   "start_url": "./",
+  "orientation": "portrait-primary",
+  "categories": [
+    "music",
+    "entertainment"
+  ],
   "icons": [
     {
       "src": "icons/icon-72x72.png",

@@ -36,13 +36,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
-                  "maximumError": "1MB"
-                },
-                {
-                  "type": "anyComponentStyle",
-                  "maximumWarning": "4kB",
-                  "maximumError": "8kB"
+                  "maximumWarning": "4MB",
+                  "maximumError": "5MB"
                 }
               ],
               "outputHashing": "all",
@@ -103,6 +98,8 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
+            "baseHref": "/music/",
+            "deployUrl": "/music/",
             "outputPath": "dist/music",
             "index": "projects/music/src/index.html",
             "browser": "projects/music/src/main.ts",

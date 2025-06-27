@@ -1,9 +1,11 @@
 ### Variables
-@baseUrl = http://localhost:3000
+@baseUrl = http://192.168.1.25:3000
 @token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhlbGxvQGdtYWlsLmNvbSIsImlkIjoxLCJuZXd0b24iOnsiY2hhdCI6dHJ1ZSwic2RvYyI6eyJhc3Npc3RhbmNlIjp0cnVlfSwic2RyYXciOnsiYXNzaXN0YW5jZSI6ZmFsc2V9LCJzc3R1ZHkiOnsiYXNzaXN0YW5jZSI6ZmFsc2V9fSwiaWF0IjoxNzQ5ODU5MTg2LCJleHAiOjE3NDk5NDU1ODZ9.wiq3G873pXUVMNnbmUCsMQDHiHfGEoOrbG3cOMhr0oo
 @refreshToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhlbGxvQGdtYWlsLmNvbSIsImlkIjoxLCJpYXQiOjE3NDk3NTA1ODYsImV4cCI6MTc1MDM1NTM4Nn0.gKYDFTPJjcCcnjtGFoAY0V_C0PNwClBPqGsdZNYrYKE
 @projectId = 1
 @fileId = 3
+@video_id = K4DyBUG242c
+@query = "On & On sulivan king"
 
 ### ============================================
 ### AUTHENTICATION ENDPOINTS
@@ -123,3 +125,7 @@ Authorization: Bearer {{token}}
 GET {{baseUrl}}/user/project/{{projectId}}/files
 Authorization: Bearer {{token}}
 
+
+### music
+
+GET {{baseUrl}}/music/search/{{query}}

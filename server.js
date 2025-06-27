@@ -1,4 +1,6 @@
 import Express from 'express';
+import https from 'https';
+import fs from 'fs';
 import CORS from 'cors';
 import Authentication from './authentication.js';
 import Database from './database/main.js';
@@ -7,6 +9,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import os from 'os';
 import 'dotenv/config';
+import progress_emitter from './progress.emitter.js';
 
 const app = Express();
 
@@ -25,18 +28,26 @@ function get_local_external_IP() {
     return '127.0.0.1';
 }
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+const certPath = path.join(__dirname, 'certificates', 'cert.pem');
+const keyPath = path.join(__dirname, 'certificates', 'key.pem');
+
 const port = process.env.PORT || 3000;
 const host = get_local_external_IP() || '0.0.0.0';
+// const host = '0.0.0.0';
+// const https_options = {
+//     cert: fs.readFileSync(certPath),
+//     key: fs.readFileSync(keyPath),
+// };
 
 app.use(CORS());
 app.use(Express.json());
 app.use(Express.urlencoded({ extended: true }));
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
 // Serve static files for music app
-app.use('/', Express.static(path.join(__dirname, 'frontend/dist/my-angular-app/browser')));
 app.use('/music', Express.static(path.join(__dirname, 'frontend/dist/music/browser')));
+app.use('/', Express.static(path.join(__dirname, 'frontend/dist/my-angular-app/browser')));
 
 //
 //
@@ -463,25 +474,95 @@ app.put('/user/file/:fileId',
 //
 // Music
 
-app.get("/audio/:audio_path", async (req, res) => {
-    const audio_path = req.params.audio_path;
-    console.log('Fetching audio file:', audio_path);
-    if (!audio_path) {
-        return res.status(400).json({ error: 'Audio path is required' });
+app.post("/audio/download/:audio_id", async (req, res) => {
+    const audio_id = req.params.audio_id;
+
+    if (!audio_id) {
+        return res.status(400).json({ error: 'Audio ID is required' });
     }
     try {
-        const audioData = await Music.get(audio_path);
-        if (!audioData) {
-            return res.status(404).json({ error: 'Audio file not found' });
-        }
-        res.setHeader('Content-Type', 'audio/mp3');
-        res.send(audioData);
+        Music.download_stream(res, audio_id, req.body?.download_options);
     } catch (error) {
         console.error('Error fetching audio file:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+app.get("/audio/stream/:audio_id", async (req, res) => {
+    // for streaming audio files
+    const audio_id = req.params.audio_id;
 
+    if (!audio_id) {
+        return res.status(400).json({ error: 'Audio ID is required' });
+    }
+    try {
+        Music.stream(res, audio_id);
+    } catch (error) {
+        console.error('Error fetching audio file:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+app.get('/audio/progress/:video_id', async (req, res) => {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    const videoId = req.params.video_id;
+
+    const on_progress = (progress) => {
+        res.write(`data: ${JSON.stringify(progress)}\n\n`);
+    };
+
+    const on_done = () => {
+        res.write(`event: done\ndata: {}\n\n`);
+        res.end();
+        progress_emitter.off(videoId, on_progress);
+        progress_emitter.off(`${videoId}_done`, on_done);
+    };
+
+    progress_emitter.on(videoId, on_progress);
+    progress_emitter.on(`${videoId}_done`, on_done);
+
+    req.on('close', () => {
+        progress_emitter.off(videoId, on_progress);
+        progress_emitter.off(`${videoId}_done`, on_done);
+    });
+});
+
+app.get('/music/search/:query', async (req, res) => {
+    const query = req.params.query;
+    console.log('Search query:', query);
+    if (!query) {
+        return res.status(400).json({ error: 'Search query is required' });
+    }
+    try {
+        const results = await Music.search(query);
+        
+        res.json(results);
+    } catch (error) {
+        console.error('Error searching music:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+
+
+
+
+
+app.get('/.well-known/appspecific/:path', (req, res) => {
+    res.status(404).end(); // Just return 404 for DevTools requests
+});
+
+// Serve the Angular app
+app.get('/music', (req, res) => {
+    console.log('Music root route hit');
+    res.sendFile(path.join(__dirname, 'frontend/dist/music/browser/index.html'));
+});
+app.get(/^\/music\/.*/, (req, res) => {
+    console.log('Wildcard route hit, serving music/index.html');
+    console.log(req.url);
+    res.sendFile(path.join(__dirname, 'frontend/dist/music/browser/index.html'));
+});
 app.get(/.*/, (req, res) => {
     console.log('Wildcard route hit, serving index.html');
     console.log(req.url);
@@ -491,3 +572,6 @@ app.get(/.*/, (req, res) => {
 app.listen(port, host, () => {
     console.log(`Server is running on http://${host}:${port}`);
 });
+// https.createServer(https_options, app).listen(port, host, () => {
+//     console.log(`Server is running on https://${host}:${port}`);
+// });
