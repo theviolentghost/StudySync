@@ -1,0 +1,29 @@
+<div class="page_container">
+    <div class="channel_banner"></div>
+
+    <div class="channel_display">
+        <div class="channel_icon"></div>
+        <div class="channel_info">
+            <p class="channel_name">name</p>
+            <p class="channel_description">description</p>
+            <button *ngIf="!isSubscribed" (click)="toggleIsSubscribed()" class="subscribe_button_unclicked">Subscribe</button>
+                <button *ngIf="isSubscribed" (click)="toggleIsSubscribed()" class="subscribe_button_clicked">Subscribed</button>
+        </div>
+    </div>
+
+    <div class="channel_video_grid">
+        <a class="video" (click)="navigateToPlayer()" *ngFor="let video of videos">
+            <div class="thumbnail">
+                <div class="video_time_display"><div class="video_time_text">0:00:00</div></div>
+            </div>
+
+            <div class="video_details">
+                <div class="video_text">
+                    <p class="video_title">title</p>
+                    <p class="video_caption">channel name</p>
+                    <p class="video_caption"> views and date</p>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>

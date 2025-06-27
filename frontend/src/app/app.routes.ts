@@ -20,6 +20,12 @@ import { ContactComponent } from './contact/contact.component';
 import { AboutComponent } from './about/about.component';
 import { YoutubePageComponent } from './youtube-page/youtube-page.component';
 import { StylePageComponent } from './style-page/style-page.component';
+import { VideoPlayerComponent } from './youtube-page/video-player/video-player.component';
+import { VideoSelectComponent } from './youtube-page/video-select/video-select.component';
+import { VideoSearchResultsComponent } from './youtube-page/video-search-results/video-search-results.component';
+import { VideoChannelComponent } from './youtube-page/video-channel/video-channel.component';
+import { SubcriptionPageComponent } from './youtube-page/subcription-page/subcription-page.component';
+
 
 
 export const routes: Routes = [
@@ -50,7 +56,40 @@ export const routes: Routes = [
     {
         path: 'youtubeHome',
         component: YoutubePageComponent,
+        children: [
+            {
+                path: '', //default
+                component: VideoSelectComponent,
+                outlet: 'youtube'
+            },
+            {
+                path: 'select',
+                component: VideoSelectComponent,
+                outlet: 'youtube'
+            },
+            {
+                path: "player/:videoId",
+                component: VideoPlayerComponent,
+                outlet: 'youtube'
+            },
+            {
+                path: "search-results",
+                component: VideoSearchResultsComponent,
+                outlet: 'youtube'
+            },
+            {
+                path: "channel-view",
+                component: VideoChannelComponent,
+                outlet: 'youtube'
+            },
+            {
+                path: "subscription-page",
+                component: SubcriptionPageComponent,
+                outlet: 'youtube'
+            }
+        ]
     },
+
     {
         path: 'user',
         component: UserSpaceComponent,

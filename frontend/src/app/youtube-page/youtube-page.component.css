@@ -12,19 +12,17 @@
 }
 
 .icon{
-    margin: 12px 24px;
+    margin: 12px 0px 12px 24px;
     width: 24px;
     height: 24px;
-    border: solid 1px white;
+    /* border: solid 1px white; */
     display: inline;
-}
-
-.navigation_link{
-    text-decoration: none;
+    background-color: transparent;
+    cursor: pointer;
 }
 
 .current_page{
-    color: var(--color-primary);
+    color: var(--color-primary);    
 }
 
 .sync_navigation_button{
@@ -47,10 +45,10 @@
     text-align: center;
     gap: var(--space-md);
     font-weight: 500;
-    
+    text-decoration: none;
 }
 
-.sync_navigation_button:hover, .navigation_link:hover{
+.sync_navigation_button:hover{
     text-decoration: underline;
     color: var(--color-primary);
 }
@@ -60,6 +58,7 @@
     padding: 0;
     width: 100vw;
     display: flex;
+    gap: 0;
     flex-direction: row;
     align-items: center;
 }
@@ -86,12 +85,14 @@
 }
 
 .user_icon{
-    right: 0;
+    right: 24px;
     position: absolute;
 }
 
 .youtube_results{
-    height: 300vh;
+    width: calc(100% - 96px);
+    display: flex;
+    flex-direction: row; 
     position: relative;
 }
 
@@ -102,28 +103,10 @@
     position: sticky;
     top: 48px;
     flex-direction: column;
-    border-right: solid 1px var(--color-background-200);
 }
 
-.youtube_video_grid{
-    width: calc(100vw - 72px);
-    left: 72px;
-    top: 0;
-    padding: 8px 16px;
-    display: grid;
-    position: absolute;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
+.no_margin{
+    margin:0;
 }
 
-.video{
-    width: 100%;
-    height: 350px;
-    border: solid 1px var(--color-background-200);
-}
 
-.thumbnail{
-    background-color: #bbb;
-    width: 100%;
-    aspect-ratio: 16/9;
-}

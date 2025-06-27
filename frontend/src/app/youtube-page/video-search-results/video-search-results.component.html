@@ -1,0 +1,34 @@
+<div class="results_list">
+    <button class="searched_channel">
+        <div class="thumbnail" (click)="navigateToChannel()">
+            <button class="searched_channel_icon"></button>
+        </div>
+
+        <div class="channel_info_container" (click)="navigateToChannel()">
+            <div class="video_info">
+                <p class="video_title">channel name channel name channel name channel namechannel name channel namechannel name channel namechannel name channel namechannel name channel namechannel name channel namechannel name channel namechannel name channel namechannel name channel namechannel name channel namechannel name channel namechannel</p>
+                <p class="video_caption">&#64;channel and subs</p>
+                <p class="video_caption">description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description </p>
+            </div>
+        </div>
+
+        <button *ngIf="!isSubscribed" (click)="toggleIsSubscribed()" class="subscribe_button_unclicked">Subscribe</button>
+        <button *ngIf="isSubscribed" (click)="toggleIsSubscribed()" class="subscribe_button_clicked">Subscribed</button>
+    </button>
+
+    <button class="video" (click)="navigateToPlayer()" *ngFor="let video of videos">
+        <div class="thumbnail">
+            <div class="video_time_display">0:00:00</div>
+        </div>
+
+        <div class="video_info">
+            <p class="video_title">title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title</p>
+            <p class="video_caption">views and uplaod time</p>
+            <div class="channel_container">
+                <button class="video_channel_icon" (click)="navigateToChannel()"></button>
+                <p class="video_caption">channel name</p>
+            </div>
+            <p class="video_caption">description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description</p>
+        </div>
+    </button>
+</div>

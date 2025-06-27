@@ -2,54 +2,70 @@
     <div class="sync_navigation">
         <div class="icon"></div>
 
-        <button class="sync_navigation_button"><a class="navigation_link" routerLink="">Home</a></button>
-        <button class="sync_navigation_button"><a class="navigation_link current_page" routerLink="youtubeHome">YouTube</a></button>
-        <button class="sync_navigation_button"><a class="navigation_link" routerLink="contactUs">Contact</a></button>
-        <button class="sync_navigation_button"><a class="navigation_link" routerLink="about">About Us</a></button>
+        <a class="sync_navigation_button" routerLink="/">Home</a> <!--chnage the sub router: 'youtbe'-->
+        <a class="sync_navigation_button" routerLink="/youtubeHome">YouTube</a>
+        <a class="sync_navigation_button" routerLink="/contactUs">Contact</a>
+        <a class="sync_navigation_button" routerLink="/about">About Us</a>
     </div>
 
     <div class="youtube_navigation">
-        <div class="icon">ham menu</div>
-        <div class="icon">youtube logo</div>
+        <button class="icon">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-list" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5"/>
+            </svg>
+        </button>
+        <button (click)="navigateToHome()" class="icon">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-youtube" viewBox="0 0 16 16">
+                <path d="M8.051 1.999h.089c.822.003 4.987.033 6.11.335a2.01 2.01 0 0 1 1.415 1.42c.101.38.172.883.22 1.402l.01.104.022.26.008.104c.065.914.073 1.77.074 1.957v.075c-.001.194-.01 1.108-.082 2.06l-.008.105-.009.104c-.05.572-.124 1.14-.235 1.558a2.01 2.01 0 0 1-1.415 1.42c-1.16.312-5.569.334-6.18.335h-.142c-.309 0-1.587-.006-2.927-.052l-.17-.006-.087-.004-.171-.007-.171-.007c-1.11-.049-2.167-.128-2.654-.26a2.01 2.01 0 0 1-1.415-1.419c-.111-.417-.185-.986-.235-1.558L.09 9.82l-.008-.104A31 31 0 0 1 0 7.68v-.123c.002-.215.01-.958.064-1.778l.007-.103.003-.052.008-.104.022-.26.01-.104c.048-.519.119-1.023.22-1.402a2.01 2.01 0 0 1 1.415-1.42c.487-.13 1.544-.21 2.654-.26l.17-.007.172-.006.086-.003.171-.007A100 100 0 0 1 7.858 2zM6.4 5.209v4.818l4.157-2.408z"/>
+            </svg>  
+        </button>
 
-        <input class="search_bar" placeholder="Search">
+        <input id="search_bar" class="search_bar" [(ngModel)]="seachInput" (keyup.enter)="submitSearch()" (input)="updateSearchInput()" placeholder="Search">
 
-        <div class="icon user_icon"></div>
+        <button class="icon user_icon">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-person-circle" viewBox="0 0 16 16">
+                <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0"/>
+                <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1"/>
+            </svg>
+        </button>
     </div>
 
     <div class="youtube_results">
 
         <div class="youtube_menu">
-            <div class="icon">home</div>
-            <div class="icon">subs</div>
-            <div class="icon">shorts</div>
-            <div class="icon">library</div>
+            <button class="icon" routerLink="/youtubeHome"> 
+                <svg  xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-home no_margin">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l-2 0l9 -9l9 9l-2 0" />
+                    <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" /><path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+                </svg>
+            </button>
+            <button class="icon">
+                <svg  xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-mailbox no_margin" (click)="navigateToSubscriptionPage()">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                    <path d="M10 21v-6.5a3.5 3.5 0 0 0 -7 0v6.5h18v-6a4 4 0 0 0 -4 -4h-10.5" />
+                    <path d="M12 11v-8h4l2 2l-2 2h-4" /><path d="M6 15h1" />
+                </svg>
+            </button>
+            <div class="icon">
+                <svg  xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-device-mobile no_margin">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                    <path d="M6 5a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2v-14z" />
+                    <path d="M11 4h2" /><path d="M12 17v.01" />
+                </svg>
+            </div>
+            <div class="icon">
+                <svg  xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-books no_margin">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 4m0 1a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v14a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1z" />
+                    <path d="M9 4m0 1a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v14a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1z" />
+                    <path d="M5 8h4" /><path d="M9 16h4" />
+                    <path d="M13.803 4.56l2.184 -.53c.562 -.135 1.133 .19 1.282 .732l3.695 13.418a1.02 1.02 0 0 1 -.634 1.219l-.133 .041l-2.184 .53c-.562 .135 -1.133 -.19 -1.282 -.732l-3.695 -13.418a1.02 1.02 0 0 1 .634 -1.219l.133 -.041z" />
+                    <path d="M14 9l4 -1" /><path d="M16 16l3.923 -.98" />
+                </svg>
+            </div>
         </div>
 
-        <div class="youtube_video_grid">
-            <div class="video"><div class="thumbnail"></div><p>title</p><p>title</p></div>
-            <div class="video"></div>
-            <div class="video"></div>
-            <div class="video"></div>
-            <div class="video"></div>
-            <div class="video"></div>
-            <div class="video"></div>
-            <div class="video"></div>
-            <div class="video"></div>
-            <div class="video"></div>
-            <div class="video"></div>
-            <div class="video"></div>
-            <div class="video"></div>
-            <div class="video"></div>
-            <div class="video"></div>
-            <div class="video"></div>
-            <div class="video"></div>
-            <div class="video"></div>
-            <div class="video"></div>
-            <div class="video"></div>
-            <div class="video"></div>
-            <div class="video"></div>
-        </div>
+        <router-outlet name="youtube"></router-outlet>
+        
 
 
     </div>    
