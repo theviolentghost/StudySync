@@ -10,7 +10,7 @@ export const appConfig: ApplicationConfig = {
     providers: [
         provideZoneChangeDetection({ eventCoalescing: true }),
         // Add hash location strategy for better mobile compatibility
-        provideRouter(routes, withHashLocation()),
+        provideRouter(routes),
         provideHttpClient(),
         { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }, 
         provideServiceWorker('ngsw-worker.js', {

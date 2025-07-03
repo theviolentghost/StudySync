@@ -129,3 +129,18 @@ Authorization: Bearer {{token}}
 ### music
 
 GET {{baseUrl}}/music/search/{{query}}
+
+###
+POST {{baseUrl}}/audio/download/{{video_id}}
+Content-Type: application/json
+
+{
+        "quality": "0",
+        "bit_rate": "192K",
+        "include_artwork": true
+}
+###
+
+GET {{baseUrl}}/audio/artwork/{{video_id}}
+
+###

@@ -10,6 +10,7 @@ import { fileURLToPath } from 'url';
 import os from 'os';
 import 'dotenv/config';
 import progress_emitter from './progress.emitter.js';
+import { file } from 'googleapis/build/src/apis/file/index.js';
 
 const app = Express();
 
@@ -34,8 +35,8 @@ const certPath = path.join(__dirname, 'certificates', 'cert.pem');
 const keyPath = path.join(__dirname, 'certificates', 'key.pem');
 
 const port = process.env.PORT || 3000;
-const host = get_local_external_IP() || '0.0.0.0';
-// const host = '0.0.0.0';
+// const host = get_local_external_IP() || '0.0.0.0';
+const host = '0.0.0.0'; // Use localhost for development
 // const https_options = {
 //     cert: fs.readFileSync(certPath),
 //     key: fs.readFileSync(keyPath),
@@ -44,10 +45,6 @@ const host = get_local_external_IP() || '0.0.0.0';
 app.use(CORS());
 app.use(Express.json());
 app.use(Express.urlencoded({ extended: true }));
-
-// Serve static files for music app
-app.use('/music', Express.static(path.join(__dirname, 'frontend/dist/music/browser')));
-app.use('/', Express.static(path.join(__dirname, 'frontend/dist/my-angular-app/browser')));
 
 //
 //
@@ -481,21 +478,50 @@ app.post("/audio/download/:audio_id", async (req, res) => {
         return res.status(400).json({ error: 'Audio ID is required' });
     }
     try {
-        Music.download_stream(res, audio_id, req.body?.download_options);
+        console.log('Downloading audio file with ID:', audio_id);
+        Music.download_stream(res, audio_id, req.body);
     } catch (error) {
         console.error('Error fetching audio file:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
-app.get("/audio/stream/:audio_id", async (req, res) => {
-    // for streaming audio files
+app.get("/audio/artwork/:audio_id", async (req, res) => {
     const audio_id = req.params.audio_id;
 
     if (!audio_id) {
         return res.status(400).json({ error: 'Audio ID is required' });
     }
     try {
+        console.log('getting artwork with ID:', audio_id);
+        Music.get_artwork(res, audio_id);
+    } catch (error) {
+        console.error('Error fetching audio file:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+app.get("/audio/stream/:audio_id", async (req, res) => {
+    const audio_id = req.params.audio_id;
+
+    if (!audio_id) {
+        return res.status(400).json({ error: 'Audio ID is required' });
+    }
+    try {
+        console.log('Streaming audio file with ID:', audio_id);
         Music.stream(res, audio_id);
+    } catch (error) {
+        console.error('Error fetching audio file:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+app.get("/music/stream/:audio_id", async (req, res) => {
+    const audio_id = req.params.audio_id;
+
+    if (!audio_id) {
+        return res.status(400).json({ error: 'Audio ID is required' });
+    }
+    try {
+        console.log('Streaming audio file with ID:', audio_id);
+        Music.download_stream(res, audio_id);
     } catch (error) {
         console.error('Error fetching audio file:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -528,8 +554,8 @@ app.get('/audio/progress/:video_id', async (req, res) => {
     });
 });
 
-app.get('/music/search/:query', async (req, res) => {
-    const query = req.params.query;
+app.get('/music/search', async (req, res) => {
+    const query = req.query.q;
     console.log('Search query:', query);
     if (!query) {
         return res.status(400).json({ error: 'Search query is required' });
@@ -549,24 +575,57 @@ app.get('/music/search/:query', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+// Serve static files for music app with no cache for index.html
+app.use('/music', Express.static(
+    path.join(__dirname, 'frontend/dist/music/browser'),
+    {
+        setHeaders: (res, filePath) => {
+            // console.log(filePath);
+            if (filePath.endsWith('index.html')) {
+                res.setHeader('Cache-Control', 'no-store');
+            }
+        }
+    }
+));
+
+// Serve static files for study app with no cache for index.html
+app.use('/', Express.static(
+    path.join(__dirname, 'frontend/dist/study/browser'),
+    {
+        setHeaders: (res, filePath) => {
+            // console.log(filePath);
+            if (filePath.endsWith('index.html')) {
+                res.setHeader('Cache-Control', 'no-store');
+            }
+        }
+    }
+));
+
 app.get('/.well-known/appspecific/:path', (req, res) => {
     res.status(404).end(); // Just return 404 for DevTools requests
 });
 
-// Serve the Angular app
-app.get('/music', (req, res) => {
-    console.log('Music root route hit');
-    res.sendFile(path.join(__dirname, 'frontend/dist/music/browser/index.html'));
-});
-app.get(/^\/music\/.*/, (req, res) => {
-    console.log('Wildcard route hit, serving music/index.html');
-    console.log(req.url);
-    res.sendFile(path.join(__dirname, 'frontend/dist/music/browser/index.html'));
-});
+// Serve the Angular study app (this should be LAST)
 app.get(/.*/, (req, res) => {
-    console.log('Wildcard route hit, serving index.html');
+    res.setHeader('Cache-Control', 'no-store');
     console.log(req.url);
-    res.sendFile(path.join(__dirname, 'frontend/dist/my-angular-app/browser/index.html'));
+    if (req.path.startsWith('/music') || req.path.startsWith('music')) {
+        res.sendFile(
+            path.join(__dirname, 'frontend/dist/music/browser/index.html')
+        );
+    } else {
+        res.sendFile(
+            path.join(__dirname, 'frontend/dist/study/browser/index.html')
+        );
+    }
 });
 
 app.listen(port, host, () => {

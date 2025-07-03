@@ -1,8 +1,16 @@
-<router-outlet></router-outlet>
+<div class="content-container">
+    <router-outlet></router-outlet>
+</div>
 <media-player></media-player>
 <div class="navigation">
-    <a routerLink="/artists" routerLinkActive="active">Artists</a>
-    <a routerLink="/playlists" routerLinkActive="active">Playlists</a>
-    <a routerLink="/search" routerLinkActive="active">Search</a>
-    <a routerLink="/settings" routerLinkActive="active">Settings</a>
+    <a
+        *ngFor="let link of navigation_links"
+            [routerLink]="link.url"
+            class="navigation-link"
+            (click)="on_navigation_link_click(link)"
+            [ngClass]="{ 'active': active_link === link.url }"
+    >
+        <div class="icon" [style.mask-image]="'url(' + link.icon + ')'"></div>
+        <span class="label">{{ link.label }}</span>
+    </a>
 </div>

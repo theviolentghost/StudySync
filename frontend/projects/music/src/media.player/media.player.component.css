@@ -1,0 +1,340 @@
+:host, .container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    width: 100%;
+}
+.container {   
+    bottom: 0;
+    position: fixed; 
+    height: 100%;
+    overflow: hidden;
+    transition: height 0.65s ease-in-out, bottom 0.25s ease-in-out;
+    z-index: 1000;
+    background-color: var(--color-background);
+}
+.container.reduced {
+    bottom: 74px;
+    height: var(--space-7);
+}
+.container.hidden {
+    height: 0px;
+}
+.media-header {
+    position: relative;
+    flex-shrink: 0;
+    width: 100%;
+    height: var(--space-7);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-4);
+    padding: var(--space-2);
+    background-color: var(--color-background-200);
+    border-bottom: solid 1px var(--color-background-300);
+    cursor: pointer;
+}
+.media-info {
+    display: flex;
+    width: 90%;
+}
+.title {
+    font-size: var(--space-4);
+    font-weight: 500;
+    color: var(--color-text);
+    text-align: center;
+    width: 90%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.subtitle {
+    font-size: var(--space-3);
+    font-weight: 400;
+    color: var(--color-neutral);
+    text-align: center;
+    width: 90%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.audio-progress {
+    --progress: 0.0;
+    width: 100%;
+    height: 2px;
+    overflow: hidden;
+    position: absolute;
+    top: 0;
+    left: 0;
+    opacity: 1;
+    transition: opacity 0.55s ease-in-out;
+}
+.audio-progress::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: calc(var(--progress) * 100%);
+    height: 100%;
+    background-color: var(--color-primary);
+    transition: width 0.2s ease-in-out;
+}
+.status {
+    position: absolute;
+    left: var(--space-3);
+    background-color: var(--color-primary);
+    width: var(--space-4);
+    height: var(--space-4);
+    border-radius: 50%;
+    mask-position: center;
+    mask-size: contain;
+    mask-repeat: no-repeat;
+}
+.queue {
+    position: absolute;
+    right: var(--space-3);
+    background-color: var(--color-primary);
+    width: var(--space-4);
+    height: var(--space-4);
+    mask-position: center;
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    border-radius: 50%;
+    cursor: pointer;
+}
+.player-status {
+    --mask: url('/plus.svg');
+    position: absolute;
+    right: var(--space-3);
+    background-color: var(--color-primary);
+    width: var(--space-5);
+    height: var(--space-5);
+    mask-position: center;
+    mask-size: 1000%;
+    mask-repeat: no-repeat;
+    border-radius: 50%;
+    cursor: pointer;
+}
+.player-status::before {
+    position: absolute;
+    content: '';
+    width: 100%;
+    height: 100%;
+    mask-image: var(--mask);
+    mask-position: center;
+    mask-size: 70%;
+    mask-repeat: no-repeat;
+    top: 0;
+    left: 0;
+    background-color: var(--color-background-950);
+}
+.media {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    max-width: 900px;
+
+}
+.thumbnail {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+.thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+#audio {
+    display: block; /* Hide the audio element */
+}
+.metadata {
+    align-self: flex-start;
+    width: calc(100% - 2 * var(--space-5));
+}
+.info {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    width: 100%;
+    padding: var(--space-2);
+    gap: var(--space-1);
+}
+.info .title {
+    font-size: var(--space-6);
+    font-weight: 600;
+    color: var(--color-text);
+    text-align: center;
+    width: 90%;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.info .artist {
+    font-size: var(--space-4);
+    font-weight: 400;
+    color: var(--color-neutral);
+    text-align: center;
+    width: 90%;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.liked {
+    position: absolute;
+    transform: translateY(var(--space-3));
+    right: var(--space-3);
+    width: var(--space-6);
+    height: var(--space-6);
+    background-color: var(--color-primary);
+    mask-position: center;
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    cursor: pointer;
+}
+.main-audio-progress {
+    position: relative;
+    width: 100%;
+    height: 6px;
+    overflow: hidden;
+    background: var(--color-background-200);
+}
+.buffer-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 6px;
+    width: 100%;
+    background: var(--color-background-300);
+    pointer-events: none;
+}
+.slider {
+    top: 0;
+    left: 0;
+    --value: 00;
+    --max: 100;
+    width: 100%;
+    height: 6px;
+    background: transparent;
+    appearance: none;
+    outline: none;
+    margin: 0;
+    padding: 0;
+    cursor: pointer;
+    position: relative;
+}
+.slider::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: calc((var(--value) + 1) / var(--max) * 100%);
+    height: 100%;
+    background-color: var(--color-primary);
+}
+.slider::-webkit-slider-thumb {
+    appearance: none;
+    width: 4px;
+    height: 100px;
+    border-radius: 50%;
+    background: var(--color-primary, #007bff);
+}
+.controls, .modifiers {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    justify-content: center;
+    gap: clamp(var(--space-5), 2.5vw, var(--space-5));
+    padding: 0 var(--space-2);
+    overflow: visible;
+}
+.controls .control-button, .modifiers .modifier-button {
+    margin: var(--space-4) 0;
+    position: relative;
+    flex-shrink: 0;
+    width: var(--space-7);
+    height: var(--space-7);
+    background-color: var(--color-neutral);
+    mask-size: cover;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color 0.15s ease-in-out, transform 0.15s ease-in-out;
+}
+.controls .control-button.active, .modifiers .modifier-button.active {
+    background-color: var(--color-primary);
+}
+.controls .control-button:first-child {
+    margin-right: auto;
+}
+.controls .control-button:last-child {
+    margin-left: auto;
+}
+.controls .control-button.inverse, .modifiers .modifier-button.inverse {
+    --mask: url('/plus.svg');
+    background-color: var(--color-neutral);
+    mask-position: center;
+    mask-size: 1000%;
+    mask-repeat: no-repeat;
+    border-radius: 50%;
+    cursor: default;
+    scale: 1.4;
+}
+.controls .control-button.inverse.active, .modifiers .modifier-button.inverse.active {
+    background-color: var(--color-primary);
+    cursor: pointer;
+}
+.controls .control-button.inverse.spinner, .modifiers .modifier-button.inverse.spinner {
+    background-color: var(--color-neutral);
+    animation: spin 1s linear infinite;
+}
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+    
+}
+
+
+.controls .control-button.inverse::before, .modifiers .modifier-button.inverse::before {
+    position: absolute;
+    content: '';
+    width: 100%;
+    height: 100%;
+    mask-image: var(--mask);
+    mask-position: center;
+    mask-size: 70%;
+    mask-repeat: no-repeat;
+    top: 0;
+    left: 0;
+    background-color: var(--color-background-950);
+}
+.modifiers {
+    width: 35%;
+    min-width: fit-content;
+    justify-content: space-around;
+    margin-bottom: var(--space-3);
+}
+.modifiers .modifier-button {
+    width: var(--space-6);
+    height: var(--space-6);
+}

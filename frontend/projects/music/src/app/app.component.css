@@ -5,6 +5,14 @@
     width: 100%;
 }
 
+.content-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
 router-outlet {
     display: contents;
 }
@@ -14,16 +22,42 @@ router-outlet {
     flex-direction: row;
     align-items: center;
     justify-content: center;
-    gap: clamp(0.5rem, 1vw, 1rem);
+    gap: clamp(0.5rem, 2.5vw, 2rem);
     padding: 1rem;
-    padding-bottom: 2.5rem;
+    padding-bottom: var(--space-3);
     width: 100%;
     background-color: var(--color-background-200);
 }
 
-.navigation a {
-    color: var(--color-neutral);
+.navigation .navigation-link {
+    --color: var(--color-neutral);
     text-decoration: none;
-    font-size: var(--font-size-base);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-1);
+    cursor: pointer;
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out;
+}
+.navigation .navigation-link.active {
+    --color: var(--color-primary);
+}
+
+.navigation .navigation-link .icon {
+    width: 1.75rem;
+    height: 1.75rem;
+    mask-size: cover;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    border-radius: 50%;
+    mask-size: 80%;
+    background-color: var(--color);
+    transition: inherit;
+}
+.navigation .navigation-link .label {
+    font-size: var(--space-3);
     font-weight: 500;
+    color: var(--color);
+    transition: inherit;
 }
