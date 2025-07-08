@@ -4,6 +4,7 @@ import Express from 'express';
 import CORS from 'cors';
 import Authentication from './authentication.js';
 import Database from './database/users.js';
+import youtubeSearch from './youtube-search.js'; 
 
 const app = Express();
 
@@ -263,6 +264,25 @@ app.post('/newton/chat',
         // Handle chat request
     }
 )
+
+app.get('/youtube_search', async (req, res) => {
+    const query = req.query.q;
+    const maxResults = req.maxResults;
+    const nextPageToken = req.nextPageToken;
+
+    console.log('Search query:', query);
+    if (!query) {
+        return res.status(400).json({ error: 'Search query is required' });
+    }
+    try {
+        const results = await youtubeSearch.search(query,  maxResults, nextPageToken);
+
+        res.json(results);
+    } catch (error) {
+        console.error('Error searching videos:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
 
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);

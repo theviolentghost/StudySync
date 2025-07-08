@@ -1,7 +1,9 @@
 import { Component} from '@angular/core';
 import { RouterModule, RouterOutlet, Router } from '@angular/router';
+import { take } from 'rxjs/operators';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { YoutubeService } from './youtube.service';
 
 @Component({
   selector: 'app-youtube-page', 
@@ -16,7 +18,9 @@ export class YoutubePageComponent {
   seachInput = '';
   search;
 
-  constructor(private router: Router) {
+  constructor(private router: Router,
+    private youtubeService: YoutubeService
+  ) {
     this.router.navigate(['/youtubeHome', { 
         outlets: { 
             youtube: ['select'] 
@@ -59,6 +63,10 @@ export class YoutubePageComponent {
 
   public submitSearch():void{
     if(!this.seachInput) return;
+
+    this.youtubeService.searchVideos(this.seachInput, 50, null)
+    .pipe(take(1))
+    .subscribe(data => console.log(data));
 
     this.navigateToSearchResults();
   }
