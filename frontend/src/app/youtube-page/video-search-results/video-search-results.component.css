@@ -48,7 +48,10 @@
     height: 100%;
     min-height: 100%;
     border-radius: 4px;
-    background-color: #bbb;
+    background-color: transparent;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
 }
 
 .video_time_display{
@@ -113,6 +116,9 @@
     background-color: transparent;
     border-radius: 24px;
     cursor: pointer;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
 }
 
 .searched_channel_icon{
@@ -124,6 +130,9 @@
     border-radius: 100%;
     cursor: pointer;
     aspect-ratio: 1;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
 }
 
 .subscribe_button_unclicked{

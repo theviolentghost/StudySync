@@ -4,3 +4,20 @@
     height:100dvh;
     background:var(--color-primary);
 }
+
+.minimized_video_player{
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    z-index: 10;
+    aspect-ratio: 16/9;
+    width: 30%;
+}
+
+.normal_video_player{
+    position: fixed;
+    left: 72px;
+    top: 96px;
+    z-index: 10;
+    aspect-ratio: 16/9;
+}

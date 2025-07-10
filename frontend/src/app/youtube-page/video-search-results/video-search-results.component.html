@@ -1,34 +1,36 @@
 <div class="results_list">
-    <button class="searched_channel">
-        <div class="thumbnail" (click)="navigateToChannel()">
-            <button class="searched_channel_icon"></button>
-        </div>
+    <div *ngFor="let result of results">
+        <button class="searched_channel" *ngIf="result.id.channelId">
+            <div class="thumbnail" (click)="navigateToChannel()">
+                <div class="searched_channel_icon" [ngStyle]="{'background-image': 'url(' + result.snippet.thumbnails.high.url + ')'}"></div>
+            </div>
 
-        <div class="channel_info_container" (click)="navigateToChannel()">
+            <div class="channel_info_container" (click)="navigateToChannel()">
+                <div class="video_info">
+                    <p class="video_title">{{ result.snippet.channelTitle}}</p>
+                    <p class="video_caption">&#64;channel and subs</p>
+                    <p class="video_caption">{{result.snippet.description}}</p>
+                </div>
+            </div>
+
+            <div *ngIf="!isSubscribed" (click)="toggleIsSubscribed()" class="subscribe_button_unclicked">Subscribe</div>
+            <div *ngIf="isSubscribed" (click)="toggleIsSubscribed()" class="subscribe_button_clicked">Subscribed</div>
+        </button>
+
+        <button class="video" *ngIf="result.id.videoId" (click)="navigateToPlayer(result.id.videoId)">
+            <div class="thumbnail" [ngStyle]="{'background-image': 'url(' + result.snippet.thumbnails.high.url + ')'}">
+                <div class="video_time_display">0:00:00</div>
+            </div>
+
             <div class="video_info">
-                <p class="video_title">channel name channel name channel name channel namechannel name channel namechannel name channel namechannel name channel namechannel name channel namechannel name channel namechannel name channel namechannel name channel namechannel name channel namechannel name channel namechannel name channel namechannel</p>
-                <p class="video_caption">&#64;channel and subs</p>
-                <p class="video_caption">description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description </p>
-            </div>
-        </div>
-
-        <button *ngIf="!isSubscribed" (click)="toggleIsSubscribed()" class="subscribe_button_unclicked">Subscribe</button>
-        <button *ngIf="isSubscribed" (click)="toggleIsSubscribed()" class="subscribe_button_clicked">Subscribed</button>
-    </button>
-
-    <button class="video" (click)="navigateToPlayer()" *ngFor="let video of videos">
-        <div class="thumbnail">
-            <div class="video_time_display">0:00:00</div>
-        </div>
-
-        <div class="video_info">
-            <p class="video_title">title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title title</p>
-            <p class="video_caption">views and uplaod time</p>
-            <div class="channel_container">
-                <button class="video_channel_icon" (click)="navigateToChannel()"></button>
-                <p class="video_caption">channel name</p>
-            </div>
-            <p class="video_caption">description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description description</p>
-        </div>
-    </button>
+                <p class="video_title">{{ result.snippet.title}}</p>
+                <p class="video_caption">views and {{ timeAgo(result.snippet.publishTime)}}</p>
+                <div class="channel_container">
+                    <div class="video_channel_icon" [ngStyle]="{'background-image': 'url('+ + ')'}" (click)="navigateToChannel()"></div>
+                    <p class="video_caption">{{ result.snippet.channelTitle}}</p>
+                </div>
+                <p class="video_caption">{{result.snippet.description}}</p>
+            </div>        
+        </button>
+    </div>    
 </div>

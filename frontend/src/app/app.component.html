@@ -1,2 +1,12 @@
 <router-outlet></router-outlet>
 <cursor #app_cursor></cursor>
+<iframe
+    [style.width.px]="playerWidth"
+    [ngClass]="{'minimized_video_player': isMinimized, 'normal_video_player': !isMinimized}"
+    *ngIf="videoId"
+    [src]="videoUrl"
+    title="YouTube video player"
+    frameborder="0"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+    allowfullscreen>
+</iframe>

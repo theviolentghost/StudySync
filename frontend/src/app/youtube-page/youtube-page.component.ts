@@ -4,6 +4,7 @@ import { take } from 'rxjs/operators';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { YoutubeService } from './youtube.service';
+import { YouTubeSearchResponse } from './video-search-result.model';
 
 @Component({
   selector: 'app-youtube-page', 
@@ -15,6 +16,7 @@ import { YoutubeService } from './youtube.service';
 export class YoutubePageComponent {
   SEARCH_DELAY_MS = 500;
 
+  oldSearch = '';
   seachInput = '';
   search;
 
@@ -63,10 +65,20 @@ export class YoutubePageComponent {
 
   public submitSearch():void{
     if(!this.seachInput) return;
+    if(this.seachInput == this.oldSearch){
+      console.log("same");
+      this.navigateToSearchResults();
+      return;
+    }
 
-    this.youtubeService.searchVideos(this.seachInput, 50, null)
+    this.oldSearch = this.seachInput;
+
+    this.youtubeService.searchVideos(this.seachInput, 15, null)
     .pipe(take(1))
-    .subscribe(data => console.log(data));
+    .subscribe(data => {
+      this.youtubeService.saveNextSearchToken(data.nextPageToken);
+      this.youtubeService.replaceSearchList(data.results);
+    });
 
     this.navigateToSearchResults();
   }

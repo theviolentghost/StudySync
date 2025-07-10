@@ -267,10 +267,9 @@ app.post('/newton/chat',
 
 app.get('/youtube_search', async (req, res) => {
     const query = req.query.q;
-    const maxResults = req.maxResults;
-    const nextPageToken = req.nextPageToken;
+    const maxResults = req.query.maxResults || 5;
+    const nextPageToken = req.query.nextPageToken || '';
 
-    console.log('Search query:', query);
     if (!query) {
         return res.status(400).json({ error: 'Search query is required' });
     }

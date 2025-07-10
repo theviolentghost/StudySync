@@ -68,7 +68,7 @@ export const routes: Routes = [
                 outlet: 'youtube'
             },
             {
-                path: "player/:videoId",
+                path: "player",
                 component: VideoPlayerComponent,
                 outlet: 'youtube'
             },

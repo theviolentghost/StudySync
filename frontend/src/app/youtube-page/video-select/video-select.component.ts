@@ -20,10 +20,9 @@ export class VideoSelectComponent {
   }
 
   public navigateToPlayer(): void {
-    const videoId = 'abcde'
     this.router.navigate(['/youtubeHome', { 
         outlets: { 
-            youtube: ['player', videoId] 
+            youtube: ['player'] 
         } 
     }], { skipLocationChange: false });
   }

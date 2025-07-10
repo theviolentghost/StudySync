@@ -16,14 +16,24 @@ async function youtubeSearch(query, maxResults, nextPageToken) {
     }
 
     let results = [];
+    let response;
 
-    const response = await youtube.search.list({
+    if(nextPageToken){
+        response = await youtube.search.list({
+            part: 'snippet',
+            q: query,
+            type: ['video, channel'],
+            maxResults: maxResults,
+            pageToken: nextPageToken,
+        });
+    } else {
+        response = await youtube.search.list({
         part: 'snippet',
         q: query,
-        type: ['video', 'channel'],
+        type: ['video, channel'],
         maxResults: maxResults,
-        pageToken: nextPageToken,
     });
+    }
 
     results = results.concat(response.data.items);
     nextPageToken = response.data.nextPageToken;

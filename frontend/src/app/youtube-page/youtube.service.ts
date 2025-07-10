@@ -1,23 +1,70 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { YouTubeSearchResponse, SearchResultItem } from './video-search-result.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class YoutubeService {
 
+    private _videoPlayerWidth = 0;
     private backendURL = "http://localhost:3000";
+
+    private nextPageToken: string;
+    private searchList: SearchResultItem[];
+
+    private resultsSubject = new BehaviorSubject<SearchResultItem[] | null>(null);
+    results$: Observable<SearchResultItem[] | null> = this.resultsSubject.asObservable();
+
+    private videoUrlSubject = new BehaviorSubject<string | null>(null);
+    videoUrl$: Observable<string | null> = this.videoUrlSubject.asObservable();
+
+    private minimizedSubject = new BehaviorSubject<boolean | null>(null);
+    videoMinimized$: Observable<boolean | null> = this.minimizedSubject.asObservable();
+
+    private videoWidthSubject = new BehaviorSubject<number | null>(null);
+    videoWidth$: Observable<number | null> = this.videoWidthSubject.asObservable();
 
     constructor(private http: HttpClient) { }
 
     searchVideos(query: string, maxResults: number = 10, nextPageToken): Observable<any> {
 
-        const params = new HttpParams()
+        let params = new HttpParams()
             .set('q', query)
-            .set('maxResults', maxResults)
-            .set('nextPageToken', nextPageToken)
+            .set('maxResults', maxResults);
 
-        return this.http.get<any>(`${this.backendURL}/youtube_search`, { params });
+        if (nextPageToken) {
+            params = new HttpParams().set('nextPageToken', nextPageToken).set('q', query).set('maxResults', maxResults);
+        }
+        return this.http.get<YouTubeSearchResponse>(`${this.backendURL}/youtube_search`, { params });
+    }
+
+    set videoPlayerWidth(number: number){
+        this.videoWidthSubject.next(number);
+    }
+
+    playNewVideo(url :string):void{
+        this.minimizedSubject.next(false);
+        this.videoUrlSubject.next(url);
+    }
+
+    saveNextSearchToken(token: string): void{
+        this.nextPageToken = token;
+    }
+
+    replaceSearchList(list :SearchResultItem[]):void{
+        this.searchList = list;
+        this.resultsSubject.next(this.searchList);
+    }
+
+    addToSearchList(list :SearchResultItem[]): void{
+        this.searchList.push(...list);
+        this.resultsSubject.next(this.searchList);
+    }
+
+    getCurrentSearch(): SearchResultItem[]{
+        return this.resultsSubject.value || [];
     }
 }
+
