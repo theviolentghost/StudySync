@@ -1,11 +1,11 @@
 <div class="results_list">
     <div *ngFor="let result of results">
         <button class="searched_channel" *ngIf="result.id.channelId">
-            <div class="thumbnail" (click)="navigateToChannel()">
-                <div class="searched_channel_icon" [ngStyle]="{'background-image': 'url(' + result.snippet.thumbnails.high.url + ')'}"></div>
+            <div class="thumbnail" (click)="navigateToChannel(result.snippet.channelId)">
+                <img class="searched_channel_icon" [ngStyle]="{'background-image': 'url(' + result.snippet.thumbnails.high.url + ')'}">
             </div>
 
-            <div class="channel_info_container" (click)="navigateToChannel()">
+            <div class="channel_info_container" (click)="navigateToChannel(result.snippet.channelId)">
                 <div class="video_info">
                     <p class="video_title">{{ result.snippet.channelTitle}}</p>
                     <p class="video_caption">&#64;channel and subs</p>
@@ -26,7 +26,7 @@
                 <p class="video_title">{{ result.snippet.title}}</p>
                 <p class="video_caption">views and {{ timeAgo(result.snippet.publishTime)}}</p>
                 <div class="channel_container">
-                    <div class="video_channel_icon" [ngStyle]="{'background-image': 'url('+ + ')'}" (click)="navigateToChannel()"></div>
+                    <div class="video_channel_icon" [ngStyle]="{'background-image': 'url('+ + ')'}" (click)="navigateToChannel(result.snippet.channelId)"></div>
                     <p class="video_caption">{{ result.snippet.channelTitle}}</p>
                 </div>
                 <p class="video_caption">{{result.snippet.description}}</p>

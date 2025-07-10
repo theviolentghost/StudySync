@@ -66,7 +66,6 @@ export class YoutubePageComponent {
   public submitSearch():void{
     if(!this.seachInput) return;
     if(this.seachInput == this.oldSearch){
-      console.log("same");
       this.navigateToSearchResults();
       return;
     }

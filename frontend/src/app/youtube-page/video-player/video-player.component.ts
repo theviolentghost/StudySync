@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, HostListener} from '@angular/core';
+import { Component, AfterViewInit, HostListener, OnDestroy} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { YoutubeService } from '../youtube.service';
@@ -18,12 +18,17 @@ export class VideoPlayerComponent {
     private youtubeService: YoutubeService
   ){
     for(let i = 0; i < 25; i++){
-      this.videos[i] = i;
+      this.videos[i] = i;//recomended blank fill
     }
   }
 
   ngAfterViewInit() {
     this.savePlayerWidth();
+    this.savePlayerScroll();
+  }
+
+  ngOnDestroy(){
+    this.youtubeService.minimizePlayer();
   }
 
   @HostListener('window:resize')
@@ -31,9 +36,19 @@ export class VideoPlayerComponent {
     this.savePlayerWidth();
   }
 
+  @HostListener('window:scroll', ['$event'])
+  onWindowScroll(event: Event) {
+    this.savePlayerScroll();
+  }
+
   public savePlayerWidth(): void{
     let container = document.getElementById('video_player');
     this.youtubeService.videoPlayerWidth = container.offsetWidth;
+  }
+
+  public savePlayerScroll(): void{
+    const scrollY = window.scrollY || document.documentElement.scrollTop;
+    this.youtubeService.videoPlayerY = scrollY;
   }
 
   public toggleIsSubscribed(): void{

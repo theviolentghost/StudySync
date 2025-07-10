@@ -10,6 +10,10 @@
     aspect-ratio: 4;
     background-color: #bbb;
     border-radius: 4px;
+    background-color: transparent;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
 }
 
 .channel_display{
@@ -29,6 +33,10 @@
     background-color: transparent;
     border-radius: 100%;
     cursor: pointer;
+    background-color: transparent;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
 }
 
 .channel_name{
@@ -41,8 +49,9 @@
     font-weight: 500;
     margin-bottom: 12px;
     color: #bbb;
-    max-height: 2.3em;
+    max-height: 3.8em;
     text-wrap: wrap;
+    overflow: hidden;
 }
 
 .subscribe_button_unclicked{

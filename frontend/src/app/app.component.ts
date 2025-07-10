@@ -31,6 +31,9 @@ export class AppComponent {
   minSub
   isMinimized = true;
 
+  ySub
+  playerY = 0;
+
   constructor(private sanitizer: DomSanitizer,
     private youtubeService: YoutubeService
   ) {}
@@ -38,6 +41,10 @@ export class AppComponent {
   ngOnInit() {
     this.widthSub = this.youtubeService.videoWidth$.subscribe(width => {
       this.playerWidth = width;
+    });
+
+    this.ySub = this.youtubeService.videoY$.subscribe(y => {
+      this.playerY = 96 - y;
     });
 
     this.minSub = this.youtubeService.videoMinimized$.subscribe(minimized => {
@@ -53,13 +60,25 @@ export class AppComponent {
     this.urlSub.unsubscribe();
     this.minSub.unsubscribe();
     this.widthSub.unsubscribe();
+    this.ySub.unsubscribe();
+  }
+
+  getPlayerWidth(){
+    if(this.isMinimized) return null;
+    return this.playerWidth;
+  }
+
+  getPlayerY(){
+    if(this.isMinimized) return null;
+    return this.playerY;
   }
 
   getEmbedUrl(id: string): SafeResourceUrl {
     if (!id) {
-      return this.sanitizer.bypassSecurityTrustResourceUrl('https://www.youtube.com/embed/?enablejsapi=1');
+      return this.sanitizer.bypassSecurityTrustResourceUrl('https://www.youtube.com/embed/');
     }
+    if(this.videoId == id) return;
     this.videoId = id;
-    return this.sanitizer.bypassSecurityTrustResourceUrl(`https://www.youtube.com/embed/${id}?enablejsapi=1`);
+    return this.sanitizer.bypassSecurityTrustResourceUrl(`https://www.youtube.com/embed/${id}?enablejsapi=1&controls=1`);
   }
 }

@@ -3,7 +3,6 @@ export interface Thumbnail {
 }
 
 export interface SearchSnippet {
-  publishedAt: string;
   channelId: string;
   title: string;
   description: string;
@@ -25,8 +24,6 @@ export interface SearchResultId {
 }
 
 export interface SearchResultItem {
-  kind: string;
-  etag: string;
   id: SearchResultId;
   snippet: SearchSnippet;
 }

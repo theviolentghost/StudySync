@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { YoutubeService } from '../youtube.service';
 import { SearchResultItem } from '../video-search-result.model';
 import { Subscription } from 'rxjs';
+import { take } from 'rxjs/operators';
 
 
 @Component({
@@ -46,16 +47,17 @@ export class VideoSearchResultsComponent {
     }], { skipLocationChange: true });
   }
 
-  public navigateToChannel(): void {
+  public navigateToChannel(channelId: string): void {
+    this.youtubeService.getFullChannel(channelId)
+        .pipe(take(1))
+        .subscribe(data => {
+          this.youtubeService.saveCurrentChannel(data);
+        });
     this.router.navigate(['/youtubeHome', { 
         outlets: { 
             youtube: ['channel-view'] 
         } 
     }], { skipLocationChange: true });
-  }
-
-  public getResults(): void{
-    this.results = this.youtubeService.getCurrentSearch();
   }
 
   public timeAgo(isoDate) {

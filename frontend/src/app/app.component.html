@@ -1,7 +1,8 @@
 <router-outlet></router-outlet>
 <cursor #app_cursor></cursor>
 <iframe
-    [style.width.px]="playerWidth"
+    [style.width.px]="getPlayerWidth()"
+    [style.top.px]="getPlayerY()"
     [ngClass]="{'minimized_video_player': isMinimized, 'normal_video_player': !isMinimized}"
     *ngIf="videoId"
     [src]="videoUrl"
