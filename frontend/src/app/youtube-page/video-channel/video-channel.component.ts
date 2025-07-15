@@ -1,8 +1,11 @@
-import { Component, OnInit, OnDestroy} from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { YoutubeService } from '../youtube.service';
 import { YouTubeChannel } from '../youtube-channel-search-results.model';
+import { SearchResultItem, YouTubeSearchResponse } from '../video-search-result.model';
+import { PlaylistVideo } from '../youtube-playlist-results.model';
+import { YoutubeSubscriptionService } from '../youtube-subscription.service';
 
 @Component({
   selector: 'app-video-channel',
@@ -13,14 +16,18 @@ import { YouTubeChannel } from '../youtube-channel-search-results.model';
 })
 export class VideoChannelComponent {
 
-  videos:Number[] = [];
-  isSubscribed = false;
+  videos:Number[] = [];//recommended vidoes on the side
 
+  isSubscribed = false;
   channelSub;
   currentChannel: YouTubeChannel;
+  isAddingToUploads = false;
+  uploadsSub;
+  channelUploads: PlaylistVideo[];
 
   constructor(private router: Router,
-    private youtubeService: YoutubeService
+    private youtubeService: YoutubeService,
+    private youtubeSubscriptionService: YoutubeSubscriptionService
   ){
     for(let i = 0; i < 25; i++){
       this.videos[i] = i;
@@ -28,25 +35,61 @@ export class VideoChannelComponent {
   }
 
   ngOnInit() {
+    window.scrollTo(0, 0);
     this.channelSub = this.youtubeService.channel$.subscribe(channel => {
       this.currentChannel = channel;
-      console.log(channel);
+      if(!this.currentChannel) return;
+
+      this.isSubscribed = this.youtubeSubscriptionService.isSubscribed(channel.id);
+    });
+
+    this.uploadsSub = this.youtubeService.channelUploads$.subscribe(videos => {
+      this.channelUploads = videos;
+      this.isAddingToUploads = false;
     });
   }
 
   ngOnDestroy() {
     this.channelSub.unsubscribe();
+    this.uploadsSub.unsubscribe();
   }
 
-  public toggleIsSubscribed(): void{
+  @HostListener('window:scroll', ['$event'])
+  onWindowScroll(event: Event) {
+    const scrollY = window.scrollY || document.documentElement.scrollTop;
+    let pageHeight;
+    try{
+      pageHeight = document.getElementById('page_container').offsetHeight - document.body.offsetHeight;
+    } catch{
+      return;
+    }
+
+    if (!this.isAddingToUploads && scrollY >= pageHeight){ 
+      this.isAddingToUploads = true;
+      this.youtubeService.addToUploadList();
+    }
+  }
+
+  public loadMoreUploads(){
+    this.youtubeService.addToUploadList();
+  }
+
+  public toggleIsSubscribed(channelId: string): void{
     this.isSubscribed = !this.isSubscribed;
+
+    if(this.isSubscribed){
+      this.youtubeSubscriptionService.subscribeToChannel(channelId);
+      return;
+    } 
+
+    this.youtubeSubscriptionService.unsubscribeToChannel(channelId);
   }
 
-  public navigateToPlayer(): void {
-    this.router.navigate(['/youtubeHome', { 
-        outlets: { 
-            youtube: ['player'] 
-        } 
-    }], { skipLocationChange: true });
+  public navigateToPlayer(videoId: string): void {
+    this.youtubeService.navigateToPlayer(videoId);
+  }
+
+  public timeAgo(isoDate) {
+    return this.youtubeService.timeAgo(isoDate);
   }
 }

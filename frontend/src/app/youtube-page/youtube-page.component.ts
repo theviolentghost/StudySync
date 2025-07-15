@@ -65,6 +65,8 @@ export class YoutubePageComponent {
 
   public submitSearch():void{
     if(!this.seachInput) return;
+    this.youtubeService.currentSearchQuery = this.seachInput;
+    
     if(this.seachInput == this.oldSearch){
       this.navigateToSearchResults();
       return;

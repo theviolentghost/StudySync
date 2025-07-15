@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterModule } from '@angular/router';
-import { NoteEditorComponent } from './user.space/note.editor/note.editor.component';
+// import { NoteEditorComponent } from './user.space/note.editor/note.editor.component';
 import { CursorComponent } from './cursor/cursor.component';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { YoutubeService } from './youtube-page/youtube.service';
@@ -12,7 +12,6 @@ import { min, Subscription } from 'rxjs';
   imports: [
     RouterOutlet,
     RouterModule,
-    NoteEditorComponent,
     CursorComponent,
     CommonModule
   ],
@@ -23,7 +22,7 @@ export class AppComponent {
 
   videoId: string = '';
   videoUrl: SafeResourceUrl;
-  urlSub;
+  videoIdSub;
 
   widthSub;
   playerWidth = 0;
@@ -51,13 +50,13 @@ export class AppComponent {
       this.isMinimized = minimized;
     });
 
-    this.urlSub = this.youtubeService.videoUrl$.subscribe(newUrl => {
-      this.videoUrl = this.getEmbedUrl(newUrl);
+    this.videoIdSub = this.youtubeService.videoId$.subscribe(videoId => {
+      this.videoUrl = this.getEmbedUrl(videoId);
     });
   }
 
   ngOnDestroy() {
-    this.urlSub.unsubscribe();
+    this.videoIdSub.unsubscribe();
     this.minSub.unsubscribe();
     this.widthSub.unsubscribe();
     this.ySub.unsubscribe();

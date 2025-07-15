@@ -1,6 +1,7 @@
 import { Component} from '@angular/core';
 import { RouterModule, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { YoutubeService } from '../youtube.service';
 
 
 @Component({
@@ -13,25 +14,19 @@ import { CommonModule } from '@angular/common';
 export class VideoSelectComponent {
   videos:Number[] = [];
 
-  constructor(private router: Router){
+  constructor(private router: Router,
+    private youtubeService: YoutubeService
+  ){
     for(let i = 0; i < 25; i++){
       this.videos[i] = i;
     }
   }
 
   public navigateToPlayer(): void {
-    this.router.navigate(['/youtubeHome', { 
-        outlets: { 
-            youtube: ['player'] 
-        } 
-    }], { skipLocationChange: false });
+    this.youtubeService.navigateToPlayer('');
   }
 
   public navigateToChannel(): void {
-    this.router.navigate(['/youtubeHome', { 
-        outlets: { 
-            youtube: ['channel-view'] 
-        } 
-    }], { skipLocationChange: true });
+    this.youtubeService.navigateToChannel('');
   }
 }

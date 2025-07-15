@@ -1,10 +1,11 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { RouterModule, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { YoutubeService } from '../youtube.service';
 import { SearchResultItem } from '../video-search-result.model';
 import { Subscription } from 'rxjs';
-import { take } from 'rxjs/operators';
+import { FileManagerService } from '../../user.space/note.editor/file.manager.service';
+import { YoutubeSubscriptionService } from '../youtube-subscription.service';
 
 
 @Component({
@@ -19,14 +20,18 @@ export class VideoSearchResultsComponent {
   results:SearchResultItem[] = [];
   resultsSub;
   isSubscribed = false;
+  private isAddingToSearch: boolean = false;
 
   constructor(private router: Router,
-    private youtubeService: YoutubeService
+    private youtubeService: YoutubeService,
+    private youtubeSubscriptionService: YoutubeSubscriptionService
   ){}
 
   ngOnInit() {
-    this.resultsSub = this.youtubeService.results$.subscribe(searchResults => {
+    window.scrollTo(0, 0);
+    this.resultsSub = this.youtubeService.searchResults$.subscribe(searchResults => {
       this.results = searchResults || [];
+      this.isAddingToSearch = false;
     });
   }
 
@@ -34,53 +39,41 @@ export class VideoSearchResultsComponent {
     this.resultsSub.unsubscribe();
   }
 
-  public toggleIsSubscribed(): void{
-    this.isSubscribed = !this.isSubscribed;
+  @HostListener('window:scroll', ['$event'])
+  onWindowScroll(event: Event) {
+    const scrollY = window.scrollY || document.documentElement.scrollTop;
+    const pageHeight = document.getElementById('results_list').offsetHeight - document.body.offsetHeight;
+
+    if (!this.isAddingToSearch && scrollY >= pageHeight){ 
+      this.isAddingToSearch = true;
+      this.youtubeService.addToSearchList();
+    }
   }
 
-  public navigateToPlayer(url: string): void {
-    this.youtubeService.playNewVideo(url);
-    this.router.navigate(['/youtubeHome', { 
-        outlets: { 
-            youtube: ['player'] 
-        } 
-    }], { skipLocationChange: true });
+  public toggleIsSubscribed(channelId: string): void{
+    this.isSubscribed = !this.isSubscribed;
+
+    if(this.isSubscribed){
+      this.youtubeSubscriptionService.subscribeToChannel(channelId);
+      return;
+    } 
+
+    this.youtubeSubscriptionService.unsubscribeToChannel(channelId);
+  }
+
+  public isSubscribedToChannel(channelId: string): boolean{
+    return this.youtubeSubscriptionService.isSubscribed(channelId);
+  }
+
+  public navigateToPlayer(videoId: string): void {
+    this.youtubeService.navigateToPlayer(videoId);
   }
 
   public navigateToChannel(channelId: string): void {
-    this.youtubeService.getFullChannel(channelId)
-        .pipe(take(1))
-        .subscribe(data => {
-          this.youtubeService.saveCurrentChannel(data);
-        });
-    this.router.navigate(['/youtubeHome', { 
-        outlets: { 
-            youtube: ['channel-view'] 
-        } 
-    }], { skipLocationChange: true });
+    this.youtubeService.navigateToChannel(channelId);
   }
 
   public timeAgo(isoDate) {
-  const now = new Date();
-  const past = new Date(isoDate);
-  const diffMs = now.getTime() - past.getTime();
-
-  if (diffMs < 0) return "in the future";
-
-  const seconds = Math.floor(diffMs / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
-  const months = Math.floor(days / 30);
-  const years = Math.floor(days / 365);
-
-  if (years > 0) return years === 1 ? "1 year ago" : `${years} years ago`;
-  if (months > 0) return months === 1 ? "1 month ago" : `${months} months ago`;
-  if (days > 0) return days === 1 ? "1 day ago" : `${days} days ago`;
-  if (hours > 0) return hours === 1 ? "1 hour ago" : `${hours} hours ago`;
-  if (minutes > 0) return minutes === 1 ? "1 minute ago" : `${minutes} minutes ago`;
-  if (seconds > 0) return seconds === 1 ? "1 second ago" : `${seconds} seconds ago`;
-
-  return "just now";
-}
+   return this.youtubeService.timeAgo(isoDate);
+  }
 }

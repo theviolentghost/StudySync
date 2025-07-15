@@ -30,5 +30,5 @@ export interface SearchResultItem {
 
 export interface YouTubeSearchResponse {
   nextPageToken?: string;
-  reults: SearchResultItem[];
+  results: SearchResultItem[];
 }

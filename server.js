@@ -6,6 +6,7 @@ import Authentication from './authentication.js';
 import Database from './database/users.js';
 import youtubeSearch from './youtube-search.js'; 
 import youtubeChannelSearch from './youtube-channel-search.js';
+import youtubePlaylist from './youtube-playlist.js';
 
 const app = Express();
 
@@ -292,6 +293,40 @@ app.get('/youtube_full_channel', async (req, res) => {
     }
     try {
         const results = await youtubeChannelSearch.getFullChannel(id);;
+
+        res.json(results);
+    } catch (error) {
+        console.error('Error searching videos:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+app.get('/youtube_get_channel_playlists', async (req, res) => {
+    const id = req.query.id;
+
+    if (!id) {
+        return res.status(400).json({ error: 'id is required' });
+    }
+    try {
+        const results = await youtubePlaylist.getChannelPlaylists(id);
+
+        res.json(results);
+    } catch (error) {
+        console.error('Error searching videos:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+app.get('/youtube_get_playlist_videos', async (req, res) => {
+    const id = req.query.id;
+    const nextPageToken = req.query.nextPageToken;
+
+
+    if (!id) {
+        return res.status(400).json({ error: 'id is required' });
+    }
+    try {
+        const results = await youtubePlaylist.getPlaylistVideos(id, nextPageToken);
 
         res.json(results);
     } catch (error) {

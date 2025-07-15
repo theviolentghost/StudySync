@@ -1,4 +1,4 @@
-<div class="page_container" *ngIf="currentChannel">
+<div id="page_container" class="page_container" *ngIf="currentChannel">
     <img class="channel_banner" [ngStyle]="{'background-image': 'url(' + currentChannel.brandingSettings.image.bannerExternalUrl + ')'}">
     <div class="channel_display">
         <div class="channel_icon" [ngStyle]="{'background-image': 'url(' + currentChannel.snippet.thumbnails.high.url + ')'}"></div>
@@ -6,22 +6,21 @@
             <p class="channel_name">{{ currentChannel.snippet.title }}</p>
             <span class="channel_description">{{ currentChannel.snippet.customUrl }}</span>
             <p class="channel_description">{{ currentChannel.snippet.description }}</p>
-            <button *ngIf="!isSubscribed" (click)="toggleIsSubscribed()" class="subscribe_button_unclicked">Subscribe</button>
-                <button *ngIf="isSubscribed" (click)="toggleIsSubscribed()" class="subscribe_button_clicked">Subscribed</button>
+            <div  (click)="toggleIsSubscribed(currentChannel.id)" [ngClass]="{'subscribe_button_unclicked': !isSubscribed, 'subscribe_button_clicked':isSubscribed}">{{isSubscribed ? "Subscribed" : "Subscribe"}}</div>
         </div>
     </div>
 
     <div class="channel_video_grid">
-        <a class="video" (click)="navigateToPlayer()" *ngFor="let video of videos">
-            <div class="thumbnail">
+        <a class="video" (click)="navigateToPlayer(video.contentDetails.videoId)" *ngFor="let video of channelUploads">
+            <div class="thumbnail" [ngStyle]="{'background-image': 'url(' + video.snippet.thumbnails.high.url + ')'}">
                 <div class="video_time_display"><div class="video_time_text">0:00:00</div></div>
             </div>
 
             <div class="video_details">
                 <div class="video_text">
-                    <p class="video_title">title</p>
-                    <p class="video_caption">channel name</p>
-                    <p class="video_caption"> views and date</p>
+                    <p class="video_title">{{ video.snippet.title }}</p>
+                    <p class="video_caption">{{ video.snippet.description }}</p>
+                    <p class="video_caption"> views and {{ timeAgo(video.snippet.publishedAt)}}</p>
                 </div>
             </div>
         </a>

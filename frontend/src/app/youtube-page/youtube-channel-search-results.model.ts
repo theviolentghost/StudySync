@@ -1,3 +1,4 @@
+import { PlaylistVideo } from "./youtube-playlist-results.model";
 
 export interface YouTubeChannel {
   id: string;
@@ -43,4 +44,10 @@ export interface BrandingSettings {
     bannerMobileExtraHdImageUrl?: string;
     bannerTvImageUrl?: string;
   };
+}
+
+export interface SubscriptionData{
+  channelId: string;
+  nextUploadPageToken: string;
+  uploads: PlaylistVideo[];
 }

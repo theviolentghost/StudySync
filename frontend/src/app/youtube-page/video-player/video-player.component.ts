@@ -22,6 +22,10 @@ export class VideoPlayerComponent {
     }
   }
 
+  ngOnInit() {
+    window.scroll(0, 0);
+  }
+
   ngAfterViewInit() {
     this.savePlayerWidth();
     this.savePlayerScroll();
@@ -56,11 +60,7 @@ export class VideoPlayerComponent {
   }
 
   public navigateToChannel(): void {
-    this.router.navigate(['/youtubeHome', { 
-        outlets: { 
-            youtube: ['channel-view'] 
-        } 
-    }], { skipLocationChange: true });
+    this.youtubeService.navigateToChannel('');
   }
 
 }
