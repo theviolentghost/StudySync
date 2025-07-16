@@ -1,5 +1,5 @@
 <div class="subscription_list">
-    <button class="channel_icon" *ngFor="let subscription of subscriptions" (click)="navigateToChannel()"></button>
+    <img class="channel_icon" *ngFor="let subscription of subscriptions" [ngStyle]="{ 'background-image': 'url(' + subscription.iconUrl + ')' }" (click)="navigateToChannel(subscription.channelId)">
 </div>
 
 <div class="youtube_video_grid">
@@ -9,7 +9,7 @@
         </div>
 
         <div class="video_details">
-            <button class="video_channel_icon" (click)="navigateToChannel()"></button>
+            <button class="video_channel_icon" (click)="navigateToChannel('')"></button>
             <div class="video_text">
                 <p class="video_title">title</p>
                 <p class="video_caption">channel name</p>

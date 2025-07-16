@@ -22,6 +22,10 @@
     background-color: transparent;
     border-radius: 100%;
     cursor: pointer;
+    background-color: transparent;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
 }
 
 .youtube_video_grid{

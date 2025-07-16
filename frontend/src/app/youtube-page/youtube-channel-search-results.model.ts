@@ -48,6 +48,7 @@ export interface BrandingSettings {
 
 export interface SubscriptionData{
   channelId: string;
-  nextUploadPageToken: string;
-  uploads: PlaylistVideo[];
+  uploadsId: string;
+  iconUrl: string;
+
 }

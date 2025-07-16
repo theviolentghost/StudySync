@@ -16,8 +16,6 @@ import { YoutubeSubscriptionService } from '../youtube-subscription.service';
 })
 export class VideoChannelComponent {
 
-  videos:Number[] = [];//recommended vidoes on the side
-
   isSubscribed = false;
   channelSub;
   currentChannel: YouTubeChannel;
@@ -28,11 +26,7 @@ export class VideoChannelComponent {
   constructor(private router: Router,
     private youtubeService: YoutubeService,
     private youtubeSubscriptionService: YoutubeSubscriptionService
-  ){
-    for(let i = 0; i < 25; i++){
-      this.videos[i] = i;
-    }
-  }
+  ){}
 
   ngOnInit() {
     window.scrollTo(0, 0);
