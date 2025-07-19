@@ -3,17 +3,17 @@
 </div>
 
 <div class="youtube_video_grid">
-    <a class="video" (click)="navigateToPlayer()" *ngFor="let video of videos">
-        <div class="thumbnail">
+    <a class="video" #videoItem [attr.video-id]="video.contentDetails.videoId" [attr.playlist-id]="video.snippet.playlistId" (click)="navigateToPlayer(video.contentDetails.videoId)" *ngFor="let video of sortedUploads">
+        <div class="thumbnail" [attr.background-url]="video.snippet.thumbnails.high.url" [ngStyle]="{ 'background-image': 'url(' + video.snippet.thumbnails.high.url + ')' }">
             <div class="video_time_display"><div class="video_time_text">0:00:00</div></div>
         </div>
 
         <div class="video_details">
-            <button class="video_channel_icon" (click)="navigateToChannel('')"></button>
+            <button class="video_channel_icon" (click)="navigateToChannel(video.snippet.channelId)"></button>
             <div class="video_text">
-                <p class="video_title">title</p>
-                <p class="video_caption">channel name</p>
-                <p class="video_caption"> views and date</p>
+                <p class="video_title">{{ video.snippet.title}}</p>
+                <p class="video_caption">{{ video.snippet.channelTitle}}</p>
+                <p class="video_caption"> views and {{ timeAgo(video.snippet.publishedAt)}}</p>
             </div>
         </div>
     </a>

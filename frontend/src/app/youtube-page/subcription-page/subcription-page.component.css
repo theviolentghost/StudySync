@@ -62,6 +62,10 @@
     position: relative;
     border-radius: inherit;
     aspect-ratio: 16/9;
+    background-color: transparent;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
 }
 
 .video_time_display{
@@ -110,6 +114,7 @@
     height: auto;
     max-height: 2.3em;
     text-wrap: wrap;
+    overflow: hidden;
 }
 
 .video_caption{
@@ -117,4 +122,5 @@
     font-size: 12px;
     color: #bbb;
     text-wrap: wrap;
+    overflow: hidden;
 }

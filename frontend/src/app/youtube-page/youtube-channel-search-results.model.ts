@@ -50,5 +50,12 @@ export interface SubscriptionData{
   channelId: string;
   uploadsId: string;
   iconUrl: string;
+  initialized: boolean;
+}
 
+export interface SubscriptionUploads{
+  uploadsId: string;
+  uploads: PlaylistVideo[];
+  nextPageToken: string;
+  isLoadingUploads: boolean;
 }

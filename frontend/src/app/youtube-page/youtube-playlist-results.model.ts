@@ -32,4 +32,5 @@ export interface PlaylistSnippet {
   channelTitle: string;
   liveBroadcastContent: string;
   publishedAt: string;
+  playlistId: string;
 }
