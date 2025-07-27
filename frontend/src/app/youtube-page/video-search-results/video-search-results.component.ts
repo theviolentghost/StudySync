@@ -65,8 +65,8 @@ export class VideoSearchResultsComponent {
     return this.youtubeSubscriptionService.isSubscribed(channelId);
   }
 
-  public navigateToPlayer(videoId: string): void {
-    this.youtubeService.navigateToPlayer(videoId);
+  playNewVideo(videoId: string){
+    this.youtubeService.playNewVideo(videoId);
   }
 
   public navigateToChannel(channelId: string): void {

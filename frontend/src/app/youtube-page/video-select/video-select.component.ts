@@ -22,8 +22,12 @@ export class VideoSelectComponent {
     }
   }
 
+  playNewVideo(videoId: string){
+    this.youtubeService.playNewVideo(videoId);
+  }
+
   public navigateToPlayer(): void {
-    this.youtubeService.navigateToPlayer('');
+    this.youtubeService.navigateToPlayer();
   }
 
   public navigateToChannel(): void {

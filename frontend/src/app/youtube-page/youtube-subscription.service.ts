@@ -85,7 +85,7 @@ export class YoutubeSubscriptionService{
             if(this._allChannelUploads[channel].uploadsId === playlistId){
                 if(this._allChannelUploads[channel].isLoadingUploads) return;
                 if(!this._allChannelUploads[channel].nextPageToken) return;
-                this._allChannelUploads[channel].isLoadingUploads = true;
+                this._allChannelUploads[channel].isLoadingUploads = true;   
 
                 this.youtubeService.getPlaylistVideos(playlistId, this._allChannelUploads[channel].nextPageToken)
                     .pipe(take(1))
@@ -122,6 +122,21 @@ export class YoutubeSubscriptionService{
     public unsubscribeToChannel(channelId: string): void{
         if(!this.channelIdList) return;
         this._channelIdList = this._channelIdList.filter(element => element !== channelId);
+
+        this._allSubscriptions = this._allSubscriptions.filter(subscription => {
+            if(subscription.channelId === channelId) {
+                for(let channel = 0; channel < this._allChannelUploads.length; channel++){
+                    if(this._allChannelUploads[channel].uploadsId === subscription.uploadsId) {
+                        this._allChannelUploads.splice(channel, 1);
+                        this.channelUploadsListSubject.next(this._allChannelUploads);
+                        break;
+                    }
+                }
+                return false;
+            }
+            return true;
+        });
+        this.channelDataListSubject.next(this._allSubscriptions);
         this.saveSubscriptionList();
     }
 

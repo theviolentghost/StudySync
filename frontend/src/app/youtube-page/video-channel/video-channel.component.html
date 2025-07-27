@@ -11,7 +11,7 @@
     </div>
 
     <div class="channel_video_grid">
-        <a class="video" (click)="navigateToPlayer(video.contentDetails.videoId)" *ngFor="let video of channelUploads">
+        <a class="video" (click)="playNewVideo(video.contentDetails.videoId)" *ngFor="let video of channelUploads">
             <div class="thumbnail" [ngStyle]="{'background-image': 'url(' + video.snippet.thumbnails.high.url + ')'}">
                 <div class="video_time_display"><div class="video_time_text">0:00:00</div></div>
             </div>

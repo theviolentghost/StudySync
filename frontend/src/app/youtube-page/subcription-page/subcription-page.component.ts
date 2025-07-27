@@ -16,6 +16,8 @@ import { take } from 'rxjs/operators';
 })
 export class SubcriptionPageComponent {
 
+  canLoadMoreUploads:boolean;
+
   sortedUploads: PlaylistVideo[] = [];
   subscriptionsSub;
   subscriptions:SubscriptionData[];
@@ -36,11 +38,13 @@ export class SubcriptionPageComponent {
 
   ngOnInit(){
     window.scrollTo(0, 0);
+    setTimeout(() => this.canLoadMoreUploads = true, 500);
+
     this.subscriptionsSub = this.youtubeSubsciptionService.channelDataList$.subscribe(channels => {
       if(!channels) return;
       this.subscriptions = this.youtubeSubsciptionService.allSubscriptions;
       for(let i = 0; i < channels.length; i++){
-        if(channels[i].initialized) continue;
+        if(channels[i].initialized || !channels[i].uploadsId) continue;
         this.initializeChannelUploads(channels[i]);
       }
     });
@@ -88,6 +92,7 @@ export class SubcriptionPageComponent {
         let playlistId = videoElement.getAttribute('playlist-id');
 
         if(this.youtubeSubsciptionService.isLastLoadedUpload(playlistId, videoElement.getAttribute('video-id'))){
+          if(!this.canLoadMoreUploads) return;
           this.youtubeSubsciptionService.loadMoreUploads(videoElement.getAttribute('playlist-id'));
         }
       } else {
@@ -101,8 +106,8 @@ export class SubcriptionPageComponent {
     this.onScreenObserver.disconnect();
   }
 
-  navigateToPlayer(videoId: string): void {
-    this.youtubeService.navigateToPlayer(videoId);
+  playNewVideo(videoId: string){
+    this.youtubeService.playNewVideo(videoId);
   }
 
   navigateToChannel(channelId: string): void {
@@ -110,7 +115,6 @@ export class SubcriptionPageComponent {
   }
 
   initializeChannelUploads(channel: SubscriptionData): void{
-    //this.subscriptions[this.subscriptions.indexOf(channel)].initialized = true;
     this.youtubeSubsciptionService.initializeChannelUploads(channel);
   }
 

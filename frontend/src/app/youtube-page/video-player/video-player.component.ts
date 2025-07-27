@@ -27,11 +27,14 @@ export class VideoPlayerComponent {
   }
 
   ngAfterViewInit() {
-    this.savePlayerWidth();
-    this.savePlayerScroll();
+    setTimeout(() => {
+      this.savePlayerWidth();
+      this.savePlayerScroll();
+    });
   }
 
   ngOnDestroy(){
+    if(!this.youtubeService.isDisplayingVideo) return;
     this.youtubeService.minimizePlayer();
   }
 

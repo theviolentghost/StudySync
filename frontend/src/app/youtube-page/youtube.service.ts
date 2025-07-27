@@ -72,6 +72,14 @@ export class YoutubeService {
         return this.http.get<YouTubeSearchResponse>(`${this.backendURL}/youtube_get_playlist_videos`, { params });
     }
 
+    get isDisplayingVideo(): boolean{
+        return this.videoIdSubject.value ? true : false;
+    }
+
+    get isMinimized(): boolean{
+        return this.minimizedSubject.value;
+    }
+
     set currentSearchQuery(search: string){
         this._currentSearchQuery = search;
     }
@@ -88,12 +96,24 @@ export class YoutubeService {
         this.channelSubject.next(channel);
     }
 
-    minimizePlayer(){
+    public minimizePlayer(){
         this.minimizedSubject.next(true);
     }
 
-    playNewVideo(videoId:string):void{
+    public expandPlayer(){
         this.minimizedSubject.next(false);
+    }
+
+    public playNewVideo(videoId:string):void{
+        if(!this.isMinimized) {
+            this.navigateToPlayer();
+        }else{
+            if(this.videoIdSubject.value == videoId) {
+                this.navigateToPlayer();
+                this.expandPlayer();
+                return;
+            }
+        }
         this.videoIdSubject.next(videoId);
     }
 
@@ -165,13 +185,13 @@ export class YoutubeService {
         }], { skipLocationChange: true });
     }
 
-    public navigateToPlayer(videoId: string): void {
-        if(videoId) this.playNewVideo(videoId);
+    public navigateToPlayer(): void {
         this.router.navigate(['/youtubeHome', { 
             outlets: { 
                 youtube: ['player'] 
             } 
         }], { skipLocationChange: true });
+
     }
 
     public timeAgo(isoDate) {

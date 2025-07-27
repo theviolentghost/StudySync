@@ -79,8 +79,8 @@ export class VideoChannelComponent {
     this.youtubeSubscriptionService.unsubscribeToChannel(channelId);
   }
 
-  public navigateToPlayer(videoId: string): void {
-    this.youtubeService.navigateToPlayer(videoId);
+  playNewVideo(videoId: string){
+    this.youtubeService.playNewVideo(videoId);
   }
 
   public timeAgo(isoDate) {

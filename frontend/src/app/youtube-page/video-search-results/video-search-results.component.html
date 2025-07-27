@@ -16,7 +16,7 @@
             </div>
         </button>
 
-        <button class="video" *ngIf="result.id.videoId" (click)="navigateToPlayer(result.id.videoId)">
+        <button class="video" *ngIf="result.id.videoId" (click)="playNewVideo(result.id.videoId)">
             <div class="thumbnail" [ngStyle]="{'background-image': 'url(' + result.snippet.thumbnails.high.url + ')'}">
                 <div class="video_time_display">0:00:00</div>
             </div>

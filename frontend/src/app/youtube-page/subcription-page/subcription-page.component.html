@@ -3,7 +3,7 @@
 </div>
 
 <div class="youtube_video_grid">
-    <a class="video" #videoItem [attr.video-id]="video.contentDetails.videoId" [attr.playlist-id]="video.snippet.playlistId" (click)="navigateToPlayer(video.contentDetails.videoId)" *ngFor="let video of sortedUploads">
+    <a class="video" #videoItem [attr.video-id]="video.contentDetails.videoId" [attr.playlist-id]="video.snippet.playlistId" (click)="playNewVideo(video.contentDetails.videoId)" *ngFor="let video of sortedUploads">
         <div class="thumbnail" [attr.background-url]="video.snippet.thumbnails.high.url" [ngStyle]="{ 'background-image': 'url(' + video.snippet.thumbnails.high.url + ')' }">
             <div class="video_time_display"><div class="video_time_text">0:00:00</div></div>
         </div>
