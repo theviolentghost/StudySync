@@ -5,6 +5,7 @@ import { PlaylistsComponent } from '../playlists/playlists.component';
 import { ArtistsComponent } from '../artists/artists.component';
 import { SettingsComponent } from '../settings/settings.component';
 import { DiscoverComponent } from '../discover/discover.component';
+import { PlaylistComponent } from '../playlist/playlist.component';
 
 
 export const routes: Routes = [
@@ -21,6 +22,10 @@ export const routes: Routes = [
     {
         path: 'playlists',
         component: PlaylistsComponent,
+    },
+    {
+        path: 'playlist/:playlist_id',
+        component: PlaylistComponent,
     },
     {
         path: 'artists',

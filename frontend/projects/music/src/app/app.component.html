@@ -3,14 +3,16 @@
 </div>
 <media-player></media-player>
 <div class="navigation">
-    <a
+    <button
         *ngFor="let link of navigation_links"
             [routerLink]="link.url"
             class="navigation-link"
-            (click)="on_navigation_link_click(link)"
+            (click)="on_navigation_link_click(link); $event.stopPropagation();"
+            (touchend)="on_navigation_link_click(link); $event.stopPropagation();"
             [ngClass]="{ 'active': active_link === link.url }"
     >
         <div class="icon" [style.mask-image]="'url(' + link.icon + ')'"></div>
         <span class="label">{{ link.label }}</span>
-    </a>
+    </button>
+    <div style="position: absolute; right: var(--space-4); font-size: 6px">{{app_version}}</div>
 </div>

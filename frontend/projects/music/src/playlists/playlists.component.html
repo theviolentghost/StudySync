@@ -1,57 +1,55 @@
 
 
-<div class="playlists-container">
+<div class="playlists-container hide-scrollbar">
     <div class="playlists-header">
         <h1>Playlists</h1>
-        <button class="add-playlist" (click)="create_playlist()">
-            <div class="plus" [style.mask-image]="'url(\'plus.svg\')'"></div>
-        </button>
+        <div class="actions">
+            <button class="action-playlist" (click)="import_playlist()">
+                <div class="plus" [style.mask-image]="'url(\'cloud-down.svg\')'"></div>
+            </button>
+            <button class="action-playlist" (click)="create_playlist()">
+                <div class="plus" [style.mask-image]="'url(\'plus.svg\')'"></div>
+            </button>
+        </div>
     </div>
 
     <div class="playlists-list">
-        <button class="playlist" *ngFor="let playlist of default_playlist_identifiers" (click)="select_playlist(playlist)">
+        <button 
+            class="playlist" 
+            *ngFor="let playlist of default_playlist_identifiers; last as isLast" 
+            [ngClass]="{playing: is_current_playlist_this_playlist(playlist)}" 
+            (click)="select_playlist(playlist)" 
+            [style.--primary]="get_playlist_primary_color(playlist)"
+            [style.border-bottom]="isLast ? 'solid 1px transparent' : null"
+        >
             <div class="thumbnail">
-                <img [src]="" alt="" />
+                <img *ngFor="let image of playlist?.images" [src]="image" alt="" />
             </div>
             <div class="name">{{ playlist.name }}</div>
             <div class="info">
                 <div class="count">{{ playlist.track_count || 0 }} tracks</div>
-                <div class="playlist-duration"> 00:00:00</div>
+                <div class="playlist-duration"> {{ ms_to_time(playlist?.duration || 0) }}</div>
             </div>
         </button>
 
         <h1>My Playlists</h1>
 
-        <button class="playlist" *ngFor="let playlist of playlist_identifiers" (click)="select_playlist(playlist)">
+        <button 
+            class="playlist" 
+            *ngFor="let playlist of playlist_identifiers; last as isLast" 
+            [ngClass]="{playing: is_current_playlist_this_playlist(playlist)}" 
+            (click)="select_playlist(playlist)" 
+            [style.--primary]="get_playlist_primary_color(playlist)"
+            [style.border-bottom]="isLast ? 'solid 1px transparent' : null"
+        >
             <div class="thumbnail">
-                <img [src]="" alt="" />
+                <img *ngFor="let image of playlist?.images" [src]="image" alt="" />
             </div>
             <div class="name">{{ playlist.name }}</div>
             <div class="info">
                 <div class="count">{{ playlist.track_count || 0 }} tracks</div>
-                <div class="playlist-duration"> 00:00:00</div>
+                <div class="playlist-duration"> {{ ms_to_time(playlist?.duration || 0) }}</div>
             </div>
         </button>
     </div>
-</div>
-
-
-
-
-
-
-<div class="result-videos">
-    <button class="result video disable-select" *ngFor="let video of videos">
-        <div class="thumbnail">
-            <img [src]="" alt="" />
-            <div class="duration">
-                00:00:00
-            </div>
-        </div>
-        <div class="info">
-            <div class="title">{{'hey' }}</div>
-            <div class="artist">{{ 'hey' }}</div>
-        </div>
-        <button class="hot-action" [style.mask-image]="'url(\'plus.svg\')'"></button>
-    </button>
 </div>

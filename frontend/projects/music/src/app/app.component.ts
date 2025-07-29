@@ -1,6 +1,6 @@
-import { Component, ElementRef, OnInit, OnDestroy } from '@angular/core';
+import { Component, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet, RouterModule } from '@angular/router';
+import { RouterOutlet, RouterModule, Router } from '@angular/router';
 
 import { MediaPlayerComponent } from '../media.player/media.player.component';
 import { AuthService } from '../../../../src/app/auth.service';
@@ -50,14 +50,16 @@ export class AppComponent {
 
     active_link: string = '';
 
+    public app_version: string = localStorage.getItem('app-version') || '0.0.0';
+    public cache_name: string = '';
+
     constructor(
-        private elementRef: ElementRef, 
-        private media: MusicMediaService,
-        private player: MusicPlayerService
+        private router: Router,
     ) {}
 
     on_navigation_link_click(link: { url: string, label: string, icon: string }) {
         this.active_link = link.url;
+        this.router.navigate([link.url]);
         // this.elementRef.nativeElement.querySelector('.navigation').scrollTo({ top: 0, behavior: 'smooth' });
     }
 }

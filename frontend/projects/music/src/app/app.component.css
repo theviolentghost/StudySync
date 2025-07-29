@@ -24,7 +24,7 @@ router-outlet {
     justify-content: center;
     gap: clamp(0.5rem, 2.5vw, 2rem);
     padding: 1rem;
-    padding-bottom: var(--space-3);
+    padding-bottom: var(--space-5);
     width: 100%;
     background-color: var(--color-background-200);
 }
@@ -39,6 +39,7 @@ router-outlet {
     gap: var(--space-1);
     cursor: pointer;
     transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out;
+    background-color: transparent;
 }
 .navigation .navigation-link.active {
     --color: var(--color-primary);

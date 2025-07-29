@@ -1,0 +1,361 @@
+:host {
+    will-change: bottom;
+    position: fixed;
+    bottom: -100%;
+    right: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    background-color: var(--color-background-200);
+    z-index: 10000;
+    transition: bottom 0.65s ease-in-out;
+}
+:host.revealed {
+    bottom: 0%;
+}
+.header {
+    position: relative;
+    width: 100%;
+    height: var(--space-7);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-4);
+    background-color: var(--color-background-100);
+}
+.header .close {
+    color: var(--color-primary);
+    position: absolute;
+    left: var(--space-2);
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: transparent;
+    font-size: var(--space-4);
+    font-weight: 500;
+    cursor: pointer;
+    transition: filter 0.15s ease-in-out;
+}
+.header .close:active {
+    filter: brightness(0.8);
+}
+.header .title {
+    font-weight: 500;
+    color: var(--color-text);
+}
+.container {
+    position: relative;
+    width: 100%;
+    height: calc(100% - var(--space-7));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-y: auto;
+    padding: var(--space-3) 0;
+}
+.preview, .action {
+    position: relative;
+    width: 80%;
+    aspect-ratio: 32 / 9;
+    max-height: calc(var(--space-8) + var(--space-5));
+    max-width: 550px;
+    background-color: var(--color-background-300);
+    overflow: hidden;
+    display: flex;
+    flex-shrink: 0;
+    color: var(--color-text);
+    align-items: center;
+    gap: var(--space-2);
+    border-radius: var(--space-3);
+}
+.preview {
+    padding: var(--space-2);
+}
+.preview .thumbnail, .action .thumbnail {
+    position: relative;
+    height: 100%;
+    scale: .9;
+    aspect-ratio: 16 / 9;
+    flex-shrink: 0;
+    background-color: var(--color-background);
+    border-radius: var(--space-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.action.playlist .thumbnail::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--background);
+    box-shadow: 0 0 8px 2px var(--background);
+    opacity: 0.5;
+    border-radius: inherit;
+    z-index: -1;
+}
+.action .thumbnail {
+    scale: .8;
+    aspect-ratio: 1 / 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    height: 80%;
+    aspect-ratio: 1 / 1;
+    position: relative;
+}
+.preview .thumbnail img {
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+.preview .info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: var(--space-2);
+    width: 100%;
+    gap: var(--space-1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-align: left;
+}
+.preview .info .title {
+    font-size: calc(1.2 * var(--font-size-base));
+    font-weight: 500;
+    color: var(--color-text);
+    display: -webkit-box;           /* REQUIRED */
+    line-clamp: 2;
+    -webkit-line-clamp: 2;          /* REQUIRED */
+    -webkit-box-orient: vertical;   /* REQUIRED */
+    overflow: hidden;               /* REQUIRED */
+    text-overflow: ellipsis;
+    white-space: normal;
+}
+.preview .info .artist {
+    font-size: calc(var(--font-size-base) * .8);
+    color: var(--color-neutral);
+    text-overflow: ellipsis;
+}
+.action {
+    background-color: transparent;
+    font-size: var(--space-5);
+    border-bottom: solid 1px var(--color-background-400);
+    border-radius: 0;
+    cursor: pointer;
+}
+.action.null {
+    pointer-events: none;
+    opacity: 0.5;
+}
+.action:last-child {
+    border-bottom: solid 1px transparent;
+}
+.actions {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-y: auto;
+    gap: var(--space-3);
+    padding: var(--space-5) 0;
+}
+.action .thumbnail .icon::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 50%;
+    height: 50%;
+    mask-size: cover;
+    mask-position: center;
+    mask-repeat: no-repeat;
+    mask-image: var(--mask);
+    background-color: var(--color);
+    transition: background-color 0.15s ease-in-out;
+}
+.action.playlist .thumbnail .icon::after {
+    background-color: var(--color);
+}
+.action.null .state {
+    display: none;
+}
+.action .state {
+    position: absolute;
+    top: 50%;
+    right: var(--space-3);
+    transform: translate(-50%, -50%);
+    aspect-ratio: 1 / 1;
+    height: 50%;
+    flex-shrink: 0;
+    border-radius: 50%;
+    /* background-color: var(--color-primary); */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+.action .state::after {
+    content: '';
+    width: 60%;
+    height: 60%;
+    mask-size: cover;
+    mask-position: center;
+    mask-repeat: no-repeat;
+    mask-image: var(--mask);
+    background-color: var(--color);
+    transition: background-color 0.15s ease-in-out;
+}
+.action .name {
+    color: var(--text);
+    font-weight: 500;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition: color 0.15s ease-in-out;
+}
+.action.playlist .name {
+    color: var(--text);
+}
+.finish-container {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: var(--space-9);
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    padding-top: var(--space-4);
+    justify-content: center;
+    gap: var(--space-4);
+    background-color: var(--color-background-100);
+}
+.finish-container.hide {
+    display: none;
+}
+.finish {
+    position: relative;
+    width: 70%;
+    height: var(--space-7);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-background-100);
+    font-size: var(--space-5);
+    font-weight: bolder;
+    background-color: var(--color-primary);
+    border-radius: 99999px;
+    cursor: pointer;
+    transition: background-color 0.15s ease-in-out, filter 0.15s ease-in-out;
+}
+.finish:active {
+    filter: brightness(0.8);
+}
+.action.playlist .info {
+    display: flex;
+    flex-direction: row;
+    gap: var(--space-2);
+    white-space: nowrap;
+    overflow: hidden;
+    color: var(--text);
+    font-size: calc(var(--font-size-base) * 0.8);
+    text-align: left;
+}
+.import {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    position: relative;
+    padding-top: 20vh;
+}
+.backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 90%;
+    flex-shrink: 0;
+    background: linear-gradient(180deg, var(--primary), transparent);
+    opacity: .45;
+    z-index: -1;
+}
+.import-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-5);
+    width: 50%;
+    max-width: 500px;
+}
+.import-input {
+    width: 100%;
+    max-width: 500px;
+    padding: var(--space-2);
+    border-radius: var(--space-2);
+    border: solid 1px var(--color-background);
+    background-color: var(--color-background);
+    outline: none;
+    color: var(--color-text);
+    font-size: calc(var(--font-size-base) * 1.1);
+}
+.import-button {
+    width: 80%;
+    min-width: 80px;
+    max-width: 500px;
+    padding: var(--space-2);
+    border-radius: var(--space-2);
+    background-color: var(--color-primary);
+    color: var(--color-background);
+    font-size: calc(var(--font-size-base) * 1.15);
+    font-weight: bolder;
+    cursor: pointer;
+    transition: background-color 0.35s ease-in-out, filter 0.35s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.import-button.loading {
+    background-color: transparent;
+}
+.import-status {
+    position: relative;
+    width: var(--space-7);
+    height: calc(var(--font-size-base) * 1.15);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    opacity: 0;
+    transition: opacity 0.35s ease-in-out, height 0.35s ease-in-out;
+}
+.import-status.loading {
+    background: var(--color-primary);
+    animation: spin 2s linear infinite;
+    mask-image: var(--mask);
+    mask-size: cover;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    opacity: 1;
+    height: var(--space-7);
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}

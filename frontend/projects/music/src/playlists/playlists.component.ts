@@ -2,6 +2,9 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { MusicMediaService, Song_Data, Song_Identifier, Song_Playlist, Song_Playlist_Identifier } from '../../music.media.service';
+import { PlaylistsService } from '../../playlists.service';
+import { HotActionService } from '../../hot.action.service';
+import { MusicPlayerService } from '../../music.player.service';
 
 @Component({
   selector: 'app-playlists',
@@ -10,31 +13,46 @@ import { MusicMediaService, Song_Data, Song_Identifier, Song_Playlist, Song_Play
   styleUrl: './playlists.component.css'
 })
 export class PlaylistsComponent {
-    videos: Song_Data[] = []; //loaded videos from playlist
-    playlist_identifiers: Song_Playlist_Identifier[] = [];
-    default_playlist_identifiers: Song_Playlist_Identifier[] = []
-    selected_playlist: Song_Playlist | null = null;
-    selected_playlist_videos: Song_Data[] = [];
+    constructor(private media: MusicMediaService, private playlists: PlaylistsService, private hot_action: HotActionService, private player: MusicPlayerService) {}
 
-    constructor(private media: MusicMediaService) {
-        this.load_playlists();
+    get playlist_identifiers(): Song_Playlist_Identifier[] {
+        return this.playlists.playlist_identifiers;
     }
 
-    async load_playlists(): Promise<void> {
-        const all_playlist_identifiers = await this.media.get_all_playlist_identifiers_from_indexDB();
-        this.default_playlist_identifiers = all_playlist_identifiers.filter(p => p?.default === true);
-        this.playlist_identifiers = all_playlist_identifiers.filter(p => !p?.default);
+    get default_playlist_identifiers(): Song_Playlist_Identifier[] {
+        // console.log('Default playlist identifiers:', this.playlists.default_playlist_identifiers);
+        return this.playlists.default_playlist_identifiers;
     }
 
-    async save_playlists(): Promise<void> {
-        await this.media.save_playlist_identifiers_to_indexDB([...this.default_playlist_identifiers, ...this.playlist_identifiers]);
+    is_current_playlist_this_playlist(playlist: Song_Playlist_Identifier): boolean {
+        return this.player.playlist_identifier?.id === playlist.id;
     }
 
-    async create_playlist(): Promise<void> {
-        
+    select_playlist(playlist: Song_Playlist_Identifier): void {
+        this.playlists.select_playlist(playlist);
     }
 
-    async select_playlist(playlist: Song_Playlist_Identifier): Promise<void> {
+    create_playlist(): void {
+        this.hot_action.open_hot_action(null, 'youtube', 'create_playlist');
+    }
+    import_playlist(): void {
+        this.hot_action.open_hot_action(null, 'youtube', 'import_playlist');
+    }
 
+    ms_to_time(ms: number): string {
+        const totalSeconds = Math.floor(ms / 1000);
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+
+        if (hours > 0) {
+            return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        } else {
+            return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+    }
+
+    get_playlist_primary_color(playlist_identifier: Song_Playlist_Identifier): string {
+        return playlist_identifier?.colors?.primary || 'var(--color-primary)';
     }
 }

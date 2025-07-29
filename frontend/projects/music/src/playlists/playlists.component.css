@@ -1,11 +1,12 @@
 .playlists-container {
     position: relative;
     width: 100%;
-    height: 100%;
+    height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
     overflow-y: auto;
+    padding-bottom: var(--space-7);
 }
 .playlists-header {
     position: sticky;
@@ -20,14 +21,22 @@
     gap: var(--space-4);
     padding: var(--space-2);
     background-color: var(--color-background-200);
+    z-index: 10;
 }
-.add-playlist {
+.actions {
     position: absolute;
     right: var(--space-2);
     top: 50%;
     transform: translateY(-50%);
-    width: var(--space-5);
-    height: var(--space-5);
+    display: flex;
+    flex-direction: row;
+    gap: var(--space-2);
+
+}
+.action-playlist {
+    position: relative;
+    width: var(--space-6);
+    height: var(--space-6);
     mask-size: contain;
     mask-repeat: no-repeat;
     mask-position: center;
@@ -43,6 +52,7 @@
     mask-repeat: no-repeat;
     mask-position: center;
     background-color: var(--color-primary);
+    
 }
 .playlists-list {
     position: relative;
@@ -52,14 +62,13 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    overflow-y: auto;
     gap: var(--space-2);
+    padding-bottom: var(--space-9);
 }
 .playlist {
     position: relative;
     max-width: 550px;
     background-color: transparent;
-    overflow: hidden;
     display: flex;
     cursor: pointer;
     flex-shrink: 0;
@@ -71,24 +80,51 @@
     aspect-ratio: 16 / 16;
     max-height: var(--space-9);
     align-items: center;
-    gap: var(--space-2);
+    gap: var(--space-4);
 }
 .playlist.last {
     border-bottom: solid 1px transparent;
 }
 .playlist .thumbnail {
-    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
     height: 80%;
     aspect-ratio: 1 / 1;
-    flex-shrink: 0;
-    /* border-radius: var(--space-2); */
+    position: relative;
+    border-radius: var(--space-2);
+    margin-left: 8px;
+}
+.playlist .thumbnail::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--primary);
+    box-shadow: 0 0 8px 6px var(--primary);
+    opacity: 0.5;
+    border-radius: inherit;
+    z-index: -1;
 }
 .playlist .thumbnail img {
-    height: 100%;
     width: 100%;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.playlist .thumbnail img:nth-child(1) {
+    border-top-left-radius: var(--space-2);
+}
+.playlist .thumbnail img:nth-child(2) {
+    border-top-right-radius: var(--space-2);
+}
+.playlist .thumbnail img:nth-child(3) {
+    border-bottom-left-radius: var(--space-2);
+}
+.playlist .thumbnail img:nth-child(4) {
+    border-bottom-right-radius: var(--space-2);
 }
 .playlist .info {
     display: flex;
@@ -101,7 +137,7 @@
     margin-left: auto;
     overflow: hidden;
     text-align: left;
-    align-items: center;
+    align-items: flex-end;
 }
 .playlist .name {
     font-size: calc(1 * var(--font-size-base));
@@ -115,15 +151,24 @@
     text-overflow: ellipsis;
     white-space: normal;
 }
+.playlist.playing .name {
+    color: var(--primary);
+}
 .playlist .info .count {
     font-size: calc(var(--font-size-base) * .75);
     color: var(--color-neutral);
     text-overflow: ellipsis;
 }
+.playlist.playing .info .count {
+    color: var(--primary);
+}
 .playlist .info .playlist-duration {
     font-size: calc(var(--font-size-base) * .65);
     color: var(--color-neutral);
     text-overflow: ellipsis;
+}
+.playlist.playing .info .playlist-duration {
+    color: var(--primary);
 }
 .playlists-list h1 {
     width: 100%;
@@ -132,104 +177,4 @@
     font-weight: 600;
     color: var(--color-text);
     margin: var(--space-2) 0;
-}
-
-
-
-
-
-.result-videos {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-    align-items: center;
-}
-.result {
-    position: relative;
-    max-height: 350px;
-    max-width: 550px;
-    /* background-color: var(--color-background-300); */
-    overflow: hidden;
-    display: flex;
-    cursor: pointer;
-    flex-shrink: 0;
-    color: var(--color-text);
-}
-.result.video {
-    flex-direction: row;
-    padding: var(--space-2) 0;
-    border-bottom: solid 1px var(--color-background-400);
-    width: 80%;
-    aspect-ratio: 16 / 9;
-    max-height: var(--space-8);
-    align-items: center;
-    background-color: transparent;
-    gap: var(--space-2);
-}
-.result.video:last-child {
-    border-bottom: none;
-}
-.result.video .thumbnail {
-    position: relative;
-    height: 70%;
-    aspect-ratio: 16 / 9;
-    flex-shrink: 0;
-    /* border-radius: var(--space-2); */
-}
-.result.video .thumbnail img {
-    height: 100%;
-    width: 100%;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-}
-.result.video .thumbnail .duration {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    background-color: rgba(0, 0, 0, .5);
-    color: var(--color-text);
-    font-size: calc(var(--font-size-base) * .55);
-    border-radius: var(--space-1);
-}
-.result.video .info {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    padding: var(--space-2);
-    width: 100%;
-    gap: var(--space-1);
-    white-space: nowrap;
-    overflow: hidden;
-    text-align: left;
-}
-.result.video .info .title {
-    font-size: calc(.8 * var(--font-size-base));
-    font-weight: 500;
-    color: var(--color-text);
-    display: -webkit-box;           /* REQUIRED */
-    line-clamp: 2;
-    -webkit-line-clamp: 2;          /* REQUIRED */
-    -webkit-box-orient: vertical;   /* REQUIRED */
-    overflow: hidden;               /* REQUIRED */
-    text-overflow: ellipsis;
-    white-space: normal;
-}
-.result.video .info .artist {
-    font-size: calc(var(--font-size-base) * .7);
-    color: var(--color-neutral);
-    text-overflow: ellipsis;
-}
-.result.video .hot-action {
-    flex-shrink: 0;
-    width: var(--space-5);
-    height: var(--space-5);
-    mask-size: contain;
-    mask-repeat: no-repeat;
-    mask-position: center;
-    background-color: var(--color-primary);
-    border-radius: 50%;
-    cursor: pointer;
-    transition: background-color 0.15s ease-in-out;
 }

@@ -6,11 +6,12 @@
     width: 100%;
 }
 .container {   
+    will-change: height, bottom, transform;
     bottom: 0;
     position: fixed; 
     height: 100%;
     overflow: hidden;
-    transition: height 0.65s ease-in-out, bottom 0.25s ease-in-out;
+    /* transition: height 0.65s ease-in-out, bottom 0.25s ease-in-out; */
     z-index: 1000;
     background-color: var(--color-background);
 }
@@ -38,14 +39,14 @@
 }
 .media-info {
     display: flex;
-    width: 90%;
+    width: 85%;
 }
 .title {
     font-size: var(--space-4);
     font-weight: 500;
     color: var(--color-text);
     text-align: center;
-    width: 90%;
+    width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -55,7 +56,7 @@
     font-weight: 400;
     color: var(--color-neutral);
     text-align: center;
-    width: 90%;
+    width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -106,29 +107,19 @@
 }
 .player-status {
     --mask: url('/plus.svg');
-    position: absolute;
+    position: absolute !important;
     right: var(--space-3);
-    background-color: var(--color-primary);
-    width: var(--space-5);
-    height: var(--space-5);
+    /* background-color: var(--color-primary) !important; */
+    width: var(--space-5) !important;
+    height: var(--space-5) !important;
     mask-position: center;
     mask-size: 1000%;
     mask-repeat: no-repeat;
+    mask-size: 80%;
     border-radius: 50%;
     cursor: pointer;
-}
-.player-status::before {
-    position: absolute;
-    content: '';
-    width: 100%;
-    height: 100%;
-    mask-image: var(--mask);
-    mask-position: center;
-    mask-size: 70%;
-    mask-repeat: no-repeat;
-    top: 0;
-    left: 0;
-    background-color: var(--color-background-950);
+    --color: var(--color-text);
+    z-index: 6;
 }
 .media {
     position: relative;
@@ -139,24 +130,35 @@
     width: 100%;
     height: 100%;
     max-width: 900px;
-
 }
 .thumbnail {
+    position: relative;
+    /* overflow: hidden; */
     width: 100%;
     aspect-ratio: 16 / 9;
     flex-shrink: 0;
+    max-height: calc(900px * 9 / 16);
     display: flex;
     align-items: center;
     justify-content: center;
     flex-direction: column;
+    transition: background 0.5s ease-in-out;
 }
-.thumbnail img {
+#thumbnail {
     width: 100%;
     height: 100%;
+    object-fit: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    transition: filter .5s ease-in-out, object-fit .5s ease-in-out;
+}
+#thumbnail.disco {
+    filter: blur(5px) brightness(0.8);
     object-fit: cover;
 }
-#audio {
-    display: block; /* Hide the audio element */
+#audio, audio {
+    display: none; /* Hide the audio element */
 }
 .metadata {
     align-self: flex-start;
@@ -177,7 +179,7 @@
     font-weight: 600;
     color: var(--color-text);
     text-align: center;
-    width: 90%;
+    width: 100%;
     text-align: left;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -188,7 +190,7 @@
     font-weight: 400;
     color: var(--color-neutral);
     text-align: center;
-    width: 90%;
+    width: 100%;
     text-align: left;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -205,19 +207,24 @@
     mask-size: contain;
     mask-repeat: no-repeat;
     cursor: pointer;
+    z-index: 6;
 }
 .main-audio-progress {
-    position: relative;
+    position: absolute;
+    bottom: -1px;
+    left: 0;
     width: 100%;
-    height: 6px;
+    height: 8px;
     overflow: hidden;
     background: var(--color-background-200);
+    z-index: 6;
+    /* transition: height 0.15s ease-in-out; */
 }
 .buffer-bar {
     position: absolute;
     top: 0;
     left: 0;
-    height: 6px;
+    height: 100%;
     width: 100%;
     background: var(--color-background-300);
     pointer-events: none;
@@ -228,7 +235,7 @@
     --value: 00;
     --max: 100;
     width: 100%;
-    height: 6px;
+    height: 100%;
     background: transparent;
     appearance: none;
     outline: none;
@@ -251,7 +258,11 @@
     width: 4px;
     height: 100px;
     border-radius: 50%;
-    background: var(--color-primary, #007bff);
+    background: var(--color);
+}
+.main-audio-progress:has(.slider:active) {
+    height: 14px;
+    transform: translateY(2px);
 }
 .controls, .modifiers {
     position: relative;
@@ -263,22 +274,36 @@
     padding: 0 var(--space-2);
     overflow: visible;
 }
-.controls .control-button, .modifiers .modifier-button {
+.control-button, .modifiers .modifier-button, .player-status {
+    --color: var(--color-neutral);
     margin: var(--space-4) 0;
     position: relative;
     flex-shrink: 0;
     width: var(--space-7);
     height: var(--space-7);
-    background-color: var(--color-neutral);
-    mask-size: cover;
-    mask-repeat: no-repeat;
-    mask-position: center;
     border-radius: 50%;
     cursor: pointer;
+    background-color: transparent;
+    z-index: 6;
+}
+.control-button::after, .modifiers .modifier-button::after {
+    position: absolute;
+    content: '';
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    mask-image: var(--mask);
+    mask-position: center;
+    mask-repeat: no-repeat;
+    mask-size: cover;
+    top: 0;
+    left: 0;
+    background-color: var(--color);
     transition: background-color 0.15s ease-in-out, transform 0.15s ease-in-out;
 }
-.controls .control-button.active, .modifiers .modifier-button.active {
-    background-color: var(--color-primary);
+.control-button.active, .modifiers .modifier-button.active {
+    --color: var(--color-primary);
 }
 .controls .control-button:first-child {
     margin-right: auto;
@@ -286,7 +311,7 @@
 .controls .control-button:last-child {
     margin-left: auto;
 }
-.controls .control-button.inverse, .modifiers .modifier-button.inverse {
+.controls .control-button.inverse, .modifiers .modifier-button.inverse, .player-status.inverse {
     --mask: url('/plus.svg');
     background-color: var(--color-neutral);
     mask-position: center;
@@ -296,11 +321,14 @@
     cursor: default;
     scale: 1.4;
 }
-.controls .control-button.inverse.active, .modifiers .modifier-button.inverse.active {
+.controls .control-button.inverse::after {
+    display: none;
+}
+.controls .control-button.inverse.active, .modifiers .modifier-button.inverse.active, .player-status.inverse.active {
     background-color: var(--color-primary);
     cursor: pointer;
 }
-.controls .control-button.inverse.spinner, .modifiers .modifier-button.inverse.spinner {
+.controls .control-button.inverse.spinner, .modifiers .modifier-button.inverse.spinner, .player-status.inverse.spinner {
     background-color: var(--color-neutral);
     animation: spin 1s linear infinite;
 }
@@ -313,9 +341,17 @@
     }
     
 }
+@keyframes inverse-spin {
+    from {
+        transform: rotate(360deg);
+    }
+    to {
+        transform: rotate(0deg);
+    }
+}
 
 
-.controls .control-button.inverse::before, .modifiers .modifier-button.inverse::before {
+.controls .control-button.inverse::before, .modifiers .modifier-button.inverse::before, .player-status.inverse::before {
     position: absolute;
     content: '';
     width: 100%;
@@ -337,4 +373,74 @@
 .modifiers .modifier-button {
     width: var(--space-6);
     height: var(--space-6);
+}
+.source {
+    position: relative;
+    width: var(--space-5);
+    height: var(--space-5);
+}
+.source::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--color);
+    mask-image: var(--mask);
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    mask-position: center;
+}
+.modifier-button.downloading {
+    position: relative;
+    --progress: 0;
+}
+.modifier-button.downloading::after {
+    animation: spin 2s linear infinite;
+    --color: var(--color-primary);
+}
+.modifier-button.downloading::before {
+    content: '';
+    position: absolute;
+    width: 120%;
+    height: 120%;
+    top: -10%;
+    left: -10%;
+    border-radius: 50%;
+    
+    /* Create the ring effect */
+    background: conic-gradient(
+        var(--color-primary) calc(var(--progress, 0) * 1.02%), 
+        transparent calc(var(--progress, 0) * 1.02%)
+    );
+    
+    mask: radial-gradient(
+        circle at center,
+        transparent 60%,
+        black 60%
+    );
+    
+    transition: background 0.3s linear;
+}
+
+.draggable {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: 5;
+    background: transparent;
+}
+.container.hidden .draggable, .container.reduced .draggable {
+    display: none;
+}
+#visualization-canvas {
+    width: 100%;
+    height: calc(100% - var(--space-7));
+    position: absolute;
+    top: var(--space-7);
+    left: 0;
+    z-index: 4;
+    pointer-events: none;
+    background: transparent;
 }

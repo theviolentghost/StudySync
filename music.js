@@ -4,6 +4,8 @@ import path from 'path';
 import 'dotenv/config';
 import { google } from 'googleapis';
 import { YtDlp } from 'ytdlp-nodejs';
+import SpotifyWebApi from 'spotify-web-api-node';
+import SpotifyToYoutube from 'spotify-to-youtube';
 import progress_emitter from './progress.emitter.js';
 import { spawn } from 'child_process';
 import axios from 'axios';
@@ -19,6 +21,17 @@ const youtube = google.youtube({
   version: 'v3',
   auth: process.env.YOUTUBE_API_KEY,
 });
+
+const spotify_api = new SpotifyWebApi({
+  clientId: process.env.SPOTIFY_CLIENT_ID,
+  clientSecret: process.env.SPOTIFY_CLIENT_SECRET
+});
+
+const creds = await spotify_api.clientCredentialsGrant();
+console.log('Spotify access token:', creds.body.access_token);
+spotify_api.setAccessToken(creds.body.access_token);
+
+const spotify_to_yt = SpotifyToYoutube(spotify_api);
 
 async function get_audio_file(audio_path = '') {
     try {
@@ -50,7 +63,7 @@ function ensure_quality_in_query(query) {
     return enhanced.trim();
 }
 
-async function search_for_videos(query = 'NoCopyrightSounds', total_results = 120, next_page_token = undefined, enhance_search = true) {
+async function youtube_search_for_videos(query = 'NoCopyrightSounds', total_results = 50, next_page_token = undefined, enhance_search = true) {
     if (!query || query.trim() === '') {
         console.error('Query must be a non-empty string');
         return {
@@ -87,7 +100,7 @@ async function search_for_videos(query = 'NoCopyrightSounds', total_results = 12
     };
 }
 
-async function search_for_artists(query = 'NoCopyrightSounds', total_results = 16, next_page_token = undefined) {
+async function youtube_search_for_artists(query = 'NoCopyrightSounds', total_results = 16, next_page_token = undefined) {
     if (!query || query.trim() === '') {
         console.error('Query must be a non-empty string');
         return {
@@ -122,7 +135,7 @@ async function search_for_artists(query = 'NoCopyrightSounds', total_results = 1
     };
 }
 
-async function search(query = 'NoCopyrightSounds', /* add more params in future */) {
+async function youtube_search(query = 'NoCopyrightSounds', /* add more params in future */) {
     if (!query || query.trim() === '') {
         console.error('Query must be a non-empty string');
         return {
@@ -133,8 +146,8 @@ async function search(query = 'NoCopyrightSounds', /* add more params in future 
 
     try {
         return Promise.all([
-            search_for_videos(query, 50, undefined, false),
-            search_for_artists(query, 16)
+            youtube_search_for_videos(query, 50, undefined, false),
+            youtube_search_for_artists(query, 16)
         ]).then(([videos, artists]) => {
             return {
                 videos,
@@ -149,6 +162,141 @@ async function search(query = 'NoCopyrightSounds', /* add more params in future 
         };
     }
 }
+
+async function spotify_search_for_videos(query = 'NoCopyrightSounds', total_results = 50) {
+    if (!query || query.trim() === '') {
+        console.error('Query must be a non-empty string');
+        return {};
+    }
+
+    try {
+        const data = await spotify_api.search(query, ['track'], { limit: total_results });
+
+        return data.body.tracks;
+    } catch (error) {
+        console.error('Error searching Spotify:', error);
+        return {};
+    }
+}
+
+async function spotify_search_for_artists(query = 'NoCopyrightSounds', total_results = 50) {
+    if (!query || query.trim() === '') {
+        console.error('Query must be a non-empty string');
+        return {};
+    }
+
+    try {
+        const data = await spotify_api.search(query, ['artist'], { limit: total_results });
+
+        return data.body.tracks;
+    } catch (error) {
+        console.error('Error searching Spotify:', error);
+        return {};
+    }
+}
+
+async function spotify_search_for_albums(query = 'NoCopyrightSounds', total_results = 50) {
+    if (!query || query.trim() === '') {
+        console.error('Query must be a non-empty string');
+        return {};
+    }
+
+    try {
+        const data = await spotify_api.search(query, ['album'], { limit: total_results });
+
+        return data.body.albums;
+    } catch (error) {
+        console.error('Error searching Spotify:', error);
+        return {};
+    }
+}
+
+async function spotify_search_for_playlists(query = 'NoCopyrightSounds', total_results = 50) {
+    if (!query || query.trim() === '') {
+        console.error('Query must be a non-empty string');
+        return {};
+    }
+
+    try {
+        const data = await spotify_api.search(query, ['playlist'], { limit: total_results });
+
+        return data.body.playlists;
+    } catch (error) {
+        console.error('Error searching Spotify:', error);
+        return {};
+    }
+}
+
+async function spotify_search(query = 'NoCopyrightSounds', total_results = 40) {
+    if (!query || query.trim() === '') {
+        console.error('Query must be a non-empty string');
+        return {};
+    }
+
+    try {
+        const data = await spotify_api.search(query, ['track', 'album', 'artist'], { limit: total_results });
+
+        return data.body;
+    } catch (error) {
+        console.error('Error searching Spotify:', error);
+        return {};
+    }
+}
+
+async function search(query = 'NoCopyrightSounds', source = 'spotify') {
+    switch(source) {
+        case 'youtube':
+            return youtube_search(query);
+        case 'spotify':
+            return spotify_search(query);
+        default:
+            console.error(`Unknown source: ${source}`);
+            return {};
+    }
+}
+
+async function spotify_uri_to_video_id(uri) {
+    if (!uri) return null;
+
+    return await spotify_to_yt(uri);
+}
+    
+async function get_recommondations() {
+    console.log('Fetching Spotify recommendations...');
+    
+    try {
+
+        // https://api.reccobeats.com/v1/track/recommendation?size=10&seeds=4Yqy0GpeDEXLibWJCZyQew
+
+        let config = {
+            method: 'get',
+            maxBodyLength: Infinity,
+            url: 'https://api.reccobeats.com/v1/track/recommendation',
+            headers: { 
+                'Accept': 'application/json'
+            },
+            params: {
+                size: 10,
+                seeds: ['4Yqy0GpeDEXLibWJCZyQew']
+            }
+        };
+
+        axios.request(config)
+        .then((response) => {
+        console.log(JSON.stringify(response.data));
+        })
+        .catch((error) => {
+        console.log(error);
+        });
+    } catch (error) {
+        console.error('Error fetching recommendations:', error.response?.data || error.message);
+        return null;
+    }
+}
+
+
+
+
 
 
 
@@ -190,6 +338,7 @@ async function download_audio_to_stream(res, youtube_video_id, options = {qualit
         audioQuality: options.quality || '0',
         output: '-',
         args: [
+            '--audio-format', 'mp3',
             '--postprocessor-args', `ffmpeg:-b:a ${options.bit_rate}`,
         ],
     };
@@ -199,8 +348,10 @@ async function download_audio_to_stream(res, youtube_video_id, options = {qualit
         download_options
     );
 
-    res.setHeader('Content-Type', 'audio/mpeg');
-    res.setHeader('Cache-Control', 'no-cache'); 
+    res.setHeader('Content-Type', 'audio/mpeg');                             // Crucial for Safari
+    res.setHeader('Content-Disposition', 'inline; filename="track.mp3"');    // Helps with Blob usability
+    res.setHeader('Cache-Control', 'no-cache');                              // Prevent aggressive caching
+    res.setHeader('Accept-Ranges', 'bytes');                                 // Allows seeking/streaming
 
     downloadProcess.stdout.pipe(res);
 
@@ -215,6 +366,7 @@ async function download_audio_to_stream(res, youtube_video_id, options = {qualit
     });
 
     downloadProcess.on('close', (code) => {
+        console.log(`Download process exited with code ${code}`);
         if (code !== 0) {
             res.end();
         }
@@ -321,27 +473,48 @@ async function download_audio_artwork_to_stream(res, youtube_video_id) {
 // Get direct audio URL from YouTube with customizable quality
 async function get_audio_url(videoId, options = {quality: '0', bit_rate: '192K', format: 'mp3'}) {
   return new Promise((resolve, reject) => {
-    // Build format string that EXCLUDES HLS streams
     let formatString;
     
+    // Convert quality level to target bitrate if not explicitly provided
+    const targetBitrate = options.bit_rate || getAudioBitrateForQuality(options.quality || '0');
+    const qualityNum = parseInt(options.quality || '0');
+    
     if (options.format === 'mp3' || options.format === 'audio') {
-      // Exclude HLS and prefer direct audio files
-      formatString = 'bestaudio[protocol!=m3u8][ext!=m3u8]';
-      
-      // If specific quality is requested (0-9, with 0 being best)
-      if (options.quality && options.quality !== '0') {
-        formatString += `[abr<=${getAudioBitrateForQuality(options.quality)}]`;
+      if (qualityNum === 0) {
+        // Best quality - no bitrate restriction
+        formatString = 'bestaudio[protocol!=m3u8][ext!=m3u8]';
+      } else if (qualityNum <= 3) {
+        // High quality (320K, 256K, 192K, 160K)
+        formatString = `bestaudio[protocol!=m3u8][ext!=m3u8][abr>=${parseInt(targetBitrate)}]`;
+        formatString += `/bestaudio[protocol!=m3u8][ext!=m3u8][abr<=${parseInt(targetBitrate) + 64}]`;
+      } else if (qualityNum <= 6) {
+        // Medium quality (128K, 96K, 64K)
+        formatString = `bestaudio[protocol!=m3u8][ext!=m3u8][abr<=${parseInt(targetBitrate) + 32}][abr>=${parseInt(targetBitrate) - 32}]`;
+      } else {
+        // Low quality (48K, 32K, 24K)
+        formatString = `bestaudio[protocol!=m3u8][ext!=m3u8][abr<=${parseInt(targetBitrate) + 16}]`;
       }
       
-      // Add fallbacks that also exclude HLS
-      formatString += '/bestaudio[protocol!=m3u8]/best[protocol!=m3u8]/bestaudio/best';
+      // Add fallbacks
+      formatString += '/bestaudio[protocol!=m3u8]/best[protocol!=m3u8]';
     } else {
-      // Direct format selection with HLS exclusion
-      formatString = 'bestaudio[ext=m4a][protocol!=m3u8]/bestaudio[ext=webm][protocol!=m3u8]/bestaudio[protocol!=m3u8]/best[protocol!=m3u8]';
+      // For other formats, apply quality filtering too
+      if (qualityNum === 0) {
+        formatString = 'bestaudio[ext=m4a][protocol!=m3u8]/bestaudio[ext=webm][protocol!=m3u8]/bestaudio[protocol!=m3u8]';
+      } else {
+        const bitrateNum = parseInt(targetBitrate);
+        formatString = `bestaudio[ext=m4a][protocol!=m3u8][abr<=${bitrateNum + 32}]`;
+        formatString += `/bestaudio[ext=webm][protocol!=m3u8][abr<=${bitrateNum + 32}]`;
+        formatString += `/bestaudio[protocol!=m3u8][abr<=${bitrateNum + 32}]`;
+      }
+      
+      formatString += '/best[protocol!=m3u8]';
     }
+
+    console.log(`Using format string: ${formatString}`);
     
     const ytdlpArgs = [
-      '--format', formatString,
+      '-f', formatString,
       '--get-url',
       '--no-playlist',
       '--quiet',
@@ -354,7 +527,7 @@ async function get_audio_url(videoId, options = {quality: '0', bit_rate: '192K',
     // Add video ID
     ytdlpArgs.push(`https://www.youtube.com/watch?v=${videoId}`);
     
-    console.log('yt-dlp command:', 'yt-dlp', ytdlpArgs.join(' '));
+    console.log(`Quality ${options.quality} (${targetBitrate}) format: ${formatString}`);
     
     // Run yt-dlp command
     const ytdlp = spawn('yt-dlp', ytdlpArgs);
@@ -390,6 +563,41 @@ async function get_audio_url(videoId, options = {quality: '0', bit_rate: '192K',
   });
 }
 
+function buildYtDlpCommand(videoUrl, { quality, bit_rate, format, directUrl = true }) {
+    let cmd = `yt-dlp`;
+
+    // If user wants the direct stream URL instead of downloading
+    if (directUrl) cmd += ` -g`;
+
+    // Start with format filter
+    if (bit_rate) {
+        const abr = parseInt(bit_rate.toLowerCase().replace('k', ''));
+        cmd += ` -f "bestaudio[abr<=${abr}]"`;
+    } else if (quality !== undefined) {
+        // Sort by abr (average bitrate)
+        // yt-dlp allows sort syntax: bestaudio[abr] → sort by bitrate
+        cmd += ` -f "bestaudio[ext=webm]/bestaudio"`; // fallback if ext filter fails
+        cmd += ` --format-sort "abr"`; // sort by bitrate
+        // quality index: 0 = best (highest), 9 = worst (lowest)
+        cmd += ` --format-sort-force`;
+        cmd += ` --format-sort "abr"`; // sort ascending by default
+        if (quality === '0') {
+            cmd += ` --format-sort "abr:desc"`; // highest bitrate
+        } else {
+            // Lower quality means pick lower from sorted list
+            cmd += ` --format-sort "abr:asc"`; // lowest bitrate
+        }
+    }
+
+    // If converting to audio format like mp3
+    if (format) {
+        cmd += ` --extract-audio --audio-format ${format}`;
+    }
+
+    cmd += ` "${videoUrl}"`;
+    return cmd;
+}
+
 // Helper function to convert quality level (0-9) to approximate bitrate
 function getAudioBitrateForQuality(quality) {
   const qualityMap = {
@@ -410,12 +618,12 @@ function getAudioBitrateForQuality(quality) {
 
 async function stream_audio(res, youtube_video_id) {
     try {
-        let audio_url = await get_audio_url(youtube_video_id);
+        let audio_url = await get_audio_url(youtube_video_id, {quality: '9', bit_rate: '24K', format: 'mp3'});
         if (!audio_url) {
             //for direct streaming
             audio_url = `/music/stream/${youtube_video_id}`;
         }
-        console.log(`Streaming audio for ${youtube_video_id} from URL: ${audio_url}`);
+        // console.log(`Streaming audio for ${youtube_video_id} from URL: ${audio_url}`);
 
         res.status(200).json({url: audio_url});
     } catch (error) {
@@ -427,14 +635,26 @@ async function stream_audio(res, youtube_video_id) {
         }
     }
 }
-
 export default {
     get: get_audio_file,
-    search: search,
-    search_videos: search_for_videos,
-    search_artists: search_for_artists,
-    download: download_audio,
-    download_stream: download_audio_to_stream,
-    stream: stream_audio,
+    youtube: {
+        search: youtube_search,
+        search_videos: youtube_search_for_videos,
+        search_artists: youtube_search_for_artists,
+        download: download_audio,
+        download_stream: download_audio_to_stream,
+        stream: stream_audio,
+        get_audio_url: get_audio_url,
+    },
+    spotify: {
+        search: spotify_search,
+        search_videos: spotify_search_for_videos,
+        search_artists: spotify_search_for_artists,
+        search_albums: spotify_search_for_albums,
+        search_playlists: spotify_search_for_playlists,
+        uri_to_video_id: spotify_uri_to_video_id,
+        get_recommondations: get_recommondations,
+    },
+    search,
     get_artwork: download_audio_artwork_to_stream,
 };

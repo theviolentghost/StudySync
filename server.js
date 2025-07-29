@@ -10,7 +10,7 @@ import { fileURLToPath } from 'url';
 import os from 'os';
 import 'dotenv/config';
 import progress_emitter from './progress.emitter.js';
-import { file } from 'googleapis/build/src/apis/file/index.js';
+import playlist_importer from './import.js';
 
 const app = Express();
 
@@ -479,7 +479,7 @@ app.post("/audio/download/:audio_id", async (req, res) => {
     }
     try {
         console.log('Downloading audio file with ID:', audio_id);
-        Music.download_stream(res, audio_id, req.body);
+        Music.youtube.download_stream(res, audio_id, req.body);
     } catch (error) {
         console.error('Error fetching audio file:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -507,7 +507,7 @@ app.get("/audio/stream/:audio_id", async (req, res) => {
     }
     try {
         console.log('Streaming audio file with ID:', audio_id);
-        Music.stream(res, audio_id);
+        Music.youtube.stream(res, audio_id);
     } catch (error) {
         console.error('Error fetching audio file:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -521,7 +521,7 @@ app.get("/music/stream/:audio_id", async (req, res) => {
     }
     try {
         console.log('Streaming audio file with ID:', audio_id);
-        Music.download_stream(res, audio_id);
+        Music.youtube.download_stream(res, audio_id);
     } catch (error) {
         console.error('Error fetching audio file:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -556,12 +556,14 @@ app.get('/audio/progress/:video_id', async (req, res) => {
 
 app.get('/music/search', async (req, res) => {
     const query = req.query.q;
+    const source = req.query.source || 'spotify'; 
     console.log('Search query:', query);
+    console.log('Search source:', source);
     if (!query) {
         return res.status(400).json({ error: 'Search query is required' });
     }
     try {
-        const results = await Music.search(query);
+        const results = await Music.search(query, source);
         
         res.json(results);
     } catch (error) {
@@ -569,6 +571,51 @@ app.get('/music/search', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+
+app.get('/music/spotify/video-id', async (req, res) => {
+    const spotify_uri = req.query.uri;
+    if (!spotify_uri) {
+        return res.status(400).json({ error: 'Spotify URI is required' });
+    }
+    try {
+        const video_id = await Music.spotify.uri_to_video_id(spotify_uri);
+        if (!video_id) {
+            return res.status(404).json({ error: 'Video ID not found for the given Spotify URI' });
+        }
+        console.log('Video ID for Spotify URI:', video_id);
+        res.json({ video_id });
+    } catch (error) {
+        console.error('Error fetching video ID from Spotify URI:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+app.get('/musi/playlist', async (req, res) => {
+    const url = req.query.url;
+    if (!url) {
+        return res.status(400).json({ error: 'Playlist URL is required' });
+    }
+    try {
+        const playlist = await playlist_importer.get_musi_playlist(url);
+        if (!playlist || !playlist.tracks || playlist.tracks.length === 0) {
+            return res.status(404).json({ error: 'No tracks found in the playlist' });
+        }
+        res.json(playlist);
+    } catch (error) {
+        console.error('Error fetching Musi playlist:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -1,58 +1,75 @@
-<div class="container" [ngClass]="{'hidden': visibility_status === 'hidden', 'reduced': visibility_status === 'reduced'}">
+<hot-action #hot_action [ngClass]="{revealed: hot_action_open}"></hot-action>
+<quick-action #quick_action [ngClass]="{revealed: quick_action_open}"></quick-action>
+
+<div 
+    #playerContainer 
+    class="container" 
+    [@playerState]="getAnimationParams()"
+    [ngClass]="{'hidden': visibility_status === 'hidden', 'reduced': visibility_status === 'reduced'}"
+    
+>
+    <canvas id="visualization-canvas" width="800" height="800"></canvas>
     <button class="media-header" (click)="toggle_visibility(); $event.stopPropagation()">
-        <div class="audio-progress" [style.--progress]="audio_current_time / audio_duration" [style.opacity]="visibility_status === 'reduced' ? '1' : '0'"></div>
+        <div class="audio-progress" [style.display]="player_status === 'loading' ? 'none' : 'flex'" [style.--progress]="audio_current_time / audio_duration" [style.opacity]="visibility_status === 'reduced' ? '1' : '0'"></div>
         <div class="status" [style.mask-image]="'url(' + (visibility_status === 'visible' ? 'chevron-down.svg' : 'chevron-up.svg') + ')'"></div>
         <div class="media-info" [style.flex-direction]="visibility_status === 'reduced' ? 'column' : 'column-reverse'">
-            <span class="title">{{ visibility_status === "visible" ? (current_playlist_data?.name || "#no playlist") : (current_song_data?.song_name || "#no name") }}</span>
-            <span class="subtitle">{{ visibility_status === "visible" ? "Playing From" : (current_song_data?.original_artist_name || "#no artist") }}</span> 
+            <span class="title">{{ visibility_status === "visible" ? (current_playlist_data?.name || "#no playlist") : (current_media_data?.song_name || current_media_data?.original_song_name || "#no name") }}</span>
+            <span class="subtitle">{{ visibility_status === "visible" ? "Playing From" : (current_media_data?.original_artists?.[0]?.name || "#no artist") }}</span> 
         </div>
-        <div class="player-status" (click)="toggle_play(); $event.stopPropagation();" [style.display]="visibility_status === 'reduced' ? 'block' : 'none'" [style.--mask]="'url(' + (player_status === 'paused' ? 'player-play.svg' : 'player-pause.svg') + ')'"></div>
-        <div class="queue" [style.display]="visibility_status === 'visible' ? 'block' : 'none'" [style.mask-image]="'url(\'playlist.svg\')'"></div>
+        <!-- <div class="player-status" (click)="toggle_play(); $event.stopPropagation();" [style.display]="visibility_status === 'reduced' ? 'block' : 'none'" [style.--mask]="'url(' + (player_status === 'paused' ? 'player-play.svg' : 'player-pause.svg') + ')'"></div> -->
+        <div class="player-status inverse" [style.display]="visibility_status === 'reduced' ? 'block' : 'none'" [ngClass]="{active: player_status !== 'loading', spinner: player_status === 'loading'}" (click)="toggle_play(); $event.stopPropagation();" (touchend)="toggle_play(); $event.stopPropagation();" [style.--mask]="'url(' + (player_status !== 'loading' ? (player_status === 'paused' ? 'player-play.svg' : 'player-pause.svg') : 'loader.svg') + ')'"></div>
+        <div class="queue" (click)="open_queue_management(); $event.stopPropagation();" (touchend)="open_queue_management(); $event.stopPropagation();" [style.display]="visibility_status === 'visible' ? 'block' : 'none'" [style.mask-image]="'url(\'playlist.svg\')'"></div>
     </button>
     <div class="media">
-        <button (click)="test()">test</button>
-        <div class="thumbnail">
-            <img id="thumbnail" src="" alt="#Thumbnail" />
+        <div #media class="draggable"></div>
+        <!-- <button (click)="test()">test</button> -->
+        <div class="thumbnail" [style.background]="get_thumbnail_background(current_song_data)">
+            <img id="thumbnail" src="" style="pointer-events: none;" [ngClass]="{disco: disco_mode }"/>
             <div class="main-audio-progress">
-            <div class="buffer-bar" [style.width.%]="buffered_percent"></div>
+                <div class="buffer-bar" [style.width.%]="player_status === 'loading' ? 0 : buffered_percent" ></div>
                 <input
                     type="range"
                     class="slider"
                     min="0"
                     [max]="audio_duration"
                     [value]="audio_current_time"
-                    (input)="on_seek($event)"
-                    [style.--value]="audio_current_time"
-                    [style.--max]="audio_duration"
+                    (input)="on_seek($event); $event.stopPropagation();"
+                    [style.--value]="player_status === 'loading' ? -100 : audio_current_time"
+                    [style.--max]="player_status === 'loading' ? 100 : audio_duration"
                     style="position: absolute;"
+                    [style.--color]="player_status === 'loading' ? 'var(--color-neutral)' : 'var(--color-primary)'"
                 />
             </div>
         </div>
-        <audio id="audio" preload="auto">
-            <source src="" type="audio/mp3">
+        <audio id="audio" preload="auto" controls playsinline>
+            <source id="audio-src" src="" type="audio/mpeg">
+            Your browser does not support the audio element.
         </audio>
         <div class="metadata">
-            <button class="liked" [style.mask-image]="'url(' + (current_song_data?.liked === true ? 'heart-fill.svg' : 'heart.svg') + ')'" (click)="toggle_like()"></button>
+            <button class="liked" [style.background-color]="player_status === 'loading' ? 'var(--color-neutral)' : 'var(--color-primary)'" [style.mask-image]="'url(' + ((current_song_data?.liked === true || buffer_like === true) ? 'heart-fill.svg' : 'heart.svg') + ')'" (click)="toggle_like()" (touchend)="toggle_like()"></button>
             <div class="info">
-                <div class="title">{{current_song_data?.song_name || "#no name"}}</div>
-                <div class="artist">{{current_song_data?.original_artist_name || "#no artist"}}</div>
+                <div class="title">{{current_media_data?.song_name || current_media_data?.original_song_name || "#no name"}}</div>
+                <div class="artist">{{current_media_data?.original_artists?.[0]?.name || "#no artist"}}</div>
+                <div class="source" [style.--color]="get_source_color(current_media_data?.id?.source)" [style.--mask]="'url(\'brand-' + current_media_data?.id?.source + '.svg\')'"></div>
             </div>
         </div>
         <div class="controls">
-            <button class="control-button" [ngClass]="{active: shuffle}" (click)="toggle_shuffle()" [style.mask-image]="'url(' + 'arrows-shuffle.svg' + ')'"></button> <!-- shuffle-->
-            <button class="control-button active" [ngClass]="{active: player_status !== 'loading'}" (click)="previous()" [style.mask-image]="'url(' + 'player-skip-back.svg' + ')'"></button> <!-- previous-->
-            <button class="control-button inverse" [ngClass]="{active: player_status !== 'loading', spinner: player_status === 'loading'}" (click)="toggle_play()" [style.--mask]="'url(' + (player_status !== 'loading' ? (player_status === 'paused' ? 'player-play.svg' : 'player-pause.svg') : 'loader.svg') + ')'"></button> <!-- play/pause-->
-            <button class="control-button active" [ngClass]="{active: player_status !== 'loading'}" (click)="next()" [style.mask-image]="'url(' + 'player-skip-forward.svg' + ')'"></button> <!-- skip-->
-            <button class="control-button" [style.mask-image]="'url(' + 'repeat.svg' + ')'"></button> <!-- repeat-->
+            <button class="control-button" [ngClass]="{active: shuffle}" (click)="toggle_shuffle()" (touchend)="toggle_shuffle()" [style.--mask]="'url(' + 'arrows-shuffle.svg' + ')'"></button> <!-- shuffle-->
+            <button class="control-button active" [ngClass]="{active: player_status !== 'loading'}" (click)="previous()" (touchend)="previous()" [style.--mask]="'url(' + 'player-skip-back.svg' + ')'"></button> <!-- previous-->
+            <button class="control-button inverse" [ngClass]="{active: player_status !== 'loading', spinner: player_status === 'loading'}" (click)="toggle_play()" (touchend)="toggle_play()" [style.--mask]="'url(' + (player_status !== 'loading' ? (player_status === 'paused' ? 'player-play.svg' : 'player-pause.svg') : 'loader.svg') + ')'"></button> <!-- play/pause-->
+            <button class="control-button active" [ngClass]="{active: player_status !== 'loading'}" (click)="next()" (touchend)="next()" [style.--mask]="'url(' + 'player-skip-forward.svg' + ')'"></button> <!-- skip-->
+            <button class="control-button" [style.--mask]="'url(' + 'repeat.svg' + ')'"></button> <!-- repeat-->
         </div>
         <!-- <div class="volume-control" style="display: none;"> not available on pwa
             <input type="range" class="slider" min="0" max="100" value="50">
         </div> -->
         <div class="modifiers">
-            <button class="modifier-button" [style.mask-image]="'url(' + 'plus.svg' + ')'"></button> <!-- add to playlist-->
+            <button class="modifier-button" (click)="download_song()" (touchend)="download_song()" [style.--progress]="video_progress(current_media_data?.id?.video_id || current_song_data?.id?.video_id || '')" [ngClass]="{downloading: is_downloading(current_media_data?.id?.video_id || '') || is_downloading(current_song_data?.id?.video_id || '') }" [style.pointer]="current_song_data?.downloaded ? 'default' : 'pointer'" [style.--color]="current_song_data?.downloaded ? 'var(--color-primary)' : 'var(--color-neutral)'" [style.--mask]="'url(' + ( is_downloading(current_media_data?.id?.video_id || '') || is_downloading(current_song_data?.id?.video_id || '') ? 'loader.svg' : (current_song_data?.downloaded || current_media_data?.downloaded ? 'cloud-download.svg' : 'download.svg')) + ')'"></button> <!-- download -->
+            <button class="modifier-button" (click)="add_song_to_playlist()" (touchend)="add_song_to_playlist()" [style.--mask]="'url(' + 'plus.svg' + ')'"></button> <!-- add to playlist-->
             <!-- <button class="modifier-button"></button> equilizer (doesnt work on lockscreen) -->
-            <button class="modifier-button" [style.mask-image]="'url(' + 'disco-ball-fill.svg' + ')'"></button> <!-- toggle disco mode-->
-            <button class="modifier-button" [style.mask-image]="'url(' + 'badge-cc.svg' + ')'"></button> <!-- toggle lyrics-->
+            <button class="modifier-button" (click)="toggle_disco_mode()" (touchend)="toggle_disco_mode()" [style.--color]="disco_mode ? 'var(--color-primary)' : 'var(--color-neutral)'" [style.--mask]="'url(' + 'disco-ball-fill.svg' + ')'"></button> <!-- toggle disco mode-->
+            <button class="modifier-button" [style.--mask]="'url(' + 'badge-cc.svg' + ')'"></button> <!-- toggle lyrics-->
+            <button class="modifier-button" [style.--mask]="'url(' + 'edit.svg' + ')'"></button> <!-- toggle lyrics-->
             <!-- <button class="modifier-button"></button> add to playlist -->
         </div>
     </div>

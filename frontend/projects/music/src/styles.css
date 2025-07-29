@@ -32,12 +32,15 @@
     --color-neutral: hsl(45, 2%, 40%);
     --color-text: hsl(243, 76%, 5%);
     --color-primary: hsl(38, 100%, 50%);
+
+    --color-denied: hsl(0, 97%, 45%);
+    --color-success: hsl(142, 100%, 41%);
 }
 
 @media (prefers-color-scheme: dark) {
     :root {
         --color-background-50: hsl(60, 4%, 5%);
-        --color-background-100: hsl(40, 6%, 10%);
+        --color-background-100: hsl(40, 6%, 12%);
         --color-background-200: hsl(30, 4%, 15%);
         --color-background-300: hsl(34, 5%, 30%);
         --color-background-400: hsl(30, 4%, 40%);
@@ -61,7 +64,6 @@
     padding: 0;
     border: none;
     -webkit-font-smoothing: antialiased;
-    overflow: hidden;
 }
 
 *:focus {
@@ -70,6 +72,7 @@
 }
 
 html, body {
+    overscroll-behavior: none;
     width: 100vw;
     height: 100dvh;
 }
@@ -88,7 +91,7 @@ body {
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
-    -webkit-touch-callout: none; /* iOS Safari */
+    /* -webkit-touch-callout: none; iOS Safari */
 }
 .enable-select {
     -webkit-user-select: text;
@@ -96,4 +99,42 @@ body {
     -ms-user-select: text;
     user-select: text;
     -webkit-touch-callout: default; /* iOS Safari */
+}
+.disable-zoom {
+    touch-action: manipulation;
+    -ms-touch-action: manipulation;
+    -webkit-touch-callout: none; /* iOS Safari */
+}
+.enable-zoom {
+    touch-action: auto;
+    -ms-touch-action: auto;
+    -webkit-touch-callout: default; /* iOS Safari */
+}
+.hide-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+}
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.show-scrollbar {
+    -ms-overflow-style: auto;  /* IE and Edge */
+    scrollbar-width: auto; /* Firefox */
+}
+.show-scrollbar::-webkit-scrollbar {
+    display: block;
+}
+button, input, select, textarea {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background: none;
+    border: none;
+    outline: none;
+}
+button:hover, input:hover, select:hover, textarea:hover, div:hover{
+    background-color: transparent;
+    color: inherit;
+    transform: none;
+    box-shadow: none;
 }

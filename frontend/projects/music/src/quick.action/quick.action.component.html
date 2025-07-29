@@ -1,0 +1,130 @@
+<div class="header">
+    <button class="close" (click)="cancel()">Cancel</button>
+    <h3 class="label">{{title}}</h3>
+</div>
+
+<ng-container [ngSwitch]="action">
+    <!-- Add to Playlist Template -->
+    <ng-container *ngSwitchCase="'pick_playlist_color'">
+        <div class="color-grid">
+            <div
+                class="color-column"
+                *ngFor="let color_column of playlist_color_options"
+            >
+                <button
+                    class="color-option"
+                    *ngFor="let color of color_column"
+                    [style.--color]="color"
+                    (click)="select_view_color(color)"
+                    [ngClass]="{
+                        'selected': color === playlist_view_color,
+                    }"
+                ></button>
+            </div>
+        </div>
+        <div class="finish-container" [ngClass]="{'hide': false}">
+            <button class="finish" [style.background-color]="playlist_view_color" (click)="set_playlist_color()">{{is_playlist_view_color_the_same_as_selected_playlist ? 'Keep' : 'Confirm'}}</button>
+        </div>
+    </ng-container>
+
+    <!-- Queue Template -->
+    <ng-container *ngSwitchCase="'queue_management'">
+        <div class="queue-management">
+            <!-- #resultVideos (scroll)="on_scroll($event)" [style.padding-top]="padding_top" -->
+            <div class="result-videos" #resultVideos (scroll)="on_scroll($event)" >
+                <h2 *ngIf="play_next_queue_length > 0" style="width: 100%; margin: var(--space-2); padding-left: var(--space-2);">Up Next</h2>
+                <button 
+                    class="result video disable-select" 
+                    [ngClass]="{
+                        selected: get_bare_song_key(current_song_identifier) === get_bare_song_key(video?.id),
+                        'added-to-next': added_to_next_swiping_video === video_key(video, i),
+                        'delete-animation': deleted_swiping_video === video_key(video, i)
+                    }" 
+                    *ngFor="let video of play_next_queue_width_song_data; last as isLast; index as i" 
+                    (touchstart)="video_on_swipe_start($event, video, i)"
+                    (touchmove)="video_on_swipe_move($event)"
+                    (touchend)="video_on_swipe_end($event, 'play_next')"
+                    (mousedown)="video_on_swipe_start($event, video, i)"
+                    (mousemove)="video_on_swipe_move($event)"
+                    (mouseup)="video_on_swipe_end($event, 'play_next')"
+                    (mouseleave)="video_on_swipe_end($event, 'play_next')"
+                    [attr.data-video-key]="video_key(video, i)"
+                    [style.transform]="swiping_video === video_key(video, i) ? 'translateX(' + swipe_x + 'px)' : ''"
+                    [style.border-bottom]="isLast ? 'solid 1px transparent' : null"
+                >
+                <!-- (click)="play(video)" -->
+                    <div class="thumbnail" [style.background-color]="video?.colors?.primary || '#1a1c1b'">
+                        <img [src]="get_artwork_src(video)" alt="" />
+                        <div class="duration">{{ ms_to_time( video?.video_duration || 0) }}</div>
+                    </div>
+                    <div class="info">
+                        <div class="title">{{ video?.song_name }}</div>
+                        <div class="artist">{{ video?.original_artists?.[0]?.name }}</div>
+                    </div>
+                    <div class="extra-info">
+                        <div class="source" [style.--color]="get_source_color(video?.id?.source)" [style.--mask]="'url(\'brand-' + video?.id?.source + '.svg\')'"></div>
+                        <div class="liked" *ngIf="video?.liked" [style.--mask]="'url(' + 'heart-fill.svg' + ')'"></div>
+                        <div class="downloaded" *ngIf="video?.downloaded && video?.download_audio_blob" [style.--mask]="'url(' + 'cloud-download.svg' + ')'"></div>
+                    </div>
+                    <div class="download" *ngIf="is_downloading(video?.id?.video_id || '')">
+                        <div class="progress" [style.width.%]="video_progress(video?.id?.video_id || '')"></div>
+                    </div>
+                    <div class="quick-actions" [style.width.px]="swiping_video === video_key(video, i) ? swipe_width : 0">
+                        <button [ngClass]="{hidden: swipe_x < -delete_swipe_open_size}" [style.background-color]="'var(--color-neutral)'" class="action" [style.--mask]="'url(' + 'dots.svg' + ')'"></button>
+                        <button [style.background-color]="'var(--color-denied)'" class="action" [style.--mask]="'url(' + 'trash.svg' + ')'"></button>
+                    </div>
+                    <div class="moveable" [style.--mask]="'url(' + 'grip-horizontal.svg' + ')'"></div>
+                </button>
+                <h2 style="width: 100%; margin: var(--space-2); padding-left: var(--space-2);">Playlist</h2>
+                <button 
+                    class="result video disable-select" 
+                    [ngClass]="{
+                        selected: get_bare_song_key(current_song_identifier) === get_bare_song_key(video?.id),
+                        'added-to-next': added_to_next_swiping_video === video_key(video, i + play_next_queue_length + 1 ),
+                        'delete-animation': deleted_swiping_video === video_key(video, i + play_next_queue_length + 1)
+                    }" 
+                    *ngFor="let video of playlist_queue_width_song_data; index as i; first as isFirst" 
+                    [style.margin-top]="isFirst ? padding_top : '0px'"
+                    (touchstart)="video_on_swipe_start($event, video, i + play_next_queue_length + 1)"
+                    (touchmove)="video_on_swipe_move($event)"
+                    (touchend)="video_on_swipe_end($event, 'playlist')"
+                    (mousedown)="video_on_swipe_start($event, video, i + play_next_queue_length + 1)"
+                    (mousemove)="video_on_swipe_move($event)"
+                    (mouseup)="video_on_swipe_end($event, 'playlist')"
+                    (mouseleave)="video_on_swipe_end($event, 'playlist')"
+                    [attr.data-video-key]="video_key(video, i + play_next_queue_length + 1)"
+                    [style.transform]="swiping_video === video_key(video, i + play_next_queue_length + 1) ? 'translateX(' + swipe_x + 'px)' : ''"
+                >
+                <!-- (click)="play(video)" -->
+                    <div class="thumbnail" [style.background-color]="video?.colors?.primary || '#1a1c1b'">
+                        <img [src]="get_artwork_src(video)" alt="" />
+                        <div class="duration">{{ ms_to_time( video?.video_duration || 0) }}</div>
+                    </div>
+                    <div class="info">
+                        <div class="title">{{ video?.song_name }}</div>
+                        <div class="artist">{{ video?.original_artists?.[0]?.name }}</div>
+                    </div>
+                    <div class="extra-info">
+                        <div class="source" [style.--color]="get_source_color(video?.id?.source)" [style.--mask]="'url(\'brand-' + video?.id?.source + '.svg\')'"></div>
+                        <div class="liked" *ngIf="video?.liked" [style.--mask]="'url(' + 'heart-fill.svg' + ')'"></div>
+                        <div class="downloaded" *ngIf="video?.downloaded && video?.download_audio_blob" [style.--mask]="'url(' + 'cloud-download.svg' + ')'"></div>
+                    </div>
+                    <div class="download" *ngIf="is_downloading(video?.id?.video_id || '')">
+                        <div class="progress" [style.width.%]="video_progress(video?.id?.video_id || '')"></div>
+                    </div>
+                    <div class="quick-actions" [style.width.px]="swiping_video === video_key(video, i + play_next_queue_length + 1) ? swipe_width : 0">
+                        <button [ngClass]="{hidden: swipe_x < -delete_swipe_open_size}" [style.background-color]="'var(--color-neutral)'" class="action" [style.--mask]="'url(' + 'dots.svg' + ')'"></button>
+                        <button [style.background-color]="'var(--color-denied)'" class="action" [style.--mask]="'url(' + 'trash.svg' + ')'"></button>
+                    </div>
+                    <div class="moveable" [style.--mask]="'url(' + 'grip-horizontal.svg' + ')'"></div>
+                </button>
+            </div>
+        </div>
+    </ng-container>
+
+    <!-- Default/Fallback Template -->
+    <ng-container *ngSwitchDefault>
+        <p>no gud option</p>
+    </ng-container>
+    
+</ng-container>

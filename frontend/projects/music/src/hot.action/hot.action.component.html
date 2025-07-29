@@ -1,0 +1,89 @@
+<div class="header">
+    <button class="close" (click)="cancel()">Cancel</button>
+    <h3 class="label">{{title}}</h3>
+</div>
+
+<ng-container [ngSwitch]="action">
+    
+    <!-- Add to Playlist Template -->
+    <ng-container *ngSwitchCase="'add_to_playlist'">
+        <div class="container disable-select">
+            <div class="preview">
+                <div class="thumbnail" [style.background-color]="song_data?.colors?.primary || 'transparent'">
+                    <img [src]="song_data?.download_artwork_blob || song_data?.url?.artwork?.low || song_data?.url?.artwork?.high ||  'default-thumbnail.svg'" alt="Thumbnail" />
+                </div>
+                <div class="info">
+                    <div class="title">{{ song_data?.song_name || "#no name" }}</div>
+                    <div class="artist">{{ song_data?.original_artists?.[0]?.name }}</div>
+                </div>
+            </div>
+            <div class="actions" [style.height]="are_any_actions_selected() ? 'calc(100% - var(--space-10) - var(--space-6))' : '100%'">
+                <button class="action" *ngFor="let action of actions" (click)="action.select();" (touchend)="action.select();" [style.--color]="!action?.no_check ? (action.selected ? 'var(--color-primary)' : 'var(--color-background-300)') : 'var(--color-primary)'" [style.--text]="!action?.no_check ? (action.selected ? 'var(--color-primary)' : 'var(--color-text)') : 'var(--color-primary)'" [ngClass]="{'null': !action_is_selectable(action.is_selectable)}">
+                    <div class="thumbnail">
+                        <div class="icon" [style.--mask]="'url(\'' + action.icon() + '\')'" alt="Action Thumbnail"></div>
+                    </div>
+                    <div class="name">{{ action.name }}</div>
+                    <div *ngIf="!action?.no_check" class="state" [style.--mask]="'url(\'check.svg\')'"></div>
+                </button>
+                <h2>Add To Playlists</h2>
+                <button class="action playlist" *ngFor="let playlist of playlist_selectors" (click)="select_playlist(playlist)" (touchend)="select_playlist(playlist)" [style.--primary]="get_playlist_primary_color(playlist.identifier)" [style.--color]="(playlist.selected ? 'var(--primary)' : 'var(--color-background-300)')" [style.--text]="(playlist.selected ? 'var(--primary)' : 'var(--color-text)')" [style.--background]="(playlist.selected ? 'var(--primary)' : 'var(--color-background)')" [ngClass]="{'null': !action_is_selectable(playlist.is_selectable)}">
+                    <div class="thumbnail">
+                        <!-- <img *ngFor="let image of playlist.identifier?.images" [src]="image" alt="" /> -->
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: var(--space-1);">
+                        <div class="name">{{ playlist.identifier.name }}</div>
+                        <div class="info">
+                            <div class="count">{{ (playlist.identifier.track_count || 0) + (playlist.selected ? 1 : 0) }} tracks</div>
+                            <div class="playlist-duration"> {{ ms_to_time((playlist.identifier.duration || 0) + (playlist.selected ? (song_data?.video_duration ?? 0) : 0)) }}</div>
+                        </div>
+                    </div>
+                    <div class="state" [style.--mask]="'url(\'check.svg\')'"></div>
+                </button>
+            </div>
+
+            <div class="finish-container" [ngClass]="{'hide': !are_any_actions_selected()}">
+                <button class="finish" (click)="add_to_playlist_done()" (touchend)="add_to_playlist_done()">Done</button>
+            </div>
+        </div>
+    </ng-container>
+
+    <!-- Song Options Template -->
+    <ng-container *ngSwitchCase="'song_options'">
+        
+    </ng-container>
+
+    <!-- Import Playlist Template -->
+    <ng-container *ngSwitchCase="'import_playlist'">
+        <div class="import">
+            <div class="backdrop" [style.--primary]="'var(--color-primary)'"></div>
+            <div class="import-container">
+                <input type="text" class="import-input" placeholder="https://feelthemusi.com/playlist/..." [(ngModel)]="import_url" />
+                <!-- <button class="import-button" (click)="import_playlist_done()" [ngClass]="{loading: import_status === 'loading'}">{{ import_status === 'loading' ? '' : 'Import'}} <div class="import-status" [ngClass]="{loading: import_status === 'loading', error: import_status === 'error'}" [style.--mask]="'url(\'loader.svg\')'"></div></button> -->
+            </div>
+            <div class="finish-container" [ngClass]="{'hide': import_url.length === 0}">
+                <!-- <button class="finish" (click)="create_playlist_done()">Create</button> -->
+                <button class="import-button" (click)="import_playlist_done()" (touchend)="import_playlist_done()" [ngClass]="{loading: import_status === 'loading'}">{{ import_status === 'loading' ? '' : 'Import'}} <div class="import-status" [ngClass]="{loading: import_status === 'loading', error: import_status === 'error'}" [style.--mask]="'url(\'loader.svg\')'"></div></button>
+            </div>
+        </div>
+    </ng-container>
+
+    <!-- Create Playlist Template -->
+    <ng-container *ngSwitchCase="'create_playlist'">
+        <div class="import">
+            <div class="backdrop" [style.--primary]="'#2a844e'"></div>
+            <div class="import-container">
+                <input class="import-input" type="text" placeholder="Playlist Name" [(ngModel)]="playlist_name" />
+            </div>
+
+            <div class="finish-container" [ngClass]="{'hide': !has_valid_playlist_name()}">
+                <button class="finish" (click)="create_playlist_done()">Create</button>
+            </div>
+        </div>
+    </ng-container>
+
+    <!-- Default/Fallback Template -->
+    <ng-container *ngSwitchDefault>
+        <p>no gud option</p>
+    </ng-container>
+    
+</ng-container>
