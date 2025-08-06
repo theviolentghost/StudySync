@@ -7,6 +7,8 @@ import Database from './database/users.js';
 import youtubeSearch from './youtube-search.js'; 
 import youtubeChannelSearch from './youtube-channel-search.js';
 import youtubePlaylist from './youtube-playlist.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 const app = Express();
 
@@ -15,6 +17,8 @@ const port = process.env.PORT || 8080;
 app.use(CORS());
 app.use(Express.json());
 app.use(Express.urlencoded({ extended: true }));
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 //
 //
@@ -333,6 +337,30 @@ app.get('/youtube_get_playlist_videos', async (req, res) => {
         console.error('Error searching videos:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
+});
+
+app.use('/', Express.static(
+    path.join(__dirname, 'frontend/dist/my-angular-app/browser'),
+    {
+        setHeaders: (res, filePath) => {
+            // console.log(filePath);
+            if (filePath.endsWith('index.html')) {
+                res.setHeader('Cache-Control', 'no-store');
+            }
+        }
+    }
+));
+
+app.get('/.well-known/appspecific/:path', (req, res) => {
+    res.status(404).end(); // Just return 404 for DevTools requests
+});
+
+// Serve the Angular study app (this should be LAST)
+app.get(/.*/, (req, res) => {
+    
+    res.sendFile(
+        path.join(__dirname, 'frontend/dist/my-angular-app/browser/index.html')
+    );
 });
 
 app.listen(port, () => {
