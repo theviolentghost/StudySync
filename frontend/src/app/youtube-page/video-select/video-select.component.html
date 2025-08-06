@@ -1,7 +1,8 @@
 <div class="youtube_video_grid">
-    <a class="video" (click)="playNewVideo('')" *ngFor="let video of videos">
+    <a class="video" (click)="playNewVideo(null)" *ngFor="let video of videos">
         <div class="thumbnail">
             <div class="video_time_display"><div class="video_time_text">0:00:00</div></div>
+            <div class="video_progress_bar" *ngIf="wasWatched('')" [style.width.%]="getVideoProgressPercent('')"></div>
         </div>
 
         <div class="video_details">

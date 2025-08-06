@@ -6,6 +6,7 @@ import { YouTubeSearchResponse, SearchResultItem } from './video-search-result.m
 import { YouTubeChannel } from './youtube-channel-search-results.model';
 import { max, take } from 'rxjs/operators';
 import { Playlist, PlaylistVideo } from './youtube-playlist-results.model';
+import { WatchHistoryService } from './watch-history.service';
 
 @Injectable({
   providedIn: 'root'
@@ -36,7 +37,8 @@ export class YoutubeService {
     channelUploads$: Observable<PlaylistVideo[] | null> = this.channelUploadsSubject.asObservable();
 
     constructor(private http: HttpClient,
-        private router: Router
+        private router: Router,
+        private watchHistoryService: WatchHistoryService
     ) { }
 
     searchVideos(query: string, maxResults: number = 10, nextPageToken): Observable<any> {
@@ -104,7 +106,9 @@ export class YoutubeService {
         this.minimizedSubject.next(false);
     }
 
-    public playNewVideo(videoId:string):void{
+    public playNewVideo(video: PlaylistVideo):void{
+        let videoId = video.contentDetails.videoId;
+
         if(!this.isMinimized) {
             this.navigateToPlayer();
         }else{
@@ -115,6 +119,11 @@ export class YoutubeService {
             }
         }
         this.videoIdSubject.next(videoId);
+        this.watchHistoryService.saveCurrentVideo(video);
+    }
+
+    public removeVideoPlaying(): void{
+        this.videoIdSubject.next('');
     }
 
     saveNextSearchToken(token: string): void{

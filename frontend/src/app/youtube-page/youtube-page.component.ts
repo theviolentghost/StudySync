@@ -54,6 +54,14 @@ export class YoutubePageComponent {
     }], { skipLocationChange: true });
   }
 
+  public navigateToLibraryPage(): void{
+    this.router.navigate(['/youtubeHome', { 
+        outlets: { 
+            youtube: ['library-page'] 
+        } 
+    }], { skipLocationChange: true });
+  }
+
   public updateSearchInput(): void{
 
     clearTimeout(this.search);

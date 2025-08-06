@@ -146,7 +146,9 @@ export class YoutubeSubscriptionService{
     }
 
     public getSubscriptionList(): string[]{
-        return JSON.parse(localStorage.getItem(this.SUBSCRIPTION_LIST_KEY));
+        let list = JSON.parse(localStorage.getItem(this.SUBSCRIPTION_LIST_KEY));
+        if(!list) return [];
+        return list;
     }
 
     public isSubscribed(channelId: string): boolean{

@@ -124,3 +124,10 @@
     text-wrap: wrap;
     overflow: hidden;
 }
+
+.video_progress_bar{
+    height: 3%;
+    position: absolute;
+    bottom: 0;
+    background-color: red;
+}
