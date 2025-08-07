@@ -17,8 +17,8 @@
             <span class="subtitle">{{ visibility_status === "visible" ? "Playing From" : (current_media_data?.original_artists?.[0]?.name || "#no artist") }}</span> 
         </div>
         <!-- <div class="player-status" (click)="toggle_play(); $event.stopPropagation();" [style.display]="visibility_status === 'reduced' ? 'block' : 'none'" [style.--mask]="'url(' + (player_status === 'paused' ? 'player-play.svg' : 'player-pause.svg') + ')'"></div> -->
-        <div class="player-status inverse" [style.display]="visibility_status === 'reduced' ? 'block' : 'none'" [ngClass]="{active: player_status !== 'loading', spinner: player_status === 'loading'}" (click)="toggle_play(); $event.stopPropagation();" (touchend)="toggle_play(); $event.stopPropagation();" [style.--mask]="'url(' + (player_status !== 'loading' ? (player_status === 'paused' ? 'player-play.svg' : 'player-pause.svg') : 'loader.svg') + ')'"></div>
-        <div class="queue" (click)="open_queue_management(); $event.stopPropagation();" (touchend)="open_queue_management(); $event.stopPropagation();" [style.display]="visibility_status === 'visible' ? 'block' : 'none'" [style.mask-image]="'url(\'playlist.svg\')'"></div>
+        <div class="player-status inverse" [style.display]="visibility_status === 'reduced' ? 'block' : 'none'" [ngClass]="{active: player_status !== 'loading', spinner: player_status === 'loading'}" (click)="toggle_play(); $event.stopPropagation();" [style.--mask]="'url(' + (player_status !== 'loading' ? (player_status === 'paused' ? 'player-play.svg' : 'player-pause.svg') : 'loader.svg') + ')'"></div>
+        <div class="queue" (click)="open_queue_management(); $event.stopPropagation();" [style.display]="visibility_status === 'visible' ? 'block' : 'none'" [style.mask-image]="'url(\'playlist.svg\')'"></div>
     </button>
     <div class="media">
         <div #media class="draggable"></div>
@@ -64,10 +64,10 @@
             <input type="range" class="slider" min="0" max="100" value="50">
         </div> -->
         <div class="modifiers">
-            <button class="modifier-button" (click)="download_song()" (touchend)="download_song()" [style.--progress]="video_progress(current_media_data?.id?.video_id || current_song_data?.id?.video_id || '')" [ngClass]="{downloading: is_downloading(current_media_data?.id?.video_id || '') || is_downloading(current_song_data?.id?.video_id || '') }" [style.pointer]="current_song_data?.downloaded ? 'default' : 'pointer'" [style.--color]="current_song_data?.downloaded ? 'var(--color-primary)' : 'var(--color-neutral)'" [style.--mask]="'url(' + ( is_downloading(current_media_data?.id?.video_id || '') || is_downloading(current_song_data?.id?.video_id || '') ? 'loader.svg' : (current_song_data?.downloaded || current_media_data?.downloaded ? 'cloud-download.svg' : 'download.svg')) + ')'"></button> <!-- download -->
-            <button class="modifier-button" (click)="add_song_to_playlist()" (touchend)="add_song_to_playlist()" [style.--mask]="'url(' + 'plus.svg' + ')'"></button> <!-- add to playlist-->
+            <button class="modifier-button" (click)="download_song()" [style.--progress]="video_progress(current_media_data?.id?.video_id || current_song_data?.id?.video_id || '')" [ngClass]="{downloading: is_downloading(current_media_data?.id?.video_id || '') || is_downloading(current_song_data?.id?.video_id || '') }" [style.pointer]="current_song_data?.downloaded ? 'default' : 'pointer'" [style.--color]="current_song_data?.downloaded ? 'var(--color-primary)' : 'var(--color-neutral)'" [style.--mask]="'url(' + ( is_downloading(current_media_data?.id?.video_id || '') || is_downloading(current_song_data?.id?.video_id || '') ? 'loader.svg' : (current_song_data?.downloaded || current_media_data?.downloaded ? 'cloud-download.svg' : 'download.svg')) + ')'"></button> <!-- download -->
+            <button class="modifier-button" (click)="add_song_to_playlist()" [style.--mask]="'url(' + 'plus.svg' + ')'"></button> <!-- add to playlist-->
             <!-- <button class="modifier-button"></button> equilizer (doesnt work on lockscreen) -->
-            <button class="modifier-button" (click)="toggle_disco_mode()" (touchend)="toggle_disco_mode()" [style.--color]="disco_mode ? 'var(--color-primary)' : 'var(--color-neutral)'" [style.--mask]="'url(' + 'disco-ball-fill.svg' + ')'"></button> <!-- toggle disco mode-->
+            <button class="modifier-button" (click)="toggle_disco_mode()" [style.--color]="disco_mode ? 'var(--color-primary)' : 'var(--color-neutral)'" [style.--mask]="'url(' + 'disco-ball-fill.svg' + ')'"></button> <!-- toggle disco mode-->
             <button class="modifier-button" [style.--mask]="'url(' + 'badge-cc.svg' + ')'"></button> <!-- toggle lyrics-->
             <button class="modifier-button" [style.--mask]="'url(' + 'edit.svg' + ')'"></button> <!-- toggle lyrics-->
             <!-- <button class="modifier-button"></button> add to playlist -->

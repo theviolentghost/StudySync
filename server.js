@@ -14,6 +14,8 @@ import os from 'os';
 import 'dotenv/config';
 import progress_emitter from './progress.emitter.js';
 import playlist_importer from './import.js';
+import multer from 'multer';
+const upload = multer();
 
 const app = Express();
 
@@ -651,6 +653,23 @@ app.get('/music/search', async (req, res) => {
     }
 });
 
+app.get('/music/search_recommendations', async (req, res) => {
+    const query = req.query.q;
+    if (!query) {
+        return res.status(400).json({ error: 'Search query is required' });
+    }
+    try {
+        const recommendations = await Music.get_search_recommendations(query);
+        if (!recommendations || recommendations.length === 0) {
+            return res.status(404).json({ error: 'No recommendations found for the given query' });
+        }
+        res.json(recommendations);
+    } catch (error) {
+        console.error('Error fetching search recommendations:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 app.get('/music/spotify/video-id', async (req, res) => {
     const spotify_uri = req.query.uri;
     if (!spotify_uri) {
@@ -661,7 +680,7 @@ app.get('/music/spotify/video-id', async (req, res) => {
         if (!video_id) {
             return res.status(404).json({ error: 'Video ID not found for the given Spotify URI' });
         }
-        console.log('Video ID for Spotify URI:', video_id);
+
         res.json({ video_id });
     } catch (error) {
         console.error('Error fetching video ID from Spotify URI:', error);
@@ -669,7 +688,7 @@ app.get('/music/spotify/video-id', async (req, res) => {
     }
 });
 
-app.get('/musi/playlist', async (req, res) => {
+app.get('/import/musi', async (req, res) => {
     const url = req.query.url;
     if (!url) {
         return res.status(400).json({ error: 'Playlist URL is required' });
@@ -686,7 +705,86 @@ app.get('/musi/playlist', async (req, res) => {
     }
 });
 
+app.post('/import/musix', upload.single('playlist_file'), async (req, res) => {
+    const file = req.file; // multer puts the file here
+    if (!file) {
+        return res.status(400).json({ error: 'Playlist file is required' });
+    }
+    try {
+        // file.buffer contains the file data as a Buffer
+        const playlist = await playlist_importer.get_musix_playlist(file.buffer);
+        if (!playlist || !playlist.tracks || playlist.tracks.length === 0) {
+            return res.status(404).json({ error: 'No tracks found in the playlist' });
+        }
+        res.json(playlist);
+    } catch (error) {
+        console.error('Error fetching MusiX playlist:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+app.get('/music/top_charts', async (req, res) => {
+    try {
+        const top_charts = await Music.get_top_charts();
+        if (!top_charts) {
+            return res.status(404).json({ error: 'No top charts found' });
+        }
+        res.json(top_charts);
+    } catch (error) {
+        console.error('Error fetching top charts:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+app.get('/music/mood_categories', async (req, res) => {
+    try {
+        const mood_categories = await Music.get_mood_categories();
+        if (!mood_categories) {
+            return res.status(404).json({ error: 'No mood categories found' });
+        }
+        res.json(mood_categories);
+    } catch (error) {
+        console.error('Error fetching mood categories:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+app.get('/music/mood_tracks', async (req, res) => {
+    const mood = req.query.mood;
+    if (!mood) {
+        return res.status(400).json({ error: 'Mood is required' });
+    }
+    try {
+        const mood_tracks = await Music.get_mood_playlists(mood);
+        if (!mood_tracks || mood_tracks.length === 0) {
+            return res.status(404).json({ error: 'No tracks found for the given mood' });
+        }
+        res.json(mood_tracks);
+    } catch (error) {
+        console.error('Error fetching mood tracks:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+app.get('/music/watch_playlist/:track_id', async (req, res) => {
+    const track_id = req.params.track_id;
+    if (!track_id) {
+        return res.status(400).json({ error: 'Track ID is required' });
+    }
+    try {
+        const watch_playlist = await Music.get_watch_playlist(track_id);
+        if (!watch_playlist) {
+            return res.status(404).json({ error: 'No tracks found in the watch playlist' });
+        }
+
+        res.json(watch_playlist);
+    } catch (error) {
+        console.error('Error fetching watch playlist:', error);
+        return res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 Music.stream.setup_endpoints(app);
+
 
 
 
@@ -757,6 +855,3 @@ app.get(/.*/, (req, res) => {
 app.listen(port, host, () => {
     console.log(`Server is running on http://${host}:${port}`);
 });
-// https.createServer(https_options, app).listen(port, host, () => {
-//     console.log(`Server is running on https://${host}:${port}`);
-// });

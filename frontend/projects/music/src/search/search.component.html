@@ -1,6 +1,7 @@
+<div class="backdrop" [style.--primary]="get_search_primary_color()"></div>
 <div class="search-container">
     <button class="quick-action" [style.--mask]="'url(' + (search_history.length === 0 ? 'search.svg' : 'chevron-left.svg') + ')'" (click)="left_quick_action_click()"></button>
-    <input #searchInput id="search" type="text" [(ngModel)]="search_query" placeholder="Search" (keydown.enter)="search()"/>
+    <input #searchInput id="search" type="text" [(ngModel)]="search_query" placeholder="Search" (keydown.enter)="search()" autocomplete="off" (ngModelChange)="on_search_input_change()"/>
     <button class="quick-action hidden" [style.--mask]="'url(\'x.svg\')'" [ngClass]="{hidden: search_query.length === 0}" (click)="clear_input()"></button>
     <button class="quick-action" [style.--mask]="'url(\'brand-' + search_source + '.svg\')'" style="mask-size: 90%;" (click)="toggle_source_dropdown()">
         <div class="drop-down-indicator" [style.--mask]="'url(\'chevron-down.svg\')'"></div>
@@ -8,10 +9,20 @@
             <button class="option" *ngFor="let option of source_dropdown_options" [style.--mask]="'url(\'brand-' + option.source + '.svg\')'" [style.background-color]="option.color" (click)="select_source(option.source); $event.stopPropagation();"></button>
         </div>
     </button>
+    <div class="search-recommendations" *ngIf="search_recommendations.length > 0">
+        <div 
+            class="recommendation"
+            *ngFor="let recommendation of search_recommendations"
+                (click)="search(recommendation.text)"
+                (touchend)="search(recommendation.text)"
+        >
+            <span *ngFor="let run of recommendation.runs" [ngClass]="{bold: run.bold}">{{run?.text}}</span>
+        </div>
+    </div>
 </div>
 
 <div class="search-results">
-    <div class="search-results-videos">
+    <div class="search-results-main">
         <ng-container [ngSwitch]="search_source">
             <!-- YOUTUBE TEMPLATE -->
             <ng-container *ngSwitchCase="'youtube'">
@@ -26,19 +37,21 @@
                 </div>
                 <!-- Videos -->
                 <ng-container *ngIf="(search_results?.videos?.total || 0) > 0; else noResults">
-                    <button (click)="youtube_play(video)" class="search-result video disable-select" *ngFor="let video of search_results?.videos?.results" [ngClass]="{saved: is_song_in_collection(video, 'youtube'), selected: get_bare_song_key(current_song_identifier) === get_bare_song_key(get_video_identifier(video, 'youtube'))}" >
-                        <div class="thumbnail">
-                            <img [src]="video.snippet.thumbnails.default.url" alt="" />
-                            <div class="duration">00:00:00</div>
-                        </div>
-                        <div class="info">
-                            <div class="title">{{ video.snippet.title }}</div>
-                            <div class="artist">{{ video.snippet.channelTitle }}</div>
-                        </div>
-                        <button class="hot-action" [style.--mask]="'url(\'plus.svg\')'" (click)="open_hot_action(video, 'youtube'); $event.stopPropagation();">
-                            <div *ngIf="is_song_in_collection(video, 'youtube')" class="saved-indicator" [style.--mask]="'url(\'check.svg\')'"></div>
+                    <div class="search-results-videos">
+                        <button (click)="youtube_play(video)" class="search-result video disable-select" *ngFor="let video of search_results?.videos?.results" [ngClass]="{saved: is_song_in_collection(video, 'youtube'), selected: get_bare_song_key(current_song_identifier) === get_bare_song_key(get_video_identifier(video, 'youtube'))}" >
+                            <div class="thumbnail">
+                                <img [src]="video.snippet.thumbnails.default.url" alt="" />
+                                <div class="duration">00:00:00</div>
+                            </div>
+                            <div class="info">
+                                <div class="title">{{ video.snippet.title }}</div>
+                                <div class="artist">{{ video.snippet.channelTitle }}</div>
+                            </div>
+                            <button class="hot-action" [style.--mask]="'url(\'plus.svg\')'" (click)="open_hot_action(video, 'youtube'); $event.stopPropagation();">
+                                <div *ngIf="is_song_in_collection(video, 'youtube')" class="saved-indicator" [style.--mask]="'url(\'check.svg\')'"></div>
+                            </button>
                         </button>
-                    </button>
+                    </div>
                 </ng-container>
             </ng-container>
 
@@ -103,7 +116,7 @@
 
         <!-- No Results Template -->
         <ng-template #noResults>
-            <div class="no-results" *ngIf="search_query.length > 0">
+            <div class="no-results" *ngIf="search_query.length > 0 && searched">
                 <div class="icon" [style.mask-image]="'url(\'search.svg\')'"></div>
                 <div class="message">No results found</div>
             </div>

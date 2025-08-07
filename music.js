@@ -295,7 +295,27 @@ async function spotify_uri_to_video_id(uri) {
         }
         
         return response.data?.id;
+    try {
+        //open.spotify.com/track/
+        //spotify:track:5B2KdpqWRwcnO2Cfxh7MSX'
+        if (!uri.startsWith('spotify:')) throw new Error(`Failed to fetch video id: Invalid URI format: ${uri}`);
+        const spotify_id = uri.split(':').pop(); // Extract the last part of the URI
+
+        console.log('Fetching Spotify video ID for:', spotify_id);
+
+        const response = await axios.get(`http://0.0.0.0:54321/get_video_id?q=open.spotify.com/track/${spotify_id}`, {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        if (response.status !== 200) {
+            throw new Error(`Failed to fetch video id: ${response.statusText}`);
+        }
+        
+        return response.data?.id;
     } catch (error) {
+        console.error('Error fetching spotify video id:', error);
+        return {};
         console.error('Error fetching spotify video id:', error);
         return {};
     }
@@ -867,6 +887,12 @@ export default {
     get_mood_categories: get_mood_categories,
     get_mood_playlists: get_mood_playlists,
     get_watch_playlist: get_watch_playlist,
+    get_search_recommendations: get_search_recommendations,
+    get_top_charts: get_top_charts,
+    get_mood_categories: get_mood_categories,
+    get_mood_playlists: get_mood_playlists,
+    get_watch_playlist: get_watch_playlist,
     get_artwork: download_audio_artwork_to_stream,
+    stream,
     stream,
 };

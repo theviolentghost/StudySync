@@ -29,11 +29,24 @@
     outline: none;
     background: none;;
     color: var(--color-text);
-    font-size: var(--font-size-base);
+    font-size: calc(var(--font-size-base) * 1.1);
     font-weight: 500;
     border-radius: inherit;
     transition: background-color 0.15s ease-in-out;
 }
+/* is tocuh screen */
+@media (pointer: coarse) {
+    .search-container:has(input:focus) .search-recommendations {
+        display: flex;
+    }
+}
+
+@media (hover: hover) {
+    .search-container:focus-within .search-recommendations, 
+    .search-recommendations:hover {
+        display: flex;
+    }
+} 
 .search-container .quick-action {
     position: relative;
     flex-shrink: 0;
@@ -132,6 +145,40 @@
 .search-container .quick-action.hidden {
     display: none;
 }
+.search-recommendations {
+    --offset: 82px;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: calc(100% - var(--offset));
+    max-height: 300px;
+    overflow-y: auto;
+    background-color: var(--color-background-200);
+    border-radius: 0 0 var(--space-2) var(--space-2);
+    z-index: 1000;
+    display: none;
+    flex-direction: column;
+    padding: var(--space-2);
+    padding-top: 0;
+    margin: 0 calc(var(--offset) / 2);
+}
+.search-recommendations .recommendation {
+    font-size: var(--font-size-base);
+    color: var(--color-background-500);
+    cursor: pointer;
+    transition: filter 0.15s ease-in-out;
+    background-color: inherit;
+    border-radius: var(--space-1);
+    padding: var(--space-2) var(--space-1);
+}
+.search-recommendations .recommendation:hover {
+    filter: brightness(0.9);
+}
+.search-recommendations .recommendation .bold {
+    color: var(--color-text);
+}
+
+
 .search-results {
     position: relative;
     height: 100%;
@@ -154,13 +201,27 @@
     align-items: center;
     gap: var(--space-4);
 }
-.search-results-videos {
+.search-results-main {
     width: 100%;
     display: flex;
     flex-direction: column;
     overflow-y: auto;
     align-items: center;
 }
+.search-results-videos {
+    /* width: 100%; */
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    align-items: center;
+    width: 80%;
+    max-width: 550px;
+    display: flex;
+    background-color: var(--color-background);
+    box-shadow: 0 0 10px 10px var(--color-background);
+    padding: var(--space-2) var(--space-1);
+}
+
 .search-result {
     position: relative;
     max-height: 350px;
@@ -176,7 +237,7 @@
     flex-direction: row;
     padding: var(--space-2) 0;
     border-bottom: solid 1px var(--color-background-400);
-    width: 80%;
+    width: 100%;
     aspect-ratio: 16 / 9;
     max-height: var(--space-8);
     align-items: center;
@@ -374,4 +435,15 @@
 .extra-info-alignment {
     display: flex;
     flex-direction: column-reverse;
+}
+.backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 90%;
+    flex-shrink: 0;
+    background: linear-gradient(180deg, var(--primary), transparent);
+    opacity: .45;
+    z-index: -1;
 }

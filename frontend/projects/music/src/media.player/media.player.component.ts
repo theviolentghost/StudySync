@@ -188,12 +188,13 @@ export class MediaPlayerComponent implements AfterViewInit {
     ngAfterViewInit() {
         const audio = document.getElementById('audio') as HTMLAudioElement;
         audio.ontimeupdate = () => this.audio_current_time = audio.currentTime;
-        audio.onloadedmetadata = () => this.audio_duration = audio.duration;
+        // audio.onloadedmetadata = () => audio.currentTime = 0; // Reset to start when metadata is loaded
         audio.addEventListener('progress', () => {
             if (audio.buffered.length > 0 && audio.duration > 0) {
                 const bufferedEnd = audio.buffered.end(audio.buffered.length - 1);
                 this.buffered_percent = (bufferedEnd / audio.duration) * 100;
             }
+            this.audio_duration = audio.duration || 0; // Ensure duration is set
         });
 
         this.player.audio_source_element = audio;
@@ -280,7 +281,6 @@ export class MediaPlayerComponent implements AfterViewInit {
     }
 
     private setupMouseListeners(element: HTMLElement): void {
-        console.log('Setting up mouse listeners for media player');
         let isMouseDragging = false;
         let mouseStartY = 0;
 
@@ -294,8 +294,6 @@ export class MediaPlayerComponent implements AfterViewInit {
             this.startY = e.clientY;
             this.lastTouchTime = Date.now();
             this.lastTouchY = this.startY;
-
-            console.log('Mouse drag started at:', mouseStartY);
             
             // Prevent text selection and other mouse behaviors
             e.preventDefault();
@@ -395,7 +393,7 @@ export class MediaPlayerComponent implements AfterViewInit {
         this.buffer_like = !this.buffer_like; 
         this.buffer_like_clicked = true; 
 
-        if(!this.current_song_data) return;
+        if(!this.current_song_data || this.player.loading) return;
         this.buffer_like = false; 
         this.current_song_data.liked = !this.current_song_data?.liked;
         // this.media.save_song_to_indexDB(this.current_song_data.id.video_id, this.current_song_data);

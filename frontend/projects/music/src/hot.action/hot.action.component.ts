@@ -6,7 +6,7 @@ import { Router } from '@angular/router';
 import { Song_Data } from '../../music.media.service';
 import { PlaylistsService } from '../../playlists.service';
 import { HotActionService } from '../../hot.action.service';
-import { MusicMediaService, DownloadQuality, Song_Playlist_Identifier } from '../../music.media.service';
+import { MusicMediaService, DownloadQuality, Song_Playlist_Identifier, Song_Source } from '../../music.media.service';
 import { MusicPlayerService } from '../../music.player.service';
 
 @Component({
@@ -20,7 +20,14 @@ export class HotActionComponent {
     @Output() close: EventEmitter<void> = new EventEmitter<void>();
     playlist_name: string = '';
     import_url: string = '';
+    import_file: File | null = null;
     import_status: 'idle' | 'loading' | 'error' = 'idle';
+    source_options: Map<Song_Source, string> = new Map([
+        ['spotify', "#1cd760"],
+        ['youtube', "#ff0033"],
+        ['musi', "#ff8843"],
+        ['musix', "#ff8843"],
+    ]);
     get action(): string {
         return this.hot_action.action;
     }
@@ -215,5 +222,55 @@ export class HotActionComponent {
                 this.router.navigate(['/playlist', playlist_indentifier.id]);
             }
         });
+    }
+
+    async import_playlist_from_file_done(): Promise<void> {
+        if (!this.import_file) {
+            console.error('No file selected for import');
+            this.import_status = 'error';
+            return;
+        }
+
+        this.import_status = 'loading';
+
+        try {
+            const response = await this.media.import_playlist_from_file(this.import_file);
+            console.log('Playlist import response:', response);
+            if (response.name.trim().length > 0 && response.tracks.length > 0) {
+                const playlist_identifier = await this.playlists.create_playlist(response.name);
+                console.log('Created playlist identifier:', playlist_identifier);
+                if (!playlist_identifier) return;
+                const playlist = await this.playlists.get_playlist(playlist_identifier);
+
+                await this.playlists.add_songs_to_playlist(response.tracks.map((track: any) => this.hot_action.musix_track_data(track)), playlist_identifier, playlist);
+
+                await Promise.all(response.tracks.map(async (track: any) => {
+                    const song_data: Song_Data | null = await this.hot_action.musix_track_data(track);
+                    if (song_data) {
+                        await this.playlists.add_song_to_playlist(song_data, playlist_identifier, playlist);
+                    }
+                }));
+
+                this.hot_action.close_hot_action();
+                
+                this.import_status = 'idle';
+                this.import_file = null;
+
+                this.router.navigate(['/playlist', playlist_identifier.id]);
+            }
+        } catch (error) {
+            console.error('Error importing playlist from file:', error);
+            this.import_status = 'error';
+        }
+    }
+
+    on_file_import_change(event: Event): void {
+        const input = event.target as HTMLInputElement;
+        if (input.files && input.files.length === 1) {
+            this.import_file = input.files[0];
+            this.import_playlist_from_file_done();
+        } else {
+            this.import_file = null;
+        }
     }
 }

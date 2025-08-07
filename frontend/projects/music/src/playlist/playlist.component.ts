@@ -299,7 +299,8 @@ export class PlaylistComponent {
     source_options: Map<Song_Source, string> = new Map([
         ['spotify', "#1cd760"],
         ['youtube', "#ff0033"],
-        ['musi', "#ff8843"]
+        ['musi', "#ff8843"],
+        ['musix', "#ff8843"],
     ]);
 
     get_source_color(source: Song_Source | undefined): string {

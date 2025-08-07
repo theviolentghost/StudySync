@@ -93,7 +93,7 @@ export interface Artist_Identifier {
     source: Song_Source; 
 }
 
-export type Song_Source = 'youtube' | 'spotify' | 'musi' | 'other';
+export type Song_Source = 'youtube' | 'spotify' | 'musi' | 'musix' | 'other';
 
 @Injectable({
   providedIn: 'root'
@@ -417,11 +417,13 @@ export class MusicMediaService {
 
     async get_audio_stream(key: string): Promise<string | null> {
         const video_id = key.split(':').pop() || ''; 
-        return ((await lastValueFrom(
+        const response = ((await lastValueFrom(
                 this.http.get(
-                    `${this.Auth.backendURL}/audio/stream/${video_id}`,
+                    `${this.Auth.backendURL}/stream?video_id=${encodeURIComponent(video_id)}&t=0`,
                 )
-            )) as any)?.url || null;
+            )) as any);
+        console.log('Audio stream response:', response);
+        return response?.playlist_url || null;
     }
 
     async get_song_artwork(song: Song_Data): Promise<string | null> {
@@ -947,11 +949,61 @@ export class MusicMediaService {
         try {
             // call the backend endpoint to import the playlist
             const response = await lastValueFrom(
-                this.http.get(`${this.Auth.backendURL}/musi/playlist`, { params: { url } })
+                this.http.get(`${this.Auth.backendURL}/import/musi`, { params: { url } })
             );
             return response;
         } catch (error) {
             console.error('Error importing playlist:', error);
+            return null;
+        }
+    }
+
+    async import_playlist_from_file(file: File): Promise<any> {
+        if (!file) {
+            console.error('No file provided for playlist import');
+            return;
+        }
+        
+        try {
+            const form_data = new FormData();
+            form_data.append('playlist_file', file);
+            
+            // call the backend endpoint to import the playlist
+            const response = await lastValueFrom(
+                this.http.post(`${this.Auth.backendURL}/import/musix`, form_data)
+            );
+            return response;
+        } catch (error) {
+            console.error('Error importing playlist from file:', error);
+            return null;
+        }
+    }
+
+    async get_search_recommendations(query: string): Promise<any> {
+        try {
+            const response = await lastValueFrom(
+                this.http.get(`${this.Auth.backendURL}/music/search_recommendations`, { params: { q: query } })
+            );
+            return response; 
+        } catch (error) {
+            console.error('Error fetching search recommendations:', error);
+            return [];
+        }
+    }
+
+    async get_watch_playlist(track_id: string): Promise<any> {
+        if (!track_id) {
+            console.error('No track ID provided for watch playlist');
+            return;
+        }
+        
+        try {
+            const response = await lastValueFrom(
+                this.http.get(`${this.Auth.backendURL}/music/watch_playlist/${track_id}`)
+            );
+            return response; 
+        } catch (error) {
+            console.error('Error fetching watch playlist:', error);
             return null;
         }
     }

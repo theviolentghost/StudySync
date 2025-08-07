@@ -1,7 +1,7 @@
-// const puppeteer = require('puppeteer');
-// const cheerio = require('cheerio');
 import puppeteer from 'puppeteer';
 import * as cheerio from 'cheerio';
+
+import musiX from './musix.mplit.parser.js';
 
 async function get_html(url) {
     try {
@@ -76,4 +76,7 @@ async function get_musi_playlist(url) {
 
 // get_musi_playlist('https://feelthemusi.com/playlist/a1shah') // Replace with the actual URL
 
-export default { get_musi_playlist };
+export default { 
+    get_musi_playlist,
+    get_musix_playlist: musiX.parse_musix_playlist,
+};
