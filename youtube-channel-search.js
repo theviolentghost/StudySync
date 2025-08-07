@@ -13,7 +13,7 @@ async function getFullChannelDetails(channelId) {
       id: channelId,
     });
 
-    if (response.data.items.length === 0) {
+    if (!response || response.data.items.length === 0) {
       console.log('Channel not found.');
       return null;
     }

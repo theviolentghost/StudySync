@@ -1,33 +1,89 @@
 import { Injectable } from '@angular/core';
-import { VideoHistory } from './watch-history.model';
-import { YoutubeService } from './youtube.service';
+import { HistoryVideo, VideoHistory } from './watch-history.model';
+import { PlaylistVideo } from './youtube-playlist-results.model';
+import { openDB } from 'idb';
 
 @Injectable({
   providedIn: 'root'
 })
 
 export class WatchHistoryService {
+    private watchHistoryDB;
+    private watchHistoryTableName: string = 'watchHistory';
+
     private allWatchHistory: Map<string, VideoHistory>;
+    private currentVideo: PlaylistVideo;
 
-    constructor(private youtubeService: YoutubeService){}
+    constructor(){
+        this.allWatchHistory = new Map<string, VideoHistory>;
 
-    initializeWatchHistory(): void{
-        //load from db
+        if(this.watchHistoryDB) return;
+        this.initializeWatchHistory();
+    }
+
+    getAllWatchedVideos(): HistoryVideo[]{
+        let videos: HistoryVideo[] = [];
+        this.allWatchHistory.forEach((videoHistory, videoId) => {
+            let video: HistoryVideo = {id: videoId, videoData: videoHistory};
+            videos.push(video);
+        });
+        return videos;
+    }
+
+    async initializeWatchHistory(): Promise<void>{
+        const tableName = this.watchHistoryTableName;
+        this.watchHistoryDB = await openDB('watchHistory', 1, {
+            upgrade(db) {
+                if (!db.objectStoreNames.contains(tableName)) {
+                    db.createObjectStore(tableName);
+                }
+            },
+        });
+        let allHistoryKeys = await this.watchHistoryDB.getAllKeys(this.watchHistoryTableName);
+        for(const key of allHistoryKeys){
+            let history = await this.watchHistoryDB.get(this.watchHistoryTableName, key);
+            let videoHistory = history as VideoHistory;
+            this.allWatchHistory.set(key, videoHistory);
+        }
         this.cleanOldVideos();
     }
 
-    addToWatchHistory(videoId: string, historyData: VideoHistory): void{
-        this.allWatchHistory.set(videoId, historyData);
+    async storeWatchHistory(): Promise<void>{
+        for(let [id, data] of this.allWatchHistory){
+            this.watchHistoryDB.put(this.watchHistoryTableName, data, id);
+        }
     }
 
-    updateVideoProgress(videoId: string, historyData: VideoHistory): void{
-        if(!this.wasWatched(videoId)) this.addToWatchHistory(videoId, historyData);
+    async storeSingleVideo(id: string, data: VideoHistory): Promise<void>{
+        await this.watchHistoryDB.put(this.watchHistoryTableName, data, id);
+    }
 
-        this.allWatchHistory.get(videoId).currentPosition = historyData.currentPosition;
+    saveCurrentVideo(video: PlaylistVideo): void{
+        this.currentVideo = video;
+    }
+
+    getSavedVideoData(): PlaylistVideo{
+        return this.currentVideo;
+    }
+
+    addSavedVideoToWatchHistory(length: number): void{
+        let videoId = this.currentVideo.contentDetails.videoId;
+        let historyData: VideoHistory = {length: length, currentPosition: 0, watchedAt: new Date().toISOString(), thumbnailUrl: this.currentVideo.snippet.thumbnails.high.url, title: this.currentVideo.snippet.title, channelName: this.currentVideo.snippet.channelTitle, channelId: this.currentVideo.snippet.channelId};
+
+        if(this.wasWatched(videoId)) this.allWatchHistory.delete(videoId);
+        this.allWatchHistory.set(videoId, historyData);
+        this.storeSingleVideo(videoId, historyData);
+    }
+
+    updateVideoProgress(currentPosition: number): void{
+        let videoId = this.currentVideo.contentDetails.videoId;
+        let historyData = this.allWatchHistory.get(videoId);
+        historyData.currentPosition = currentPosition;
+        this.storeSingleVideo(videoId, historyData);
     }
 
     wasWatched(videoId: string): boolean{
-        return this.allWatchHistory.has(videoId);
+        return this.allWatchHistory.get(videoId) ? true : false;
     }
 
     getVideoProgress(videoId: string): number{
@@ -39,10 +95,17 @@ export class WatchHistoryService {
 
     cleanOldVideos(): void{
         for(let [id, data] of this.allWatchHistory){
-            if(this.youtubeService.timeAgo(data.watchedAt).includes('year')){
+            if(this.isOverOneYearOld(new Date(data.watchedAt))){
                 this.allWatchHistory.delete(id);
             }
         }
+    }
+
+    isOverOneYearOld(date: Date): boolean {
+        const oneYearAgo = new Date();
+        oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
+        return date < oneYearAgo;
     }
 }
 

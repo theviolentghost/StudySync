@@ -94,21 +94,24 @@
 }
 
 .subscribe_button_unclicked{
-    width: 8em;
+    width: 9em;
     height: 2.5em;
     padding: 12px 24px;
+    margin: 12px 24px;
     font-size: 16px;
     font-weight: 500;
     border-radius: 8px;
     background-color: #cd201f;
     cursor: pointer;
-    align-items: center;
+    align-self: center;
+    text-align: center;
 }
 
 .subscribe_button_clicked{
-    width: 8em;
+    width: 9em;
     height: 2.5em;
     padding: 12px 24px;
+    margin: 12px 24px;
     font-size: 16px;
     font-weight: 500;
     background-color: transparent;
@@ -116,6 +119,8 @@
     outline:  solid 1px var(--color-accent-400);
     outline-offset: -1px;
     cursor: pointer;
+    align-self: center;
+    text-align: center;
 }
 
 .recommended_videos{

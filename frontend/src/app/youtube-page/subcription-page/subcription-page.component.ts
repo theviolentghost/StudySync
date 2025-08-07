@@ -1,16 +1,16 @@
 import { Component, OnInit, OnDestroy, AfterViewInit, ViewChildren, QueryList, ElementRef} from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
 import { YoutubeService } from '../youtube.service';
 import { SubscriptionUploads, SubscriptionData, YouTubeChannel } from '../youtube-channel-search-results.model';
 import { YoutubeSubscriptionService } from '../youtube-subscription.service';
 import { PlaylistVideo } from '../youtube-playlist-results.model';
 import { take } from 'rxjs/operators';
+import { WatchHistoryService } from '../watch-history.service';
 
 @Component({
   selector: 'app-subcription-page',
   standalone: true,
-  imports: [RouterModule, CommonModule],
+  imports: [CommonModule],
   templateUrl: './subcription-page.component.html',
   styleUrl: './subcription-page.component.css'
 })
@@ -27,18 +27,18 @@ export class SubcriptionPageComponent {
 
   onScreenObserver: IntersectionObserver;
 
-  constructor(private router: Router,
-    private youtubeService: YoutubeService,
+  constructor(private youtubeService: YoutubeService,
     private youtubeSubsciptionService: YoutubeSubscriptionService,
-  ){
-    this.onScreenObserver = new IntersectionObserver(this.handleIntersect.bind(this), {
-      threshold: 0.1,
-    });
-  }
+    private watchHistoryService: WatchHistoryService
+  ){}
 
   ngOnInit(){
     window.scrollTo(0, 0);
     setTimeout(() => this.canLoadMoreUploads = true, 500);
+
+    this.onScreenObserver = new IntersectionObserver(this.handleIntersect.bind(this), {
+      threshold: 0.1,
+    });
 
     this.subscriptionsSub = this.youtubeSubsciptionService.channelDataList$.subscribe(channels => {
       if(!channels) return;
@@ -106,8 +106,8 @@ export class SubcriptionPageComponent {
     this.onScreenObserver.disconnect();
   }
 
-  playNewVideo(videoId: string){
-    this.youtubeService.playNewVideo(videoId);
+  playNewVideo(video: PlaylistVideo){
+    this.youtubeService.playNewVideo(video);
   }
 
   navigateToChannel(channelId: string): void {
@@ -120,6 +120,14 @@ export class SubcriptionPageComponent {
 
   timeAgo(isoTime: string): string{
     return this.youtubeService.timeAgo(isoTime);
+  }
+
+  getVideoProgressPercent(videoId: string): number{
+    return this.watchHistoryService.getVideoProgress(videoId) * 100;
+  }
+
+  wasWatched(videoId: string): boolean{
+    return this.watchHistoryService.wasWatched(videoId);
   }
 
 }

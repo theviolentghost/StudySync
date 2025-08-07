@@ -2,6 +2,8 @@ import { Component} from '@angular/core';
 import { RouterModule, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { YoutubeService } from '../youtube.service';
+import { PlaylistVideo } from '../youtube-playlist-results.model';
+import { WatchHistoryService } from '../watch-history.service';
 
 
 @Component({
@@ -15,15 +17,16 @@ export class VideoSelectComponent {
   videos:Number[] = [];
 
   constructor(private router: Router,
-    private youtubeService: YoutubeService
+    private youtubeService: YoutubeService,
+    private watchHistoryService: WatchHistoryService
   ){
     for(let i = 0; i < 25; i++){
       this.videos[i] = i;
     }
   }
 
-  playNewVideo(videoId: string){
-    this.youtubeService.playNewVideo(videoId);
+  playNewVideo(video: PlaylistVideo){
+    this.youtubeService.playNewVideo(video);
   }
 
   public navigateToPlayer(): void {
@@ -32,5 +35,13 @@ export class VideoSelectComponent {
 
   public navigateToChannel(): void {
     this.youtubeService.navigateToChannel('');
+  }
+
+  getVideoProgressPercent(videoId: string): number{
+    return this.watchHistoryService.getVideoProgress(videoId) * 100;
+  }
+
+  wasWatched(videoId: string): boolean{
+    return this.watchHistoryService.wasWatched(videoId);
   }
 }

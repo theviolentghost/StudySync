@@ -41,11 +41,10 @@
 .thumbnail{
     display: flex;
     position: relative;
-    align-items: center;
     justify-content: center;
     aspect-ratio: 16/9;
     height: 100%;
-    min-height: 100%;
+    max-height: 250px;
     border-radius: 4px;
     background-color: transparent;
     background-repeat: no-repeat;
@@ -121,7 +120,7 @@
 
 .searched_channel_icon{
     height: 100%;
-    max-height: 100%;
+    max-height: 220px;
     display: block;
     border: solid 1px var(--color-background-200);
     background-color: transparent;
@@ -136,7 +135,6 @@
 .subscribe_button_unclicked{
     width: 9em;
     height: 2.5em;
-    height: fit-content;
     padding: 12px 24px;
     margin: 12px 24px;
     font-size: 16px;
@@ -145,6 +143,7 @@
     background-color: #cd201f;
     cursor: pointer;
     align-self: center;
+    text-align: center;
 }
 
 .subscribe_button_clicked{
@@ -160,4 +159,13 @@
     outline-offset: -1px;
     cursor: pointer;
     align-self: center;
+    text-align: center;
+}
+
+.video_progress_bar{
+    height: 3%;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    background-color: red;
 }

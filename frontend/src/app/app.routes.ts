@@ -20,11 +20,12 @@ import { ContactComponent } from './contact/contact.component';
 import { AboutComponent } from './about/about.component';
 import { YoutubePageComponent } from './youtube-page/youtube-page.component';
 import { StylePageComponent } from './style-page/style-page.component';
-import { VideoPlayerComponent } from './youtube-page/video-player/video-player.component';
+import { VideoPlayerPageComponent } from './youtube-page/video-player-page/video-player.component';
 import { VideoSelectComponent } from './youtube-page/video-select/video-select.component';
 import { VideoSearchResultsComponent } from './youtube-page/video-search-results/video-search-results.component';
 import { VideoChannelComponent } from './youtube-page/video-channel/video-channel.component';
 import { SubcriptionPageComponent } from './youtube-page/subcription-page/subcription-page.component';
+import { LibraryPageComponent } from './youtube-page/library-page/library-page.component';
 
 
 
@@ -69,7 +70,7 @@ export const routes: Routes = [
             },
             {
                 path: "player",
-                component: VideoPlayerComponent,
+                component: VideoPlayerPageComponent,
                 outlet: 'youtube'
             },
             {
@@ -86,7 +87,13 @@ export const routes: Routes = [
                 path: "subscription-page",
                 component: SubcriptionPageComponent,
                 outlet: 'youtube'
+            },
+            {
+                path: "library-page",
+                component: LibraryPageComponent,
+                outlet: 'youtube'
             }
+
         ]
     },
 

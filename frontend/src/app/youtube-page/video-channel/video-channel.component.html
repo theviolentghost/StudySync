@@ -11,9 +11,10 @@
     </div>
 
     <div class="channel_video_grid">
-        <a class="video" (click)="playNewVideo(video.contentDetails.videoId)" *ngFor="let video of channelUploads">
+        <a class="video" (click)="playNewVideo(video)" *ngFor="let video of channelUploads">
             <div class="thumbnail" [ngStyle]="{'background-image': 'url(' + video.snippet.thumbnails.high.url + ')'}">
                 <div class="video_time_display"><div class="video_time_text">0:00:00</div></div>
+                <div class="video_progress_bar" *ngIf="wasWatched(video.contentDetails.videoId)" [style.width.%]="getVideoProgressPercent(video.contentDetails.videoId)"></div>
             </div>
 
             <div class="video_details">

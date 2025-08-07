@@ -6,6 +6,7 @@ import { YouTubeChannel } from '../youtube-channel-search-results.model';
 import { SearchResultItem, YouTubeSearchResponse } from '../video-search-result.model';
 import { PlaylistVideo } from '../youtube-playlist-results.model';
 import { YoutubeSubscriptionService } from '../youtube-subscription.service';
+import { WatchHistoryService } from '../watch-history.service';
 
 @Component({
   selector: 'app-video-channel',
@@ -25,7 +26,8 @@ export class VideoChannelComponent {
 
   constructor(private router: Router,
     private youtubeService: YoutubeService,
-    private youtubeSubscriptionService: YoutubeSubscriptionService
+    private youtubeSubscriptionService: YoutubeSubscriptionService,
+    private watchHistoryService: WatchHistoryService
   ){}
 
   ngOnInit() {
@@ -79,11 +81,19 @@ export class VideoChannelComponent {
     this.youtubeSubscriptionService.unsubscribeToChannel(channelId);
   }
 
-  playNewVideo(videoId: string){
-    this.youtubeService.playNewVideo(videoId);
+  playNewVideo(video: PlaylistVideo){
+    this.youtubeService.playNewVideo(video);
   }
 
   public timeAgo(isoDate) {
     return this.youtubeService.timeAgo(isoDate);
+  }
+
+  getVideoProgressPercent(videoId: string): number{
+    return this.watchHistoryService.getVideoProgress(videoId) * 100;
+  }
+
+  wasWatched(videoId: string): boolean{
+    return this.watchHistoryService.wasWatched(videoId);
   }
 }

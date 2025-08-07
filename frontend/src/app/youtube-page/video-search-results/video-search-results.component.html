@@ -1,6 +1,7 @@
 <div id="results_list" class="results_list">
     <div *ngFor="let result of results">
         <button class="searched_channel" *ngIf="result.id.channelId" (click)="navigateToChannel(result.snippet.channelId)">
+
             <div class="thumbnail">
                 <img class="searched_channel_icon" [ngStyle]="{'background-image': 'url(' + result.snippet.thumbnails.high.url + ')'}">
             </div>
@@ -16,9 +17,10 @@
             </div>
         </button>
 
-        <button class="video" *ngIf="result.id.videoId" (click)="playNewVideo(result.id.videoId)">
-            <div class="thumbnail" [ngStyle]="{'background-image': 'url(' + result.snippet.thumbnails.high.url + ')'}">
+        <button class="video" #videoItem *ngIf="result.id.videoId" (click)="playNewVideo(result)">
+            <div class="thumbnail" [attr.background-url]="result.snippet.thumbnails.high.url" [ngStyle]="{'background-image': 'url(' + result.snippet.thumbnails.high.url + ')'}">
                 <div class="video_time_display">0:00:00</div>
+                <div class="video_progress_bar" *ngIf="wasWatched(result.id.videoId)" [style.width.%]="getVideoProgressPercent(result.id.videoId)"></div>
             </div>
 
             <div class="video_info">

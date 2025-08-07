@@ -21,7 +21,7 @@ Thumbs.db
 .idea/
 
 # Build artifacts
-dist/
+
 build/
 
 # Ignore llama.cpp and models folder
