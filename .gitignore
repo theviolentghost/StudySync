@@ -29,6 +29,10 @@ llama.cpp/
 models/
 storage/
 Newton/
+hls/
+*.ts
+tools/
+__pycache__/
 
 email.js
 *.rest
