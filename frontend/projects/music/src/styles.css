@@ -138,3 +138,12 @@ button:hover, input:hover, select:hover, textarea:hover, div:hover{
     transform: none;
     box-shadow: none;
 }
+/* button {
+    transition: filter 0.15s ease-in-out;
+}
+button:hover {
+    filter: brightness(0.9);
+}
+button:focus, button:active {
+    filter: brightness(0.7);
+} */

@@ -196,4 +196,11 @@ export class HotActionService {
             liked: false
         }
     }
+
+    async musix_track_data(video: any): Promise<Song_Data | null> {
+        let data: Song_Data | null = await this.musi_track_data(video);
+        if (!data || !data?.id?.source) return null;
+        data.id.source = 'musix';
+        return data;
+    }
 }

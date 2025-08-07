@@ -2,13 +2,14 @@
 
 <div class="playlists-container hide-scrollbar">
     <div class="playlists-header">
-        <h1>Playlists</h1>
         <div class="actions">
             <button class="action-playlist" (click)="import_playlist()">
-                <div class="plus" [style.mask-image]="'url(\'cloud-down.svg\')'"></div>
+                <h5>Import</h5>
+                <div class="plus" [style.--mask]="'url(\'cloud-down.svg\')'"></div>
             </button>
             <button class="action-playlist" (click)="create_playlist()">
-                <div class="plus" [style.mask-image]="'url(\'plus.svg\')'"></div>
+                <h5>Create Playlist</h5>
+                <div class="plus" [style.--mask]="'url(\'plus.svg\')'"></div>
             </button>
         </div>
     </div>
@@ -32,7 +33,7 @@
             </div>
         </button>
 
-        <h1>My Playlists</h1>
+        <h1 *ngIf="playlist_identifiers.length > 0">My Playlists</h1>
 
         <button 
             class="playlist" 

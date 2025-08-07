@@ -17,15 +17,18 @@ export class SearchComponent implements AfterViewInit {
 
     search_source: Song_Source = 'youtube'
     search_query: string = '';
+    searched: boolean = false; // whether the user has performed a search
     search_history: string[] = []; //list of previous queries
     search_results: Song_Search_Result = {
         artists: { total: 0, results: [] },
         videos: { total: 0, results: [] }
     };
     song_data_cache: Map<string, Song_Data | null> = new Map(); // bare_song_key to Song_Data mapping for quick playback
+    search_recommendations: any[] = []; 
 
     source_dropdown_open: boolean = false;
     source_dropdown_options: {source: Song_Source, color: string}[] = [{source: 'spotify', color: "#1cd760"}, {source: 'youtube', color: "#ff0033"}];
+
     toggle_source_dropdown(): void {
         this.source_dropdown_open = !this.source_dropdown_open;
     }
@@ -45,6 +48,33 @@ export class SearchComponent implements AfterViewInit {
         if ('results' in artists) return artists.results;
         return [];
     }
+
+    debounce_input_timeout: any = null;
+    debounce_input_time: number = 400; 
+    on_search_input_change(): void {
+        if (this.debounce_input_timeout) {
+            clearTimeout(this.debounce_input_timeout);
+        }
+        this.debounce_input_timeout = setTimeout(() => {
+            this.get_search_recommendations(this.search_query);
+        }, this.debounce_input_time);
+    }
+
+    async get_search_recommendations(query: string): Promise<void> {
+        if (query.trim() === '') {
+            this.search_recommendations = [];
+            return;
+        }
+        try {
+            const recommendations = await this.media.get_search_recommendations(query);
+            console.log('Search recommendations:', recommendations);
+            this.search_recommendations = recommendations;
+        } catch (error) {
+            console.error('Error fetching search recommendations:', error);
+            this.search_recommendations = [];
+        }
+    }
+                
 
     ms_to_time(ms: number): string {
         const totalSeconds = Math.floor(ms / 1000);
@@ -70,6 +100,7 @@ export class SearchComponent implements AfterViewInit {
 
     clear_input(): void {
         this.search_query = '';
+        this.search_recommendations = [];
         // Keep focus on input after clearing
         if (this.searchInput) {
             this.searchInput.nativeElement.focus();
@@ -90,14 +121,22 @@ export class SearchComponent implements AfterViewInit {
     }
 
     async search(query: string = this.search_query): Promise<void> {
-        if (this.search_query.trim() === '') return; 
+        if (query.trim() === '') return; 
+
+        this.search_query = query.trim();
+        this.search_recommendations = []; // Clear recommendations on new search
+        // get rid of search focus
+        if (this.searchInput) {
+            this.searchInput.nativeElement.blur();
+        }
         console.log(`Searching for: ${query}:`, this.search_source);
 
         this.song_data_cache.clear();
         this.search_results = await this.media.search(query, this.search_source);
+        this.searched = true; 
         console.log('Search results:', this.search_results);
 
-        this.search_history.push(this.search_query);
+        this.search_history.push(query);
     }
 
     async youtube_play(video: any): Promise<void> {
@@ -105,6 +144,17 @@ export class SearchComponent implements AfterViewInit {
         const cache = this.song_data_cache.get(this.media.bare_song_key({source: 'youtube', video_id: video.snippet?.videoId || video.id?.videoId}));
         let track_data: Song_Data | null = cache || await this.hot_action.youtube_track_data(video);
         if(!track_data) return;
+
+        this.media.get_watch_playlist(track_data.id.video_id).then(async (playlist) => {
+            if (playlist && playlist.songs && playlist.songs.length > 0) {
+                await this.player.load_playlist(playlist, false, false);
+                this.player.load_song_data_array_into_playlist_cache(playlist.song_data || []);
+            } else {
+                console.warn('No tracks found in the watch playlist for:', track_data?.id.video_id);
+            }
+        }).catch((error) => {
+            console.error('Error fetching watch playlist:', error);
+        });
 
         this.player.open_player.emit();
 
@@ -154,6 +204,17 @@ export class SearchComponent implements AfterViewInit {
         const cache = this.song_data_cache.get(this.media.bare_song_key({source: 'spotify', source_id: video.id || video.uri || '', video_id: ''}));
         let track_data: Song_Data | null = cache || await this.hot_action.spotify_track_data(video);
         if(!track_data) return;
+
+        this.media.get_watch_playlist(track_data.id.video_id).then(async (playlist) => {
+            if (playlist && playlist.songs && playlist.songs.length > 0) {
+                await this.player.load_playlist(playlist, false, false);
+                this.player.load_song_data_array_into_playlist_cache(playlist.song_data || []);
+            } else {
+                console.warn('No tracks found in the watch playlist for:', track_data?.id.video_id);
+            }
+        }).catch((error) => {
+            console.error('Error fetching watch playlist:', error);
+        });
 
         await this.player.load_and_play_track(this.media.song_key(track_data.id), track_data);
         if(!cache) {
@@ -236,5 +297,18 @@ export class SearchComponent implements AfterViewInit {
     get_bare_song_key(identifier: Song_Identifier | null | undefined): string {
         if (!identifier) return '';
         return this.media.bare_song_key(identifier);
+    }
+
+    source_options: Map<Song_Source, string> = new Map([
+        ['spotify', "#1cd760"],
+        ['youtube', "#ff0033"],
+        ['musi', "#ff8843"],
+        ['musix', "#ff8843"],
+    ]);
+
+    get_search_primary_color(): string {
+        // const source_color = this.source_options.get(this.search_source);
+        const source_color = "";
+        return source_color || 'var(--color-primary)'; // Default color if not found
     }
 }

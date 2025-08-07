@@ -30,6 +30,8 @@ models/
 storage/
 *.sqlite
 Newton/
+hls/
+tools/
 
 email.js
 *.rest

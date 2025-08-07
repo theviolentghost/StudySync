@@ -3,6 +3,7 @@ import { Output, EventEmitter } from '@angular/core';
 
 import { MusicMediaService, Song_Identifier, Song_Data, Song_Playlist, Song_Playlist_Identifier } from './music.media.service';
 import { PlaylistsService } from './playlists.service';
+import Hls from 'hls.js';
 
 
 export interface Song_Queue {
@@ -49,6 +50,60 @@ export class MusicPlayerService {
     private audio_source: MediaElementAudioSourceNode | null = null; // For connecting audio element to context
     private audio_data_array: Uint8Array | null = null; // For frequency data analysis
 
+    private hls: Hls | null = null; // For HLS streaming support
+
+    private setup_hls(): void {
+        if(!this.audio_element) return;
+        if (this.hls) {
+            this.hls.destroy();
+        }
+
+        if (Hls.isSupported()) {
+            this.hls = new Hls({
+                debug: false,
+                enableWorker: true,
+                lowLatencyMode: false,
+                maxBufferLength: 30,
+                startLevel: -1,
+                // liveSyncDuration: 0,           // Don't try to sync to "live"
+                // liveMaxLatencyDuration: 0,     // No latency management
+                startPosition: 0  // Start from the beginning of the stream
+            });
+            
+            // this.hls.loadSource(playlistUrl);
+            this.hls.attachMedia(this.audio_element!);
+            
+            this.hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                // console.log('HLS Manifest parsed successfully');
+                if(this.audio_element) this.audio_element!.currentTime = 0; // Reset to start
+            });
+            
+            this.hls.on(Hls.Events.ERROR, (event, data) => {
+                console.error('HLS Error:', data);
+                if (data.fatal) {
+                    console.error('Fatal HLS error encountered:', data);
+                }
+            });
+            
+        } else if (this.audio_element!.canPlayType('application/vnd.apple.mpegurl')) {
+            // Safari native HLS support
+            // audio.src = playlistUrl;
+            console.warn('HLS is not supported in this browser, using native support if available.');
+        } else {
+            console.error('HLS is not supported in this browser.');
+        }
+    }
+
+    private load_source_to_hls(source_url: string): void {
+        if (this.hls) {
+            this.hls.loadSource(source_url);
+            this.hls.startLoad();
+        } else if (this.audio_element) {
+            this.audio_element.src = source_url;
+            this.audio_element.load();
+        }
+    }
+
     get player_status(): 'loading' | 'playing' | 'paused' | 'stopped' {
         if (!this.audio_element) return 'stopped';
         if (this.loading) return 'loading'; // middle of loading song
@@ -92,12 +147,6 @@ export class MusicPlayerService {
     set song_data(data: Song_Data | null) {
         this.current_song_data = data;
         this.current_media = data;
-        // if (data) {
-        //     this.current_song = data.id;
-        //     this.update_media_session(data, this.media.song_key(data.id));
-        // } else {
-        //     this.current_song = null;
-        // }
     }
     get current_time(): number {
         return this.audio_element ? this.audio_element.currentTime : 0; 
@@ -117,6 +166,7 @@ export class MusicPlayerService {
         console.log("Audio element set:", element);
         console.log("Source element set:", this.source_element);
         this.intialize_audio_enviroment();
+        this.setup_hls();
     }
     set thumbnail_source_element(element: HTMLImageElement) {
         this.thumbnail_element = element;
@@ -168,7 +218,7 @@ export class MusicPlayerService {
         ).length;
         console.log(`Loaded song data for ${successful_loads}/${this.playlist_queue.queue.length} songs`);
 
-        this.remove_current_song_from_queue(); // Ensure current song is not in the queue
+        if(this.playlist_queue.queue.length > 1) this.remove_current_song_from_queue(); // Ensure current song is not in the queue
         if(!keep_hsitroy) this.history_stack.queue = []; // Clear history stack when loading a new playlist
 
         if(this._shuffle) this.shuffle_playlist();
@@ -184,7 +234,16 @@ export class MusicPlayerService {
         }
     }
 
-    async remove_current_song_from_queue(): Promise<void> {
+    public async load_song_data_array_into_playlist_cache(song_data_array: Song_Data[]): Promise<void> {
+        if (!song_data_array || song_data_array.length === 0) return;
+
+        for (const song_data of song_data_array) {
+            const song_key = this.media.song_key(song_data.id);
+            this.playlist_song_data_map.set(song_key, song_data);
+        }
+    }
+
+    remove_current_song_from_queue(): void {
         if (!this.current_song || !this.playlist_queue.queue.length) return;
 
         this.playlist_queue.queue = this.playlist_queue.queue.filter(song => song.video_id !== this.current_song?.video_id);
@@ -197,8 +256,6 @@ export class MusicPlayerService {
 
         this.loading = true;
         this.started_playing = false;
-
-        console.log('Loading track:', track_key, track_data);
 
         let [source_url, song_data]: [string | null | undefined, Song_Data | null | undefined] = [null, track_data];
         if(this.playlist_song_data_map.has(track_key)) {
@@ -298,7 +355,9 @@ export class MusicPlayerService {
                 if (source_url?.startsWith('blob:')) {
                     is_local_content = true; // Blob URL indicates local content
                 } else {
+                    this.load_source_to_hls(source_url!);
                     is_local_content = false; // External content, likely CORS restricted
+                    return; // Don't use audio context for external content
                 }
 
             }
@@ -661,6 +720,10 @@ export class MusicPlayerService {
 
         // If no more songs, reload playlist
         if(this.current_playlist) {
+            if(this.current_playlist.songs.size <= 1) {
+                // Only one song in playlist, just restart it
+                this.load_and_play_track(this.media.song_key(this.current_song));
+            }
             console.log("No next track available, reloading current playlist...");
             this.load_playlist(this.current_playlist, true, true); // Keep history
             console.log(this.current_playlist);

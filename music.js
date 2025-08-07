@@ -9,6 +9,27 @@ import SpotifyToYoutube from 'spotify-to-youtube';
 import progress_emitter from './progress.emitter.js';
 import { spawn } from 'child_process';
 import axios from 'axios';
+import stream from './stream.js';
+
+// start python server 
+const pythonServer = spawn('/Users/norbertzych/Desktop/Projects/study_sinc/venv/bin/gunicorn', [
+        '-w', '2',
+        '-b', '0.0.0.0:54321',
+        'server:app'
+    ], {
+    cwd: process.cwd(), 
+    env: process.env,
+    stdio: 'inherit' 
+});
+
+// Optionally, handle exit or errors
+pythonServer.on('error', (err) => {
+    console.error('Failed to start Python server:', err);
+});
+
+pythonServer.on('exit', (code) => {
+    console.log(`Python server exited with code ${code}`);
+});
 
 const Downloader = new YtDlp({
     cwd: process.cwd(),
@@ -30,8 +51,6 @@ const spotify_api = new SpotifyWebApi({
 const creds = await spotify_api.clientCredentialsGrant();
 console.log('Spotify access token:', creds.body.access_token);
 spotify_api.setAccessToken(creds.body.access_token);
-
-const spotify_to_yt = SpotifyToYoutube(spotify_api);
 
 async function get_audio_file(audio_path = '') {
     try {
@@ -258,39 +277,27 @@ async function search(query = 'NoCopyrightSounds', source = 'spotify') {
 async function spotify_uri_to_video_id(uri) {
     if (!uri) return null;
 
-    return await spotify_to_yt(uri);
-}
-    
-async function get_recommondations() {
-    console.log('Fetching Spotify recommendations...');
-    
     try {
+        //open.spotify.com/track/
+        //spotify:track:5B2KdpqWRwcnO2Cfxh7MSX'
+        if (!uri.startsWith('spotify:')) throw new Error(`Failed to fetch video id: Invalid URI format: ${uri}`);
+        const spotify_id = uri.split(':').pop(); // Extract the last part of the URI
 
-        // https://api.reccobeats.com/v1/track/recommendation?size=10&seeds=4Yqy0GpeDEXLibWJCZyQew
+        console.log('Fetching Spotify video ID for:', spotify_id);
 
-        let config = {
-            method: 'get',
-            maxBodyLength: Infinity,
-            url: 'https://api.reccobeats.com/v1/track/recommendation',
-            headers: { 
-                'Accept': 'application/json'
-            },
-            params: {
-                size: 10,
-                seeds: ['4Yqy0GpeDEXLibWJCZyQew']
+        const response = await axios.get(`http://0.0.0.0:54321/get_video_id?q=open.spotify.com/track/${spotify_id}`, {
+            headers: {
+                'Content-Type': 'application/json'
             }
-        };
-
-        axios.request(config)
-        .then((response) => {
-        console.log(JSON.stringify(response.data));
-        })
-        .catch((error) => {
-        console.log(error);
         });
+        if (response.status !== 200) {
+            throw new Error(`Failed to fetch video id: ${response.statusText}`);
+        }
+        
+        return response.data?.id;
     } catch (error) {
-        console.error('Error fetching recommendations:', error.response?.data || error.message);
-        return null;
+        console.error('Error fetching spotify video id:', error);
+        return {};
     }
 }
 
@@ -635,6 +642,206 @@ async function stream_audio(res, youtube_video_id) {
         }
     }
 }
+
+async function get_search_recommendations(query = '') {
+    if(!query || query.trim() === '') {
+        console.error('Query must be a non-empty string');
+        return [];
+    }
+    try {
+        const response = await axios.get('http://0.0.0.0:54321/search_suggestions', {
+            params: {
+                q: query
+            },
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        if (response.status !== 200) {
+            throw new Error(`Failed to fetch recommendations: ${response.statusText}`);
+        }
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching search recommendations:', error);
+        return {};
+    }
+}
+
+async function get_top_charts() {
+    try {
+        const response = await axios.get('http://0.0.0.0:54321/charts', {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        if (response.status !== 200) {
+            throw new Error(`Failed to fetch top charts: ${response.statusText}`);
+        }
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching top charts:', error);
+        return {};
+    }
+}
+
+async function get_mood_categories() {
+    try {
+        const response = await axios.get('http://0.0.0.0:54321/mood_categories', {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        if (response.status !== 200) {
+            throw new Error(`Failed to fetch mood categories: ${response.statusText}`); 
+        }
+        return response.data["Moods & moments"] || [];
+    } catch (error) {
+        console.error('Error fetching mood categories:', error);
+        return [];
+    }
+}
+
+async function get_mood_playlists(category) {
+    if (!category || category.trim() === '') {
+        console.error('Category must be a non-empty string');
+        return [];
+    }
+    try {
+        const response = await axios.get('http://0.0.0.0:54321/mood_playlists', {
+            params: {
+                mood: category
+            },
+            headers: {
+                'Content-Type': 'application/json'  
+            }
+        });
+        if (response.status !== 200) {
+            throw new Error(`Failed to fetch mood tracks: ${response.statusText}`);
+        }
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching mood tracks:', error);
+        return [];
+    }
+}
+
+function parse_duratrion(duration) {
+    if (!duration || typeof duration !== 'string') return 0;
+    const parts = duration.split(':').map(part => parseInt(part, 10));
+    if (parts.length === 3) {
+        // HH:MM:SS format
+        return (parts[0] * 3600 + parts[1] * 60 + parts[2]) * 1000; // convert to milliseconds
+    } else if (parts.length === 2) {
+        // MM:SS format
+        return (parts[0] * 60 + parts[1]) * 1000; // convert to milliseconds
+    } else if (parts.length === 1) {
+        // SS format
+        return parts[0] * 1000; // convert to milliseconds
+    }
+    return 0; // invalid format
+}
+
+async function get_watch_playlist(track_id) {
+    if (!track_id || track_id.trim() === '') {
+        console.error('Track ID must be a non-empty string');
+        return [];
+    }
+    try {
+        const response = await axios.get(`http://0.0.0.0:54321/watch_playlist`, {
+            params: {
+                track_id: track_id
+            },
+            headers: {
+                'Content-Type': 'application/json'  
+            }
+        });
+        if (response.status !== 200) {
+            throw new Error(`Failed to fetch mood tracks: ${response.statusText}`);
+        }
+
+        return {
+            songs: response.data.slice(1).map((track) => ({
+                // exclude first track as it is the playlist itself
+                video_id: track.videoId,
+                source_id: '',
+                source: 'youtube'
+            })),
+            name: 'Watch Playlist',
+            default: false,
+            song_data: response.data.slice(1).map((track) => {
+                return {
+                    original_artists: track.artists.map(artist => ({
+                        name: artist.name,
+                        id: artist.id,
+                        source: 'youtube'
+                    })),
+                    original_song_name: track.title,
+                    song_name: track.title,
+                    downloaded: false,
+                    download_audio_blob: null,
+                    download_artwork_blob: null,
+                    download_options: {
+                        quality: '0',
+                        bit_rate: '192K'
+                    },
+                    url: {
+                        audio: null,
+                        artwork: {
+                            low: track.thumbnail[0].url || null,
+                            high: track.thumbnail[2].url  || null
+                        }
+                    },
+                    colors: {
+                        primary: null,
+                        common: null
+                    },
+                    video_duration: parse_duratrion(track.length),
+                    lyrics: null,
+                    id: {
+                        video_id: track.videoId,
+                        source: 'youtube',
+                        source_id: ''
+                    },
+                    liked: false
+                };
+            })
+        };
+
+        /*original_song_name: string;
+    original_artists: Artist_Identifier[];
+    song_name: string; // modifiable
+    downloaded: boolean;
+    download_audio_blob?: Blob | null; // the actual audio blob, if downloaded
+    download_artwork_blob?: Blob | null; // the artwork blob, if available
+    download_options?: { 
+        quality: DownloadQuality,
+        bit_rate: string // set to specifrics laters
+    } | null; 
+    url?: {
+        audio: string | null; // the URL to the audio stream, if available
+        artwork: {
+            low: string | null; // low quality artwork URL
+            high: string | null; // high quality artwork URL
+        };
+    };
+    colors?: {
+        primary: string | null; 
+        common?: string[] | null
+    }
+    video_duration?: number; // the duration of the video in ms, if available
+    lyrics?: Song_Lyrics,
+    id: Song_Identifier; // the where this song was downloaded
+    liked?: boolean; // whether the song is liked by the user*/ 
+    } catch (error) {
+        console.error('Error fetching mood tracks:', error);
+        return [];
+    }
+}
+
+
+
+
+
 export default {
     get: get_audio_file,
     youtube: {
@@ -653,8 +860,13 @@ export default {
         search_albums: spotify_search_for_albums,
         search_playlists: spotify_search_for_playlists,
         uri_to_video_id: spotify_uri_to_video_id,
-        get_recommondations: get_recommondations,
     },
     search,
+    get_search_recommendations: get_search_recommendations,
+    get_top_charts: get_top_charts,
+    get_mood_categories: get_mood_categories,
+    get_mood_playlists: get_mood_playlists,
+    get_watch_playlist: get_watch_playlist,
     get_artwork: download_audio_artwork_to_stream,
+    stream,
 };

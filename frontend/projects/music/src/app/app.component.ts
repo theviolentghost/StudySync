@@ -1,4 +1,4 @@
-import { Component, ElementRef } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterModule, Router } from '@angular/router';
 
@@ -49,13 +49,19 @@ export class AppComponent {
     ];
 
     active_link: string = '';
+    is_music_idle: boolean = true; // This can be set based on your app logic
 
     public app_version: string = localStorage.getItem('app-version') || '0.0.0';
     public cache_name: string = '';
 
     constructor(
         private router: Router,
-    ) {}
+        private player: MusicPlayerService,
+    ) {
+        this.player.open_player.subscribe(() => {
+            this.is_music_idle = false;
+        });
+    }
 
     on_navigation_link_click(link: { url: string, label: string, icon: string }) {
         this.active_link = link.url;

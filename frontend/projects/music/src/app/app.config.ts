@@ -5,7 +5,6 @@ import { AuthInterceptor } from '../../../../src/app/auth.interceptor';
 import { provideAnimations } from '@angular/platform-browser/animations';
 
 import { routes } from './app.routes';
-import { provideServiceWorker } from '@angular/service-worker';
 
 export const appConfig: ApplicationConfig = {
     providers: [
@@ -14,9 +13,6 @@ export const appConfig: ApplicationConfig = {
         provideHttpClient(),
         provideAnimations(),
         { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
-        provideServiceWorker('/music/ngsw-worker.js', {
-            enabled: !isDevMode(),
-            registrationStrategy: 'registerWhenStable:30000'
-        }),
+        // Removed Angular service worker - using custom sw.js instead
     ]
 };

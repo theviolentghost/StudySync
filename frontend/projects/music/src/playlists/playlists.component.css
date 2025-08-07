@@ -20,8 +20,10 @@
     justify-content: center;
     gap: var(--space-4);
     padding: var(--space-2);
-    background-color: var(--color-background-200);
+    /* background-color: var(--color-background-200); */
     z-index: 10;
+    border-radius: 0 0 var(--space-4) var(--space-4);
+    box-shadow: 0 0 10px 10px var(--color-background-200);
 }
 .actions {
     position: absolute;
@@ -35,24 +37,45 @@
 }
 .action-playlist {
     position: relative;
-    width: var(--space-6);
+    min-width: var(--space-6);
     height: var(--space-6);
-    mask-size: contain;
-    mask-repeat: no-repeat;
-    mask-position: center;
     border-radius: 50%;
     cursor: pointer;
-    transition: background-color 0.15s ease-in-out;
+    transition: background-color 0.15s ease-in-out, filter 0.15s ease-in-out;
     background-color: transparent;
+    background-color: var(--color-primary);   
+    border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-background);
+    flex-direction: row;
+    gap: var(--space-1);
+    font-size: calc(var(--font-size-base) * 1.0);
+    padding: var(--space-0) var(--space-1) var(--space-0) var(--space-3);
+}
+.action-playlist:hover {
+    filter: brightness(0.9);
 }
 .plus {
+    position: relative;
+    height: 100%;
+    aspect-ratio: 1 / 1;
+}
+.plus::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
     mask-size: contain;
     mask-repeat: no-repeat;
     mask-position: center;
-    background-color: var(--color-primary);
-    
+    mask-image: var(--mask);
+    mask-size: 80%;
+    background-color: var(--color-background);
+    border-radius: inherit;
 }
 .playlists-list {
     position: relative;
@@ -64,6 +87,7 @@
     align-items: center;
     gap: var(--space-2);
     padding-bottom: var(--space-9);
+    padding-top: var(--space-3);
 }
 .playlist {
     position: relative;
