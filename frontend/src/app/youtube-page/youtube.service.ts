@@ -12,8 +12,6 @@ import { WatchHistoryService } from './watch-history.service';
   providedIn: 'root'
 })
 export class YoutubeService {
-    private backendURL = "http://localhost:3000";
-
     private _currentSearchQuery: string;
     private nextSearchPageToken: string;
     private searchList: SearchResultItem[];
@@ -49,21 +47,21 @@ export class YoutubeService {
         if (nextPageToken) {
             params = new HttpParams().set('nextPageToken', nextPageToken).set('q', query).set('maxResults', maxResults);
         }
-        return this.http.get<YouTubeSearchResponse>(`${this.backendURL}/youtube_search`, { params });
+        return this.http.get<YouTubeSearchResponse>(`/youtube_search`, { params });
     }
 
     getFullChannel(id: string): Observable<any>{
         let params = new HttpParams()
             .set('id', id);
 
-        return this.http.get<YouTubeChannel>(`${this.backendURL}/youtube_full_channel`, { params });
+        return this.http.get<YouTubeChannel>(`/youtube_full_channel`, { params });
     }
 
     // getChannelPlaylists(id: string): Observable<any>{
     //     let params = new HttpParams()
     //         .set('id', id);
 
-    //     return this.http.get<YouTubeSearchResponse>(`${this.backendURL}/youtube_get_channel_playlists`, { params });
+    //     return this.http.get<YouTubeSearchResponse>(`/youtube_get_channel_playlists`, { params });
     // }
 
     getPlaylistVideos(id: string, nextPageToken: string): Observable<any>{
@@ -71,7 +69,7 @@ export class YoutubeService {
             .set('id', id)
             .set('nextPageToken', nextPageToken);
 
-        return this.http.get<YouTubeSearchResponse>(`${this.backendURL}/youtube_get_playlist_videos`, { params });
+        return this.http.get<YouTubeSearchResponse>(`/youtube_get_playlist_videos`, { params });
     }
 
     get isDisplayingVideo(): boolean{

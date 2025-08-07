@@ -20,7 +20,7 @@
             </svg>  
         </button>
 
-        <input id="search_bar" class="search_bar" [(ngModel)]="seachInput" (keyup.enter)="submitSearch()" (input)="updateSearchInput()" placeholder="Search">
+        <input id="search_bar" class="search_bar" [(ngModel)]="seachInput" (keydown.enter)="submitSearch()" (input)="updateSearchInput()" placeholder="Search">
 
         <button class="icon user_icon">
             <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-person-circle" viewBox="0 0 16 16">

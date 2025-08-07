@@ -1,8 +1,9 @@
 from flask import Flask, request, jsonify, g
-from spotdl import Spotdl
-import os
-import logging
 import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'spotify-downloader'))
+from spotdl import Spotdl
+import logging
 import signal
 import traceback
 from functools import wraps
@@ -182,7 +183,7 @@ def get_video_id():
 if __name__ == '__main__':
     try:
         logger.info("Starting Flask server...")
-        app.run(debug=False, host='0.0.0.0', port=5000)
+        app.run(debug=False, host='0.0.0.0', port=54321)
     except Exception as e:
         logger.error(f"Failed to start server: {str(e)}")
         sys.exit(1)

@@ -34,7 +34,6 @@ hls/
 hls/*.{m3u8,ts}
 tools/
 
-email.js
 *.rest
 .gitignore
-__pycache__/server.cpython-313.pyc
+**/__pycache__/*
