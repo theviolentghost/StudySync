@@ -37,3 +37,4 @@ tools/
 email.js
 *.rest
 .gitignore
+__pycache__/server.cpython-313.pyc
