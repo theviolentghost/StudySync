@@ -197,7 +197,7 @@
     padding: 0;
     border: none;
     -webkit-font-smoothing: antialiased;
-    overflow: hidden;
+    /* overflow: hidden; */
 }
 *:focus {
     /* tab users */

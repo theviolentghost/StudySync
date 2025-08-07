@@ -1,0 +1,17 @@
+<div class="youtube_video_grid">
+    <a class="video" (click)="playNewVideo(null)" *ngFor="let video of videos">
+        <div class="thumbnail">
+            <div class="video_time_display"><div class="video_time_text">0:00:00</div></div>
+            <div class="video_progress_bar" *ngIf="wasWatched('')" [style.width.%]="getVideoProgressPercent('')"></div>
+        </div>
+
+        <div class="video_details">
+            <button class="video_channel_icon" (click)="navigateToChannel()"></button>
+            <div class="video_text">
+                <p class="video_title">title</p>
+                <p class="video_caption">channel name</p>
+                <p class="video_caption"> views and date</p>
+            </div>
+        </div>
+    </a>
+</div>

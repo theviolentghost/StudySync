@@ -1,0 +1,79 @@
+.minimized_video_player{
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+    aspect-ratio: 16/9;
+    width: 40%;
+}
+
+.normal_video_player{
+    position: fixed;
+    left: 72px;
+    top: 96px;
+    z-index: 1;
+    aspect-ratio: 16/9;
+}
+
+.minimize_button{
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    z-index: 1;
+    background-color: #222;
+}
+
+.x_button{
+    position: absolute;
+    right: 0;
+    width: 24px;
+    height: 24px;
+    z-index: 1;
+    background-color: #222;
+}
+
+.play_pause_display{
+    width: 100%;
+    height: 100%;
+    padding-top: 40px;
+    display: flex;
+    align-content: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+}
+
+.big_pause_button, .big_play_button, .x_button, .minimize_button{
+    cursor: pointer;
+}
+
+.fast_forward_area{
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: 40%;
+    position: absolute;
+}
+
+.rewind_area{
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 40%;
+    position: absolute;
+}
+
+.show{
+    display: inherit;
+}
+
+.hidden{
+    display: none;
+}
+
+.main_click_blocker{
+    width: 100%;
+    height: calc(100% - 40px);
+    position: absolute;
+    top: 0;
+}

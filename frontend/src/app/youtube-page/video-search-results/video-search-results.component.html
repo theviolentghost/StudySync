@@ -1,0 +1,37 @@
+<div id="results_list" class="results_list">
+    <div *ngFor="let result of results">
+        <button class="searched_channel" *ngIf="result.id.channelId" (click)="navigateToChannel(result.snippet.channelId)">
+
+            <div class="thumbnail">
+                <img class="searched_channel_icon" [ngStyle]="{'background-image': 'url(' + result.snippet.thumbnails.high.url + ')'}">
+            </div>
+
+            <div class="channel_info_container">
+                <div class="video_info">
+                    <p class="video_title">{{ result.snippet.channelTitle}}</p>
+                    <p class="video_caption">&#64;channel and subs</p>
+                    <p class="video_caption">{{result.snippet.description}}</p>
+                </div>
+
+                <div  (click)="toggleIsSubscribed(result.id.channelId); $event.stopPropagation();" [ngClass]="{'subscribe_button_unclicked': !isSubscribedToChannel(result.id.channelId), 'subscribe_button_clicked':isSubscribedToChannel(result.id.channelId)}">{{isSubscribedToChannel(result.id.channelId) ? "Subscribed" : "Subscribe"}}</div>
+            </div>
+        </button>
+
+        <button class="video" #videoItem *ngIf="result.id.videoId" (click)="playNewVideo(result)">
+            <div class="thumbnail" [attr.background-url]="result.snippet.thumbnails.high.url" [ngStyle]="{'background-image': 'url(' + result.snippet.thumbnails.high.url + ')'}">
+                <div class="video_time_display">0:00:00</div>
+                <div class="video_progress_bar" *ngIf="wasWatched(result.id.videoId)" [style.width.%]="getVideoProgressPercent(result.id.videoId)"></div>
+            </div>
+
+            <div class="video_info">
+                <p class="video_title">{{ result.snippet.title}}</p>
+                <p class="video_caption">views and {{ timeAgo(result.snippet.publishTime)}}</p>
+                <div class="channel_container">
+                    <div class="video_channel_icon" [ngStyle]="{'background-image': 'url('+ + ')'}" (click)="navigateToChannel(result.snippet.channelId)"></div>
+                    <p class="video_caption">{{ result.snippet.channelTitle}}</p>
+                </div>
+                <p class="video_caption">{{result.snippet.description}}</p>
+            </div>        
+        </button>
+    </div>    
+</div>

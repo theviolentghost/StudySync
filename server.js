@@ -4,9 +4,12 @@ import fs from 'fs';
 import CORS from 'cors';
 import Authentication from './authentication.js';
 import Database from './database/main.js';
-import Music from './music.js'; 
+import youtubeSearch from './youtube-search.js'; 
+import youtubeChannelSearch from './youtube-channel-search.js';
+import youtubePlaylist from './youtube-playlist.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import Music from './music.js'; 
 import os from 'os';
 import 'dotenv/config';
 import progress_emitter from './progress.emitter.js';
@@ -459,6 +462,82 @@ app.put('/user/file/:fileId',
 //
 //
 // Newton
+
+app.post('/newton/chat',
+    Authentication.newton.validateChatAuthorization,
+    (req, res) => {
+        // Handle chat request
+    }
+)
+
+app.get('/youtube_search', async (req, res) => {
+    const query = req.query.q;
+    const maxResults = req.query.maxResults || 5;
+    const nextPageToken = req.query.nextPageToken || '';
+
+    if (!query) {
+        return res.status(400).json({ error: 'Search query is required' });
+    }
+    try {
+        const results = await youtubeSearch.search(query,  maxResults, nextPageToken);
+
+        res.json(results);
+    } catch (error) {
+        console.error('Error searching videos:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+app.get('/youtube_full_channel', async (req, res) => {
+    const id = req.query.id;
+
+    if (!id) {
+        return res.status(400).json({ error: 'id is required' });
+    }
+    try {
+        const results = await youtubeChannelSearch.getFullChannel(id);;
+
+        res.json(results);
+    } catch (error) {
+        console.error('Error searching videos:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+app.get('/youtube_get_channel_playlists', async (req, res) => {
+    const id = req.query.id;
+
+    if (!id) {
+        return res.status(400).json({ error: 'id is required' });
+    }
+    try {
+        const results = await youtubePlaylist.getChannelPlaylists(id);
+
+        res.json(results);
+    } catch (error) {
+        console.error('Error searching videos:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+app.get('/youtube_get_playlist_videos', async (req, res) => {
+    const id = req.query.id;
+    const nextPageToken = req.query.nextPageToken;
+
+
+    if (!id) {
+        return res.status(400).json({ error: 'id is required' });
+    }
+    try {
+        const results = await youtubePlaylist.getPlaylistVideos(id, nextPageToken);
+
+        res.json(results);
+    } catch (error) {
+        console.error('Error searching videos:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 
 // app.post('/newton/chat',
 //     Authentication.newton.validateChatAuthorization,
