@@ -65,7 +65,7 @@ class Adaptive_Stream {
         });
     }
     constructor() {
-        this.active_processes = new Map();
+        this.xactive_processes = new Map();
 
         this.hls_directory_cleanup();
         setInterval(() => this.hls_directory_cleanup(), Adaptive_Stream.hls_playlist_cleanup_interval); 
