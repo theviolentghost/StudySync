@@ -6,6 +6,7 @@ import { MediaPlayerComponent } from '../media.player/media.player.component';
 import { AuthService } from '../../../../src/app/auth.service';
 import { MusicMediaService, DownloadQuality } from '../../music.media.service';
 import { MusicPlayerService } from '../../music.player.service';
+import { VersionService } from '../../version.service';
 
 @Component({
     selector: 'app-root',
@@ -48,20 +49,23 @@ export class AppComponent {
         },
     ];
 
-    active_link: string = '';
-    is_music_idle: boolean = true; // This can be set based on your app logic
-
-    public app_version: string = localStorage.getItem('app-version') || '0.0.0';
-    public cache_name: string = '';
-
     constructor(
         private router: Router,
         private player: MusicPlayerService,
+        private version_service: VersionService,
     ) {
         this.player.open_player.subscribe(() => {
             this.is_music_idle = false;
         });
     }
+
+    active_link: string = 'playlists';
+    is_music_idle: boolean = true; // This can be set based on your app logic
+
+    get app_version(): string {
+        return this.version_service.version || '0.0.0';
+    }
+    public cache_name: string = '';
 
     on_navigation_link_click(link: { url: string, label: string, icon: string }) {
         this.active_link = link.url;

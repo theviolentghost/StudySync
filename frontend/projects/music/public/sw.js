@@ -154,13 +154,19 @@ async function handle_version_request(request) {
     try {
         const network_response = await fetch(request, { cache: 'no-cache' });
         if (network_response.ok) {
-            // Update stored version in storage
-            const version_text = await network_response.text();
+            // Clone the response before consuming its body
+            const response_clone = network_response.clone();
+            const version_text = await response_clone.text();
             const cache = await caches.open(CURRENT_CACHE_NAME);
             await cache.put(VERSION_URL, new Response(version_text, { headers: { 'Content-Type': 'text/plain' } }));
             
             if(LOGGING_ENABLED) console.log('🌐 Served version from network and stored');
-            return network_response;
+            // Return a new response with the version text to avoid body lock issues
+            return new Response(version_text, { 
+                status: network_response.status,
+                statusText: network_response.statusText,
+                headers: network_response.headers 
+            });
         }
     } catch (error) {
         console.warn('⚠️ Network failed for version check:', error.message);

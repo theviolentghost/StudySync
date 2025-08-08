@@ -416,14 +416,35 @@ export class MusicMediaService {
     }
 
     async get_audio_stream(key: string): Promise<string | null> {
-        const video_id = key.split(':').pop() || ''; 
+        return (await this.get_hls_stream(key))?.playlist_url || null;
+    }
+
+    async get_hls_stream(key: string): Promise<any | null> {
+        // returns hls data for the song
+        const video_id = key.split(':').pop() || '';
+        console.log('Fetching HLS stream for video ID:', video_id, encodeURIComponent(video_id));
         const response = ((await lastValueFrom(
-                this.http.get(
-                    `${this.Auth.backendURL}/stream?video_id=${encodeURIComponent(video_id)}&t=0`,
-                )
-            )) as any);
-        console.log('Audio stream response:', response);
-        return response?.playlist_url || null;
+            this.http.get(
+                `/stream?video_id=${encodeURIComponent(video_id)}&t=0`,
+            )
+        )) as any);
+        console.log('HLS stream response:', response);
+        return response || null;
+    }
+
+    async get_audio_duration(key: string): Promise<number | null> {
+        const song_data = await this.get_song_from_indexDB(key);
+        if (song_data && song_data.video_duration) {
+            return song_data.video_duration;
+        }
+
+        const video_id = key.split(':').pop() || '';
+        const response = ((await lastValueFrom(
+            this.http.get(
+                `/music/duration?video_id=${encodeURIComponent(video_id)}`,
+            )
+        )) as any);
+        return response.duration || null;
     }
 
     async get_song_artwork(song: Song_Data): Promise<string | null> {

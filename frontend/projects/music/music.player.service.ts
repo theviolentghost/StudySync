@@ -63,19 +63,37 @@ export class MusicPlayerService {
                 debug: false,
                 enableWorker: true,
                 lowLatencyMode: false,
+                autoStartLoad: true,
+                startLevel: 0, // Start with lowest quality
+                capLevelToPlayerSize: false,
                 maxBufferLength: 30,
-                startLevel: -1,
-                // liveSyncDuration: 0,           // Don't try to sync to "live"
-                // liveMaxLatencyDuration: 0,     // No latency management
-                startPosition: 0  // Start from the beginning of the stream
+                maxBufferSize: 60 * 1000 * 1000, // 60MB
+                
+                // Auto quality switching configuration
+                abrEwmaDefaultEstimate: 500000, // Conservative bandwidth estimate
+                abrEwmaSlowVoD: 3,
+                abrEwmaFastVoD: 3,
+                abrMaxWithRealBitrate: false,
+                maxLoadingDelay: 4,
+                minAutoBitrate: 0
             });
+    
             
             // this.hls.loadSource(playlistUrl);
             this.hls.attachMedia(this.audio_element!);
             
             this.hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                // console.log('HLS Manifest parsed successfully');
                 if(this.audio_element) this.audio_element!.currentTime = 0; // Reset to start
+            });
+            
+            // Listen for manifest updates (when new qualities are added)
+            this.hls.on(Hls.Events.MANIFEST_LOADED, (event, data) => {
+                console.log(`🎵 Manifest loaded with ${data.levels.length} quality levels`);
+                
+                // If multiple levels are available, enable auto quality
+                if (data.levels.length > 1) {
+                    this.hls.nextLevel = -1; // Enable auto quality selection
+                }
             });
             
             this.hls.on(Hls.Events.ERROR, (event, data) => {
@@ -94,14 +112,17 @@ export class MusicPlayerService {
         }
     }
 
-    private load_source_to_hls(source_url: string): void {
+    private load_source_to_hls(hls_data: any): void {
         if (this.hls) {
-            this.hls.loadSource(source_url);
+            console.log("Loading HLS source:", `hls/${hls_data.session_id}/low.m3u8`);
+            this.hls.loadSource(hls_data.playlist_url);
             this.hls.startLoad();
         } else if (this.audio_element) {
-            this.audio_element.src = source_url;
+            this.audio_element.src = hls_data.playlist_url;
             this.audio_element.load();
         }
+
+        // this._song_duration = hls_data.duration || 0; // Set song duration from HLS data
     }
 
     get player_status(): 'loading' | 'playing' | 'paused' | 'stopped' {
@@ -152,13 +173,16 @@ export class MusicPlayerService {
         return this.audio_element ? this.audio_element.currentTime : 0; 
     }
     get duration(): number {
-        return this.audio_element ? this.audio_element.duration : 0; 
+        if(this._song_duration) return this._song_duration / 1000; // Use known duration if available
+        if(this.audio_element && !isNaN(this.audio_element.duration)) return this.audio_element.duration;
+        return 0; // Default to 0 if no duration is available
     }
 
     private _shuffle: boolean = false;
     private _repeat: number = 0; // how many times to repeat the current track (0 = no repeat, 1 = repeat once, etc.)
     // private _crossfade_duration: number = 2; // default crossfade duration in seconds
     private _disco_mode: boolean = false; 
+    private _song_duration: number = 0; // Duration of the current song in seconds
 
     set audio_source_element(element: HTMLAudioElement) {
         this.audio_element = element;
@@ -350,16 +374,11 @@ export class MusicPlayerService {
                     is_local_content = true; // Local content, safe to use audio context
                 }
             } else {
-                source_url = await this.media.get_audio_stream(track_key);
-                console.log('Audio stream URL:', source_url);
-                if (source_url?.startsWith('blob:')) {
-                    is_local_content = true; // Blob URL indicates local content
-                } else {
-                    this.load_source_to_hls(source_url!);
-                    is_local_content = false; // External content, likely CORS restricted
-                    return; // Don't use audio context for external content
-                }
+                const hls_stream_data = await this.media.get_hls_stream(track_key);
+                this.load_source_to_hls(hls_stream_data!);
 
+                is_local_content = false; // External content, likely CORS restricted
+                return; // Don't use audio context for external content
             }
 
             // source_url = (track_data?.downloaded && track_data?.download_audio_blob && track_data.download_audio_blob instanceof Blob && track_data.download_audio_blob.size > 0
@@ -541,6 +560,8 @@ export class MusicPlayerService {
             if (song) {
                 // Check abort status before processing artwork
                 if (signal.aborted) return;
+
+                this._song_duration = song.video_duration || await this.media.get_audio_duration(track_key) || 0;
 
                 // HIGH PRIORITY: Use downloaded artwork blob first
                 if (song.download_artwork_blob) {

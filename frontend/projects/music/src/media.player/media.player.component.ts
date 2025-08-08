@@ -188,13 +188,13 @@ export class MediaPlayerComponent implements AfterViewInit {
     ngAfterViewInit() {
         const audio = document.getElementById('audio') as HTMLAudioElement;
         audio.ontimeupdate = () => this.audio_current_time = audio.currentTime;
-        // audio.onloadedmetadata = () => audio.currentTime = 0; // Reset to start when metadata is loaded
+        audio.onloadedmetadata = () => audio.currentTime = 0; // Reset to start when metadata is loaded
         audio.addEventListener('progress', () => {
             if (audio.buffered.length > 0 && audio.duration > 0) {
                 const bufferedEnd = audio.buffered.end(audio.buffered.length - 1);
                 this.buffered_percent = (bufferedEnd / audio.duration) * 100;
             }
-            this.audio_duration = audio.duration || 0; // Ensure duration is set
+            this.audio_duration = this.player.duration || 0; // Ensure duration is set
         });
 
         this.player.audio_source_element = audio;

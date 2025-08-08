@@ -9,16 +9,21 @@ import SpotifyToYoutube from 'spotify-to-youtube';
 import progress_emitter from './progress.emitter.js';
 import { spawn } from 'child_process';
 import axios from 'axios';
-import stream from './stream.js';
+const { default: Adaptive_Stream } = await import(`./stream.js?v=${Date.now()}`);
+const stream = new Adaptive_Stream();
 
 // start python server 
-const pythonServer = spawn('./.venv/bin/gunicorn', [
+const pythonServer = spawn('./venv/bin/gunicorn', [
         '-w', '2',
         '-b', '0.0.0.0:54321',
         'server:app'
     ], {
     cwd: process.cwd(), 
-    env: process.env,
+    env: {
+        ...process.env,
+        PATH: `${path.resolve('./venv/bin')}:${process.env.PATH}`,
+        VIRTUAL_ENV: path.resolve('./venv')
+    },
     stdio: 'inherit' 
 });
 
@@ -293,6 +298,8 @@ async function spotify_uri_to_video_id(uri) {
         if (response.status !== 200) {
             throw new Error(`Failed to fetch video id: ${response.statusText}`);
         }
+
+        console.log('Fetched Spotify video ID:', response.data?.id);
         
         return response.data?.id;
     } catch (error) {
