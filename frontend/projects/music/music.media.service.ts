@@ -128,6 +128,8 @@ export class MusicMediaService {
     private all_songs_cache: Set<string> = new Set(); // song key
     private all_songs_cache_initialized: boolean = false;
 
+    private _preload_duration: number = 8; // seconds (3-20)
+
     async initialize_all_songs_cache(playlist_identifiers: Song_Playlist_Identifier[]): Promise<void> {
         if (this.all_songs_cache_initialized) return;
 
@@ -422,7 +424,6 @@ export class MusicMediaService {
     async get_hls_stream(key: string): Promise<any | null> {
         // returns hls data for the song
         const video_id = key.split(':').pop() || '';
-        console.log('Fetching HLS stream for video ID:', video_id, encodeURIComponent(video_id));
         const response = ((await lastValueFrom(
             this.http.get(
                 `/stream?video_id=${encodeURIComponent(video_id)}&t=0`,
@@ -445,6 +446,25 @@ export class MusicMediaService {
             )
         )) as any);
         return response.duration || null;
+    }
+
+    async preload_hls_stream(key: string): Promise<any | null> {
+        const video_id = key.split(':').pop() || '';
+        const response = ((await lastValueFrom(
+            this.http.get(
+                `/stream/preload?video_id=${encodeURIComponent(video_id)}`,
+            )
+        )) as any);
+        return response || null;
+    }
+
+    async upgrade_hls_preload(session_id: string): Promise<any | null> {
+        const response = ((await lastValueFrom(
+            this.http.get(
+                `/stream/upgrade?session_id=${encodeURIComponent(session_id)}&duration=${this._preload_duration || 5}`, 
+            )
+        )) as any);
+        return response || null;
     }
 
     async get_song_artwork(song: Song_Data): Promise<string | null> {

@@ -31,6 +31,11 @@ export class MusicPlayerService {
     private current_song: Song_Identifier | null = null; // Current song being played
     private current_song_data: Song_Data | null = null; // Current song data
 
+    private preloaded_next_song: boolean = false; // Whether HLS is preloaded
+    private next_song: Song_Identifier | null = null; // Next song to be played
+    private next_song_data: Song_Data | null = null; // Next song data
+    private preloaded_hls_data: any = null; // Preloaded HLS data for next song
+
     public playlist_song_data_map: Map<string, Song_Data> = new Map(); // Cache for playlist song data
 
     public play_next_queue: Song_Queue = {queue:[]};
@@ -60,29 +65,31 @@ export class MusicPlayerService {
 
         if (Hls.isSupported()) {
             this.hls = new Hls({
-                debug: false,
-                enableWorker: true,
-                lowLatencyMode: false,
-                autoStartLoad: true,
-                startLevel: 0, // Start with lowest quality
-                capLevelToPlayerSize: false,
-                maxBufferLength: 30,
-                maxBufferSize: 60 * 1000 * 1000, // 60MB
+                startLevel: 0,                   // Start with lowest quality
+                autoStartLoad: true,             // Start loading immediately
+                enableWorker: true,              // Disable worker for immediate processing
+                maxBufferLength: 10,        // Increase from 5 to 10 seconds
+                maxMaxBufferLength: 30,     // Max buffer size
+                maxBufferSize: 60 * 1000 * 1000, // 60MB buffer
                 
-                // Auto quality switching configuration
-                abrEwmaDefaultEstimate: 500000, // Conservative bandwidth estimate
-                abrEwmaSlowVoD: 3,
-                abrEwmaFastVoD: 3,
-                abrMaxWithRealBitrate: false,
-                maxLoadingDelay: 4,
-                minAutoBitrate: 0
+                // ✅ Segment loading optimization
+                fragLoadingTimeOut: 4000,   // Increase timeout
+                fragLoadingMaxRetry: 3,     // More retries
+                fragLoadingRetryDelay: 1000,
+                
+                // ✅ Manifest loading
+                manifestLoadingTimeOut: 1000,
+                manifestLoadingMaxRetry: 999,
+                manifestLoadingRetryDelay: 500
             });
-    
-            
-            // this.hls.loadSource(playlistUrl);
+
+            // Custom playlist parsing
+            this.hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
+                console.log(`🎵 Manifest loaded with ${data.levels.length} quality levels`);
+            });
             this.hls.attachMedia(this.audio_element!);
             
-            this.hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            this.hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
                 if(this.audio_element) this.audio_element!.currentTime = 0; // Reset to start
             });
             
@@ -95,6 +102,10 @@ export class MusicPlayerService {
                     this.hls.nextLevel = -1; // Enable auto quality selection
                 }
             });
+
+            // this.hls.on(Hls.Events.BUFFERED_TO_END, () => {
+            //     this.hls.startLoad(); // force resume fetching
+            // });
             
             this.hls.on(Hls.Events.ERROR, (event, data) => {
                 console.error('HLS Error:', data);
@@ -114,7 +125,6 @@ export class MusicPlayerService {
 
     private load_source_to_hls(hls_data: any): void {
         if (this.hls) {
-            console.log("Loading HLS source:", `hls/${hls_data.session_id}/low.m3u8`);
             this.hls.loadSource(hls_data.playlist_url);
             this.hls.startLoad();
         } else if (this.audio_element) {
@@ -183,6 +193,7 @@ export class MusicPlayerService {
     // private _crossfade_duration: number = 2; // default crossfade duration in seconds
     private _disco_mode: boolean = false; 
     private _song_duration: number = 0; // Duration of the current song in seconds
+    private _preload_next: boolean = true; // Whether to preload the next track
 
     set audio_source_element(element: HTMLAudioElement) {
         this.audio_element = element;
@@ -276,10 +287,21 @@ export class MusicPlayerService {
     private async load_track(track_key: string, track_data?: Song_Data | null): Promise<void> {
         if (!this.audio_element) throw new Error("Audio element is not set.");
 
-        this.song_changed.emit(); 
-
+        this.song_changed.emit();
         this.loading = true;
         this.started_playing = false;
+
+        console.log("Loading track:", track_key, "with preloaded key:", this.media.song_key(this.next_song_data?.id), 'and next song data:', this.next_song_data);
+        if(track_key === this.media.song_key(this.next_song_data?.id)) {
+            console.log("Loading preloaded next track:", this.next_song);
+            // song is preloaded as next song, use that data
+            return this.load_track_with_preloaded_track();
+        }
+
+        const next_song_identifier = this.get_next_song_identifier();
+        if (next_song_identifier) {
+            this.preload_next_track(this.media.song_key(next_song_identifier));
+        }
 
         let [source_url, song_data]: [string | null | undefined, Song_Data | null | undefined] = [null, track_data];
         if(this.playlist_song_data_map.has(track_key)) {
@@ -333,6 +355,33 @@ export class MusicPlayerService {
         this.update_media_session(song_data, track_key);
         await this.load_audio(track_key, song_data);
     } 
+
+    private async load_track_with_preloaded_track(): Promise<void> {
+        if (!this.next_song || !this.next_song_data) {
+            console.warn("No preloaded next song available.");
+            return;
+        }
+
+        this.current_song = this.next_song;
+        this.current_song_data = this.next_song_data;
+        this.current_media = this.next_song_data; 
+        const track_key = this.media.song_key(this.next_song);
+
+        this.update_media_session(this.next_song_data, track_key);
+        this.load_source_to_hls(this.preloaded_hls_data);
+        console.log(await this.media.upgrade_hls_preload(this.preloaded_hls_data.session_id));
+
+        // Clear preloaded data
+        this.preloaded_next_song = false;
+        this.next_song = null;
+        this.next_song_data = null;
+        this.preloaded_hls_data = null;
+
+        const next_song_identifier = this.get_next_song_identifier();
+        if (next_song_identifier) {
+            this.preload_next_track(this.media.song_key(next_song_identifier));
+        }
+    }
 
     private loadAudioController: AbortController | null = null;
     private updateMediaSessionController: AbortController | null = null;
@@ -423,7 +472,18 @@ export class MusicPlayerService {
 
     // Preload next track for smooth transitions
     private async preload_next_track(track_key: string): Promise<void> {
+        if (!this.audio_element) throw new Error("Audio element is not set.");
+        if(!this._preload_next) return; // Preloading is disabled
         
+        if(this.next_song && this.media.song_key(this.next_song) === track_key) return; // Already preloaded
+        this.preloaded_hls_data = await this.media.preload_hls_stream(track_key);
+
+        this.next_song_data = this.playlist_song_data_map.get(track_key) || await this.media.get_song_data(track_key);
+        this.next_song = this.next_song_data?.id || null;
+
+        this.preloaded_next_song = true;
+
+        console.log("Preload hls data:", this.preloaded_hls_data);
     }
 
     private async intialize_audio_enviroment(): Promise<void> {
@@ -608,6 +668,14 @@ export class MusicPlayerService {
                 });
             }
 
+            // if colors are not set generate them
+            if (song && (!song.colors.primary || !song.colors.common)) {
+                song.colors = {
+                    primary: song.colors?.primary || await this.media.get_primary_color_from_artwork(artwork),
+                    common: song.colors?.common ||  await this.media.get_top_colors_from_artwork(artwork)
+                };
+            }
+
         } catch (error: any) {
             if (error.name === 'AbortError') {
                 console.log('Update media session operation was aborted for track:', track_key);
@@ -731,6 +799,7 @@ export class MusicPlayerService {
             if(this.thumbnail_element) this.thumbnail_element.src = "";
             // console.log(`Skipping to next track: ${next_song.video_id}`, this.playlist_song_data_map.get(next_song.video_id));
             this.skipping_to_next = false;
+
             if(this.current_playlist) {
                 this.load_and_play_track(this.media.song_key(next_song), this.playlist_song_data_map.get(this.media.song_key(next_song)));
             } else {
@@ -747,12 +816,22 @@ export class MusicPlayerService {
             }
             console.log("No next track available, reloading current playlist...");
             this.load_playlist(this.current_playlist, true, true); // Keep history
-            console.log(this.current_playlist);
+            // console.log(this.current_playlist);
 
         } else {
+            this.skipping_to_next = false;
             throw new Error("No next track available and no current playlist loaded.");
         }
         this.skipping_to_next = false;
+    }
+
+    private get_next_song_identifier(): Song_Identifier | null {
+        if (this.play_next_queue.queue.length > 0) {
+            return this.play_next_queue.queue[0];
+        } else if (this.playlist_queue.queue.length > 0) {
+            return this.playlist_queue.queue[0];
+        }
+        return null;
     }
 
     skipping_to_previous = false; // Flag to prevent multiple skips

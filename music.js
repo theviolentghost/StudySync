@@ -7,34 +7,78 @@ import { YtDlp } from 'ytdlp-nodejs';
 import SpotifyWebApi from 'spotify-web-api-node';
 import SpotifyToYoutube from 'spotify-to-youtube';
 import progress_emitter from './progress.emitter.js';
-import { spawn } from 'child_process';
+import { spawn, exec } from 'child_process';
 import axios from 'axios';
-const { default: Adaptive_Stream } = await import(`./stream.js?v=${Date.now()}`);
+import Adaptive_Stream from './stream.js';
 const stream = new Adaptive_Stream();
+import { promisify } from 'util';
+
+const exec_async = promisify(exec);
+async function kill_processes_on_port(port) {
+    try {
+        console.log(`🧹 Checking for processes on port ${port}...`);
+        
+        // Find processes using the port
+        const { stdout } = await exec_async(`lsof -ti:${port}`);
+        
+        if (stdout.trim()) {
+            const pids = stdout.trim().split('\n').filter(pid => pid);
+            console.log(`Found ${pids.length} process(es) on port ${port}: ${pids.join(', ')}`);
+            
+            // Kill each process
+            for (const pid of pids) {
+                try {
+                    await exec_async(`kill -9 ${pid}`);
+                    console.log(`✅ Killed process ${pid}`);
+                } catch (error) {
+                    console.log(`⚠️ Process ${pid} was already terminated or couldn't be killed`);
+                }
+            }
+            
+            // Wait a moment for processes to fully terminate
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        } else {
+            console.log(`✅ No processes found on port ${port}`);
+        }
+    } catch (error) {
+        if (error.code === 1) {
+            // lsof returns exit code 1 when no processes are found - this is normal
+            console.log(`✅ No processes found on port ${port}`);
+        } else {
+            console.error(`Error checking/killing processes on port ${port}:`, error.message);
+        }
+    }
+}
 
 // start python server 
-const pythonServer = spawn('./venv/bin/gunicorn', [
-        '-w', '2',
-        '-b', '0.0.0.0:54321',
-        'server:app'
-    ], {
-    cwd: process.cwd(), 
-    env: {
-        ...process.env,
-        PATH: `${path.resolve('./venv/bin')}:${process.env.PATH}`,
-        VIRTUAL_ENV: path.resolve('./venv')
-    },
-    stdio: 'inherit' 
-});
+try {
+    await kill_processes_on_port(54321); // Ensure no processes are using port 54321
 
-// Optionally, handle exit or errors
-pythonServer.on('error', (err) => {
-    console.error('Failed to start Python server:', err);
-});
+    const pythonServer = spawn('./venv/bin/gunicorn', [
+            '-w', '2',
+            '-b', '0.0.0.0:54321',
+            'server:app'
+        ], {
+        cwd: process.cwd(), 
+        env: {
+            ...process.env,
+            PATH: `${path.resolve('./venv/bin')}:${process.env.PATH}`,
+            VIRTUAL_ENV: path.resolve('./venv')
+        },
+        stdio: 'inherit' 
+    });
 
-pythonServer.on('exit', (code) => {
-    console.log(`Python server exited with code ${code}`);
-});
+    // Optionally, handle exit or errors
+    pythonServer.on('error', (err) => {
+        console.error('Failed to start Python server:', err);
+    });
+
+    pythonServer.on('exit', (code) => {
+        console.log(`Python server exited with code ${code}`);
+    });
+} catch (error) {
+    console.error('Error starting Python server');
+}
 
 const Downloader = new YtDlp({
     cwd: process.cwd(),

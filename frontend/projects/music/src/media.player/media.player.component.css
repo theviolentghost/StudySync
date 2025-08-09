@@ -145,6 +145,18 @@
     flex-direction: column;
     transition: background 0.5s ease-in-out;
 }
+.thumbnail::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--color-background);
+    box-shadow: 0 0 10px 10px var(--color-background);
+    opacity: 0.3;
+    pointer-events: none;
+}
 #thumbnail {
     width: 100%;
     height: 100%;
@@ -160,6 +172,18 @@
 }
 #audio, audio {
     display: none; /* Hide the audio element */
+}
+.dashboard {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--color-background);
+    box-shadow: 0 0 10px 10px var(--color-background);
+    width: 100%;
+    height: 100%;
+    padding-top: var(--space-2);
 }
 .metadata {
     align-self: flex-start;
@@ -212,7 +236,7 @@
 }
 .main-audio-progress {
     position: absolute;
-    bottom: -1px;
+    bottom: -8px;
     left: 0;
     width: 100%;
     height: 8px;

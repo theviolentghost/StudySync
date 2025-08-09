@@ -4,7 +4,7 @@ import path from 'path';
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 
 // update version file 
-const music_version_file_path = path.join(__dirname, 'frontend/projects/music/public/version.txt');
+const music_version_file_path = path.join(__dirname, 'frontend/projects/music/public/app/version.txt');
 function update_music_version() {
     try {
         // Read current version

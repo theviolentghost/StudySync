@@ -10,9 +10,9 @@
           "/music/favicon.ico",
           "/music/index.csr.html",
           "/music/index.html",
-          "/music/manifest.webmanifest",
+          "/music/app/manifest.webmanifest",
           "/music/sw.js",
-          "/music/version.txt",
+          "/music/app/version.txt",
           "/music/*.css",
           "/music/*.js"
         ]

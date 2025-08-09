@@ -4,6 +4,16 @@ import { appConfig } from './app/app.config';
 import { isDevMode } from '@angular/core';
 import { VersionService } from '../version.service';
 
+const LOGGING_ENABLED = false; 
+
+declare global {
+    interface Window {
+        needs_update: boolean;
+        version_service: VersionService;
+        app_reference: any;
+    }
+}
+
 async function initialize_app(): Promise<{ version_service: VersionService, app_reference: any }> {
     const app_reference = await bootstrapApplication(AppComponent, appConfig)
         .catch((err) => console.error(err));
@@ -14,29 +24,46 @@ async function initialize_app(): Promise<{ version_service: VersionService, app_
 
     return { version_service, app_reference };
 }
-
-let version_service: any;
-let app_reference: any;
+window.needs_update = false;
 
 const CACHE_NAME_PREFIX = 'sinc_music';
-const VERSION_URL = '/music/version.txt';
+const VERSION_URL = '/music/app/version.txt';
 let CURRENT_CACHE_NAME = `${CACHE_NAME_PREFIX}_v1`;
 
 
 // Register service worker
 if ('serviceWorker' in navigator && !isDevMode()) {
     window.addEventListener('load', async () => {
-        ({ version_service, app_reference } = await initialize_app());
+        const { version_service, app_reference } = await initialize_app();
+        window.version_service = version_service;
+        window.app_reference = app_reference;   
 
-        console.log(version_service)
-
-        navigator.serviceWorker.register('/music/sw.js')
+        navigator.serviceWorker.register('/music/sw.js', {
+            scope: '/music/' 
+        })
             .then(async (registration) => {
                 console.log('SW registered: ', registration);
 
                 // Listen for messages from service worker
                 navigator.serviceWorker.addEventListener('message', (event) => {
                     const { type, payload } = event.data;
+                    
+                    switch(type) {
+                        case 'UPDATE_STATUS_RESPONSE':
+                            console.log('📊 Update Status:', payload);
+                            if (!payload.isFullyUpdated) {
+                                console.log(`⚠️ ${payload.pendingUpdates} files still need updating`);
+                                // Optionally show user notification about pending updates
+                            }
+                            break;
+                            
+                        case 'FORCE_UPDATE_COMPLETE':
+                            console.log('✅ Force update complete:', payload);
+                            if (payload.failed > 0) {
+                                console.warn(`⚠️ ${payload.failed} files failed to update`);
+                            }
+                            break;
+                    }
                 });
 
                 const cache = await caches.open(CURRENT_CACHE_NAME);
@@ -44,40 +71,18 @@ if ('serviceWorker' in navigator && !isDevMode()) {
                 const stored_version = stored_version_response ?
                     (await stored_version_response.text()).trim().toLowerCase() :
                     '0.0.0'; // Default version if not found
-                version_service.version = stored_version;
-                console.log(version_service.version);
+                window.version_service.version = stored_version;
+                if (LOGGING_ENABLED) console.log(window.version_service.version);
+                if (LOGGING_ENABLED) console.log(stored_version);
 
                 const should_update = await should_update_app(stored_version);
-                console.log('🔄 Update check complete, should update:', should_update);
-                if (should_update) {
-                    window.location.reload();
-                }
+                if (LOGGING_ENABLED) console.log('🔄 Update check complete, should update:', should_update);
+                window.needs_update = should_update;
 
-                // Check for updates
-                // registration.addEventListener('updatefound', () => {
-                //     const new_worker = registration.installing;
-                //     if (new_worker) {
-                //         new_worker.addEventListener('statechange', async () => {
-                //         if (new_worker.state === 'installed' && navigator.serviceWorker.controller) {
-                //             // New version available - check if we should prompt user
-
-                //             const cache = await caches.open(CURRENT_CACHE_NAME);
-                //             const stored_version_response = await cache.match(VERSION_URL);
-                //             const stored_version = stored_version_response ?
-                //                 (await stored_version_response.text()).trim().toLowerCase() :
-                //                 '0.0.0'; // Default version if not found
-                //             version_service.version = stored_version;
-                //             console.log(version_service.version);
-
-                //             const should_update = await should_update_app(stored_version);
-                //             console.log('🔄 Update check complete, should update:', should_update);
-                //             if (should_update) {
-                //                 window.location.reload();
-                //             }
-                //         }
-                //     });
-                //     }
-                // });
+                // refresh the app if needed
+                if (should_update) window.location.reload();
+                    
+                
             })
             .catch((registrationError) => {
                 console.log('SW registration failed: ', registrationError);
@@ -88,28 +93,30 @@ if ('serviceWorker' in navigator && !isDevMode()) {
 async function should_update_app(stored_version: string): Promise<boolean> {
     try {
         // Fetch server version with cache busting
-        const server_version_response = await fetch('/music/version.txt');
+        const server_version_response = await fetch(VERSION_URL, { cache: 'no-cache' });
         if (!server_version_response.ok) {
             throw new Error(`Failed to fetch version.txt: ${server_version_response.status}`);
         }
 
         const server_version = (await server_version_response.text()).trim();
 
+        if(!server_version) return false;
+
         // Compare versions
         if (stored_version !== server_version) {
             const { minor, major } = version_update_severity(stored_version, server_version);
-            version_service.minor_outdated = minor;
-            version_service.major_outdated = major;
-            
+            window.version_service.minor_outdated = minor;
+            window.version_service.major_outdated = major;
+
             // Only prompt if there was a previous version (not first visit)
             const should_prompt = stored_version !== null;
             return should_prompt;
         }
 
-        console.log('✅ Versions match - no update needed');
+        if (LOGGING_ENABLED) console.log('✅ Versions match - no update needed');
         return false;
     } catch (error) {
-        console.error('❌ Error checking version:', error);
+        if (LOGGING_ENABLED) console.error('❌ Error checking version:', error);
         return false;
     }
 }
@@ -119,7 +126,7 @@ function version_update_severity(stored_version: string, server_version: string)
     const server_parts = server_version.split('.').map(Number);
 
     if (stored_parts.length !== 3 || server_parts.length !== 3) {
-        console.error('Invalid version format:', stored_version, server_version);
+        if (LOGGING_ENABLED) console.error('Invalid version format:', stored_version, server_version);
         return { minor: false, major: false };
     }
 

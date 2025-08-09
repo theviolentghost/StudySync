@@ -51,6 +51,8 @@ app.use(CORS());
 app.use(Express.json());
 app.use(Express.urlencoded({ extended: true }));
 
+Music.stream.setup_endpoints(app);
+
 //
 //
 // Auth
@@ -783,8 +785,6 @@ app.get('/music/watch_playlist/:track_id', async (req, res) => {
     }
 });
 
-Music.stream.setup_endpoints(app);
-
 
 
 
@@ -840,7 +840,7 @@ app.get('/.well-known/appspecific/:path', (req, res) => {
 // Serve the Angular study app (this should be LAST)
 app.get(/.*/, (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
-    // console.log(req.url);
+    console.log(req.url);
     if (req.path.startsWith('/music') || req.path.startsWith('music')) {
         res.sendFile(
             path.join(__dirname, 'frontend/dist/music/browser/index.html')
