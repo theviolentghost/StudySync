@@ -31,7 +31,7 @@ export class MusicPlayerService {
     private current_song: Song_Identifier | null = null; // Current song being played
     private current_song_data: Song_Data | null = null; // Current song data
 
-    private preloaded_next_song: boolean = false; // Whether HLS is preloaded
+    public preloaded_next_song: boolean = false; // Whether HLS is preloaded
     private next_song: Song_Identifier | null = null; // Next song to be played
     private next_song_data: Song_Data | null = null; // Next song data
     private preloaded_hls_data: any = null; // Preloaded HLS data for next song
@@ -65,7 +65,7 @@ export class MusicPlayerService {
 
         if (Hls.isSupported()) {
             this.hls = new Hls({
-                startLevel: 0,                   // Start with lowest quality
+                startLevel: 0,                
                 autoStartLoad: true,             // Start loading immediately
                 enableWorker: true,              // Disable worker for immediate processing
                 maxBufferLength: 10,        // Increase from 5 to 10 seconds
@@ -79,13 +79,13 @@ export class MusicPlayerService {
                 
                 // ✅ Manifest loading
                 manifestLoadingTimeOut: 1000,
-                manifestLoadingMaxRetry: 999,
+                manifestLoadingMaxRetry: 50,
                 manifestLoadingRetryDelay: 500
             });
 
             // Custom playlist parsing
             this.hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
-                console.log(`🎵 Manifest loaded with ${data.levels.length} quality levels`);
+                // console.log(`🎵 Manifest loaded with ${data.levels.length} quality levels`);
             });
             this.hls.attachMedia(this.audio_element!);
             
@@ -95,7 +95,7 @@ export class MusicPlayerService {
             
             // Listen for manifest updates (when new qualities are added)
             this.hls.on(Hls.Events.MANIFEST_LOADED, (event, data) => {
-                console.log(`🎵 Manifest loaded with ${data.levels.length} quality levels`);
+                // console.log(`🎵 Manifest loaded with ${data.levels.length} quality levels`);
                 
                 // If multiple levels are available, enable auto quality
                 if (data.levels.length > 1) {
@@ -108,7 +108,7 @@ export class MusicPlayerService {
             // });
             
             this.hls.on(Hls.Events.ERROR, (event, data) => {
-                console.error('HLS Error:', data);
+                // console.error('HLS Error:', data);
                 if (data.fatal) {
                     console.error('Fatal HLS error encountered:', data);
                 }
@@ -131,8 +131,6 @@ export class MusicPlayerService {
             this.audio_element.src = hls_data.playlist_url;
             this.audio_element.load();
         }
-
-        // this._song_duration = hls_data.duration || 0; // Set song duration from HLS data
     }
 
     get player_status(): 'loading' | 'playing' | 'paused' | 'stopped' {
@@ -292,10 +290,17 @@ export class MusicPlayerService {
         this.started_playing = false;
 
         console.log("Loading track:", track_key, "with preloaded key:", this.media.song_key(this.next_song_data?.id), 'and next song data:', this.next_song_data);
-        if(track_key === this.media.song_key(this.next_song_data?.id)) {
-            console.log("Loading preloaded next track:", this.next_song);
-            // song is preloaded as next song, use that data
-            return this.load_track_with_preloaded_track();
+        if(this.preloaded_next_song) {
+            if(track_key === this.media.song_key(this.next_song_data?.id)) {
+                console.log("Loading preloaded next track:", this.next_song);
+                // song is preloaded as next song, use that data
+                return this.load_track_with_preloaded_track();
+            }
+            this.preloaded_next_song = false;
+            // // Clear preloaded data
+            // this.next_song = null;
+            // this.next_song_data = null;
+            // this.preloaded_hls_data = null;
         }
 
         const next_song_identifier = this.get_next_song_identifier();
@@ -362,6 +367,13 @@ export class MusicPlayerService {
             return;
         }
 
+        this.preloaded_next_song = false;
+
+        if(this.next_song_data.downloaded) {
+            this.load_audio(this.media.song_key(this.next_song), this.next_song_data);
+            return; // use downloaded media
+        }
+
         this.current_song = this.next_song;
         this.current_song_data = this.next_song_data;
         this.current_media = this.next_song_data; 
@@ -369,10 +381,8 @@ export class MusicPlayerService {
 
         this.update_media_session(this.next_song_data, track_key);
         this.load_source_to_hls(this.preloaded_hls_data);
-        console.log(await this.media.upgrade_hls_preload(this.preloaded_hls_data.session_id));
 
         // Clear preloaded data
-        this.preloaded_next_song = false;
         this.next_song = null;
         this.next_song_data = null;
         this.preloaded_hls_data = null;
@@ -474,16 +484,22 @@ export class MusicPlayerService {
     private async preload_next_track(track_key: string): Promise<void> {
         if (!this.audio_element) throw new Error("Audio element is not set.");
         if(!this._preload_next) return; // Preloading is disabled
-        
-        if(this.next_song && this.media.song_key(this.next_song) === track_key) return; // Already preloaded
+
+        const song_data = this.playlist_song_data_map.get(track_key) || await this.media.get_song_data(track_key);
+
+        console.log("Requesting Preload...:", track_key);
+        if((this.next_song && this.media.song_key(this.next_song) === track_key) || song_data?.downloaded) {
+            this.preloaded_next_song = true; // for visualization
+            return; // Already preloaded
+        }
         this.preloaded_hls_data = await this.media.preload_hls_stream(track_key);
 
-        this.next_song_data = this.playlist_song_data_map.get(track_key) || await this.media.get_song_data(track_key);
+        this.next_song_data = song_data;
         this.next_song = this.next_song_data?.id || null;
 
         this.preloaded_next_song = true;
 
-        console.log("Preload hls data:", this.preloaded_hls_data);
+        console.log("Preloaded next track:", this.next_song, "with data:", this.next_song_data);
     }
 
     private async intialize_audio_enviroment(): Promise<void> {
@@ -674,6 +690,12 @@ export class MusicPlayerService {
                     primary: song.colors?.primary || await this.media.get_primary_color_from_artwork(artwork),
                     common: song.colors?.common ||  await this.media.get_top_colors_from_artwork(artwork)
                 };
+
+                // Update song data with new colors
+                this.playlist_song_data_map.set(track_key, song);
+                this.current_song_data = song; // Update current song data
+                this.media.save_song_to_indexDB(track_key, song); // Save updated song data
+                this.media.song_data_updated.emit(song); // Emit updated song data event
             }
 
         } catch (error: any) {
@@ -917,6 +939,103 @@ export class MusicPlayerService {
             console.error("Invalid song type provided to add to play next queue.");
         }
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     update_audio_data_array(): void {
         if (this.audio_analyser && this.audio_data_array) {

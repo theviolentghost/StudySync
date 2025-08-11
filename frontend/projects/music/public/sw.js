@@ -1,6 +1,6 @@
 const CACHE_NAME_PREFIX = 'sinc_music';
 const VERSION_URL = '/music/app/version.txt';  
-const LOGGING_ENABLED = true;
+const LOGGING_ENABLED = false;
 
 let CURRENT_CACHE_NAME = `${CACHE_NAME_PREFIX}_v1`;
 
@@ -113,11 +113,17 @@ class File_Manager {
     // major update: (#.0.0) -> lowest priority (major)
     //      This is for files that are rarely updated, like scripts or libraries. but when they are updated, they are significant changes.
     get_file_classification(url) {
+        if (!url) {
+            if (LOGGING_ENABLED) console.warn('get_file_classification called with empty URL');
+            return 'no_cache'; // Default to no_cache if no URL is provided
+        }
+        if (LOGGING_ENABLED) console.log('Classifying file:', url);
         const file_extension = url.split('.').pop().toLowerCase();
 
         const classifications = {
             'js': 'tiny', 
-            'ts': 'tiny', 
+            'ts': 'no cache', // HLS song segments should not be cached
+            'm3u8': 'no cache', // HLS playlists should not be cached
             'css': 'tiny', 
             'html': 'tiny', 
             'png': 'minor', 
@@ -133,9 +139,20 @@ class File_Manager {
         return classifications[file_extension] || 'tiny'; // Default to tiny if not classified (meaning it is a frequently updated file)
     }
 
+    // if true, then serve cache version first
+    is_file_minor_or_major(url) {
+        const classification = this.get_file_classification(url.pathname);
+        return classification === 'minor' || classification === 'major';
+    }
+
     // status = 'updated' | 'needs_update'
     async store_file(url, status = 'updated') {
         const db = await this.open_database();
+        const classification = this.get_file_classification(url.pathname);
+        if(classification === 'no cache') {
+            if (LOGGING_ENABLED) console.warn('Skipping caching for no cache classification:', url);
+            return; // Skip storing files that should not be cached
+        }
 
         return new Promise((resolve, reject) => {
             const transaction = db.transaction(File_Manager.store_name, 'readwrite');
@@ -144,7 +161,7 @@ class File_Manager {
             const record = {
                 url: url,
                 status: status,
-                class: this.get_file_classification(url), // classify the file based on its type
+                class: classification, // classify the file based on its type
             };
 
             const request = store.put(record);
@@ -239,7 +256,9 @@ class File_Manager {
                 return 'network_first';
             }
 
-            return 'cache_first';
+            if(this.is_file_minor_or_major(url)) {
+                return 'cache_first';
+            }
         }
 
         // Default to network_first
@@ -367,8 +386,50 @@ self.addEventListener('install', (event) => {
 
 // Activate event
 self.addEventListener('activate', event => {
-     event.waitUntil(self.clients.claim());
+    event.waitUntil(
+        (async () => {
+            await self.clients.claim();
+            
+            // ✅ Send cached version to all clients after activation
+            await send_version_to_clients();
+        })()
+    );
 });
+
+// ✅ Function to send the current cached version to all clients
+async function send_version_to_clients() {
+    try {
+        if (self.clients && self.clients.matchAll) {
+            const clients = await self.clients.matchAll({ type: 'window' });
+            if (clients.length > 0) {
+                // Get the cached version
+                const cache = await caches.open(CURRENT_CACHE_NAME);
+                const cached_version_response = await cache.match(VERSION_URL);
+                
+                if (cached_version_response) {
+                    const cached_version = (await cached_version_response.text()).trim().toLowerCase();
+                    if(LOGGING_ENABLED) console.log('Sending cached version to clients:', cached_version);
+                    
+                    clients.forEach(client => {
+                        if(LOGGING_ENABLED) console.log('Posting version message to client');
+                        client.postMessage({
+                            type: 'update_stored_version',
+                            payload: {
+                                version: cached_version,
+                            }
+                        });
+                    });
+                } else {
+                    if(LOGGING_ENABLED) console.log('No cached version found to send to clients');
+                }
+            } else {
+                if(LOGGING_ENABLED) console.log('No clients found to send version to');
+            }
+        }
+    } catch (error) {
+        console.error('Error sending version to clients:', error);
+    }
+}
 
 async function check_version_and_cache() {
     try {
@@ -390,6 +451,14 @@ async function check_version_and_cache() {
             if (response.ok) {
                 server_version = (await response.text()).trim().toLowerCase();
                 if(LOGGING_ENABLED) console.log('Server version:', server_version);
+                
+                // ✅ Cache the server version immediately
+                const cache = await caches.open(CURRENT_CACHE_NAME);
+                await cache.put(VERSION_URL, new Response(server_version, { 
+                    headers: { 'Content-Type': 'text/plain' } 
+                }));
+                if(LOGGING_ENABLED) console.log('Cached server version:', server_version);
+                
             } else {
                 throw new Error(`${response.status}`);
             }
@@ -493,6 +562,20 @@ async function handle_version_request(request) {
             const version_text = await response_clone.text();
             const cache = await caches.open(CURRENT_CACHE_NAME);
             await cache.put(VERSION_URL, new Response(version_text, { headers: { 'Content-Type': 'text/plain' } }));
+
+            // ✅ Send message to clients to update version
+            if (self.clients && self.clients.matchAll) {
+                const clients = await self.clients.matchAll({ type: 'window' });
+                clients.forEach(client => {
+                    if(LOGGING_ENABLED) console.log('Sending version update to client:', version_text.trim().toLowerCase());
+                    client.postMessage({
+                        type: 'update_stored_version',
+                        payload: {
+                            version: version_text.trim().toLowerCase(),
+                        }
+                    });
+                });
+            }
             
             if(LOGGING_ENABLED) console.log('🌐 Served version from network and stored');
             // Return a new response with the version text to avoid body lock issues
@@ -506,7 +589,37 @@ async function handle_version_request(request) {
         console.warn('⚠️ Network failed for version check:', error.message);
     }
   
-    // Fallback response if  network fail
+    // ✅ If network fails, try to serve from cache and still send to clients
+    try {
+        const cache = await caches.open(CURRENT_CACHE_NAME);
+        const cached_response = await cache.match(VERSION_URL);
+        if (cached_response) {
+            const cached_version = await cached_response.text();
+            
+            // Send cached version to clients
+            if (self.clients && self.clients.matchAll) {
+                const clients = await self.clients.matchAll({ type: 'window' });
+                clients.forEach(client => {
+                    if(LOGGING_ENABLED) console.log('Sending cached version to client:', cached_version.trim().toLowerCase());
+                    client.postMessage({
+                        type: 'update_stored_version',
+                        payload: {
+                            version: cached_version.trim().toLowerCase(),
+                        }
+                    });
+                });
+            }
+            
+            if(LOGGING_ENABLED) console.log('📦 Served version from cache');
+            return new Response(cached_version, { 
+                headers: { 'Content-Type': 'text/plain' }
+            });
+        }
+    } catch (cache_error) {
+        console.warn('⚠️ Cache failed for version check:', cache_error.message);
+    }
+  
+    // Fallback response if both network and cache fail
     return new Response('0.0.0', { 
         headers: { 'Content-Type': 'text/plain' }
     });
@@ -566,104 +679,39 @@ self.addEventListener('message', (event) => {
   
   const { type, payload } = event.data;
 
-  console.log('🔧 Service Worker received message:', type, payload) ;
+  console.log('🔧 Service Worker received message:', type, payload);
   
-//   switch(type) {
-//     case "CHECK_VERSION":
-//       event.waitUntil(
-//         (async () => {
-//           try {
-//             // Get current version from cache first
-//             const cache = await caches.open(CURRENT_CACHE_NAME);
-//             const storedVersionResponse = await cache.match(VERSION_URL);
-//             let currentVersion = '0.0.0';
+  switch(type) {
+    case "GET_VERSION":
+      event.waitUntil(
+        (async () => {
+          try {
+            const cache = await caches.open(CURRENT_CACHE_NAME);
+            const cached_version_response = await cache.match(VERSION_URL);
+            let current_version = '0.0.0';
             
-//             if (storedVersionResponse) {
-//               currentVersion = (await storedVersionResponse.text()).trim();
-//             }
+            if (cached_version_response) {
+              current_version = (await cached_version_response.text()).trim().toLowerCase();
+            }
             
-//             // Try to get latest version from server
-//             try {
-//               const serverVersionResponse = await fetch(VERSION_URL, { 
-//                 cache: 'no-cache',
-//                 headers: { 'Cache-Control': 'no-cache' }
-//               });
-              
-//               if (serverVersionResponse.ok) {
-//                 const serverVersion = (await serverVersionResponse.text()).trim();
-                
-//                 if (serverVersion !== currentVersion) {
-//                   console.log('🔄 Version mismatch detected');
-//                   await updateCache(serverVersion);
-//                   currentVersion = serverVersion;
-//                 }
-//               }
-//             } catch (error) {
-//               console.warn('⚠️ Could not fetch server version for check:', error.message);
-//               // Continue with cached version
-//             }
-            
-//             if (event.source && event.source.postMessage) {
-//               event.source.postMessage({
-//                 type: "VERSION_CHECKED",
-//                 payload: {
-//                   version: currentVersion,
-//                   cacheName: CURRENT_CACHE_NAME
-//                 }
-//               });
-//             }
-//           } catch (error) {
-//             console.error('❌ Version check failed:', error);
-//             if (event.source && event.source.postMessage) {
-//               event.source.postMessage({
-//                 type: "VERSION_ERROR",
-//                 payload: {
-//                   error: error.message
-//                 }
-//               });
-//             }
-//           }
-//         })()
-//       );
-//       break;
-
-//     case "CLEAR_CACHE":
-//       event.waitUntil(
-//         caches.delete(CURRENT_CACHE_NAME).then(() => {
-//           console.log('🗑️ Cache cleared');
-//           if (event.source && event.source.postMessage) {
-//             event.source.postMessage({
-//               type: "CACHE_CLEARED"
-//             });
-//           }
-//         })
-//       );
-//       break;
-
-//     case "GET_CACHE_INFO":
-//       event.waitUntil(
-//         (async () => {
-//           const cache = await caches.open(CURRENT_CACHE_NAME);
-//           const keys = await cache.keys();
-//           const urls = keys.map(request => request.url);
-          
-//           if (event.source && event.source.postMessage) {
-//             event.source.postMessage({
-//               type: "CACHE_INFO",
-//               payload: {
-//                 cacheName: CURRENT_CACHE_NAME,
-//                 urls: urls,
-//                 count: urls.length
-//               }
-//             });
-//           }
-//         })()
-//       );
-//       break;
-
-//     default:
-//       return;
-//   }
+            if (event.source && event.source.postMessage) {
+              event.source.postMessage({
+                type: "update_stored_version",
+                payload: {
+                  version: current_version
+                }
+              });
+            }
+          } catch (error) {
+            console.error('❌ Get version failed:', error);
+          }
+        })()
+      );
+      break;
+      
+    default:
+      return;
+  }
 });
 
 console.log('✅ Service Worker loaded successfully');

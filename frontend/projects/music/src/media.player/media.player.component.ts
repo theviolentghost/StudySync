@@ -138,6 +138,9 @@ export class MediaPlayerComponent implements AfterViewInit {
     video_progress(video_id: string): number {
         return this.media.download_progress(video_id); // return the current download progress
     }
+    get preloaded_next_song(): boolean {
+        return this.player.preloaded_next_song;
+    }
     audio_current_time = 0;
     audio_duration = 0;
 
@@ -438,7 +441,7 @@ export class MediaPlayerComponent implements AfterViewInit {
             console.warn('Song already downloaded');
             return;
         }
-        this.media.download_audio(this.media.song_key(this.current_song_data.id), { quality: DownloadQuality.Q0, bit_rate: '128K' });
+        this.media.request_download(this.media.song_key(this.current_song_data.id), { quality: DownloadQuality.Q0, bit_rate: '128K' });
     }
 
     get_thumbnail_background(song: Song_Data | null): string {
@@ -500,5 +503,15 @@ export class MediaPlayerComponent implements AfterViewInit {
 
     on_seek(event: any): void {
         this.player.seek_to(event.target.value);
+    }
+
+    seconds_to_time(seconds: number): string {
+        if (isNaN(seconds) || seconds < 0) return '00:00';
+        seconds = Math.max(0, seconds);
+        seconds = Math.floor(seconds); // Ensure seconds is an integer
+        if (seconds === Infinity) return '00:00'; // Handle edge case for Infinity
+        const minutes = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
 }

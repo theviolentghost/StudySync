@@ -8,13 +8,75 @@ const __dirname = path.resolve();
 
 class Adaptive_Stream {
     static profiles = {
-        'ultra-low': { bitrate: '32k', sample_rate: 22050, channels: 1 },
-        'low': { bitrate: '64k', sample_rate: 44100, channels: 1 },
-        'medium': { bitrate: '128k', sample_rate: 44100, channels: 2 },
-        'high': { bitrate: '192k', sample_rate: 44100, channels: 2 },
-        'ultra-high': { bitrate: '256k', sample_rate: 44100, channels: 2 }
+        'desperate': { 
+            bitrate: '16k',
+            sample_rate: 22050,
+            channels: 1,
+            audio_profile: 'aac_he',
+            bandwidth: 16 * 1024,
+            codec: 'mp4a.40.2',
+            hls_time: '1.0', // Short segments for fast startup
+            hls_preset: 'ultrafast',
+        },
+        'ultra-low': { 
+            bitrate: '32k',
+            sample_rate: 22050,
+            channels: 1,
+            audio_profile: 'aac_he',
+            bandwidth: 32 * 1024,
+            codec: 'mp4a.40.2',
+            hls_time: '1.0', // Short segments for fast startup
+            hls_preset: 'ultrafast',
+        },
+        'low': { 
+            bitrate: '64k',
+            sample_rate: 44100, 
+            channels: 1, 
+            audio_profile: 'aac_he',
+            bandwidth: 64 * 1024 ,
+            codec: 'mp4a.40.2',
+            hls_time: '1.0', // Short segments for fast startup
+            hls_preset: 'ultrafast',
+        },
+        'medium': { 
+            bitrate: '128k',
+            sample_rate: 44100,
+            channels: 2,
+            audio_profile: 'aac_low',
+            bandwidth: 128 * 1024,
+            codec: 'mp4a.40.2',
+            hls_time: '2.0',
+            hls_preset: 'fast',
+        },
+        'high': { 
+            bitrate: '192k',
+            sample_rate: 44100,
+            channels: 2,
+            audio_profile: 'aac_low',
+            bandwidth: 192 * 1024,
+            codec: 'mp4a.40.2',
+            hls_time: '4.0',
+            hls_preset: 'medium',
+        },
+        'ultra-high': { 
+            bitrate: '256k',
+            sample_rate: 44100,
+            channels: 2,
+            audio_profile: 'aac_low',
+            bandwidth: 256 * 1024,
+            codec: 'mp4a.40.2',
+            hls_time: '4.0',
+            hls_preset: 'medium',
+        }
     };
     static profile_progression = ['ultra-low', 'low', 'medium', 'high', 'ultra-high']; // Order of profiles for adaptive streaming
+    get_requested_profiles(target_profile = 'medium') {
+        const target_index = Adaptive_Stream.profile_progression.indexOf(target_profile);
+        if (target_index === -1) return [];
+
+        // Get all profiles from ultra-low to the target profile
+        return Adaptive_Stream.profile_progression.slice(0, target_index + 1);
+    }
     static hls_root = path.join(__dirname, 'hls');
     static stream_buffer_size = '16K'; // Buffer size for streaming
 
@@ -23,73 +85,66 @@ class Adaptive_Stream {
     static hls_playlist_segment_wait_timeout = 15000; // Max wait time for first segment in ms
     static hls_playlist_segment_interval = 50; // Interval to check for first segment in ms
 
-    static hls_playlist_max_uphold_time = 1000 * 60 * 60; // 1 hour
-    static hls_playlist_cleanup_interval = 10 * 60 * 1000; // 10 min
+    static hls_playlist_max_uphold_time = 15 * 60 * 1000; // 15 min (can be kept alive to last longer)
+    static hls_playlist_cleanup_interval = 5 * 60 * 1000; // 5 min
 
     static hls_playlist_generation_timeout = 26000; // 26 seconds
 
     setup_endpoints(app) {
-        app.use('/hls', express.static(Adaptive_Stream.hls_root));
+        // Configure static middleware with proper MIME types for HLS
+        app.use('/hls', express.static(Adaptive_Stream.hls_root, {
+            setHeaders: (res, path) => {
+                if (path.endsWith('.m3u8')) {
+                    res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
+                    res.setHeader('Access-Control-Allow-Origin', '*');
+                    res.setHeader('Access-Control-Allow-Headers', 'Range');
+                    res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Range');
+                } else if (path.endsWith('.ts')) {
+                    res.setHeader('Content-Type', 'video/mp2t');
+                    res.setHeader('Access-Control-Allow-Origin', '*');
+                    res.setHeader('Access-Control-Allow-Headers', 'Range');
+                    res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Range');
+                }
+            }
+        }));
 
         // Standard adaptive quality stream
         app.get('/stream', async (req, res) => {
             const video_id = req.query.video_id;
-            const start_time = parseInt(req.query.t || '0', 10) || 0;
             const target_quality = req.query.quality || 'medium';
-            const initial_quality = req.query.initial_quality || 'ultra-low';
 
             if (!video_id) return res.status(400).send('Missing video_id');
 
-            const video_url = `https://www.youtube.com/watch?v=${video_id}`;
-
             try {
-                // console.log(`Starting stream for ${video_url} from ${start_time}s`);
-
-                const response = await this.stream(video_url, start_time, target_quality, initial_quality);
+                // console.log('stream:', video_id);
+                const response = await this.stream(video_id, target_quality);
                 res.json(response);
-
             } catch (error) {
-                console.error('Streaming error:', error);
-                res.status(500).send('Error: ' + error.message);
+                console.error('Streaming error:', error.message);
+                res.status(500).json({ error: 'Error generating stream', success: false });
             }
         });
 
         app.get('/stream/preload', async (req, res) => {
             const video_id = req.query.video_id;
-            const start_time = parseInt(req.query.t || '0', 10) || 0;
             const target_quality = req.query.quality || 'medium';
-            const initial_quality = req.query.initial_quality || 'ultra-low';
-            const duration_seconds = parseInt(req.query.duration || '5', 10) || 8;
-            // force duration_seconds to 3-20 seconds
-            if (duration_seconds < 3 || duration_seconds > 20) {
-                return res.status(400).send('Invalid duration, must be between 3 and 20 seconds');
-            }
 
             if (!video_id) return res.status(400).send('Missing video_id');
 
-            const video_url = `https://www.youtube.com/watch?v=${video_id}`;
-
             try {
-                const response = await this.preload(video_url, start_time, target_quality, initial_quality, duration_seconds);
+                // console.log(`Preloading stream for video ID: ${video_id} with target quality: ${target_quality}`);
+                const response = await this.preload(video_id, target_quality);
                 res.json(response);
             } catch (error) {
-                console.error('Preload error:', error);
-                res.status(500).send('Error: ' + error.message);
+                console.error('Preload error:', error.message);
+                res.status(500).json({ error: 'Error generating preload stream', success: false });
             }
         });
 
-        app.get('/stream/upgrade', async (req, res) => {
-            // const { session_id } = req.body;
-            const session_id = req.query.session_id;
-            if (!session_id) return res.status(400).send('Missing session_id');
-
-            try {
-                const response = await this.upgrade_preload(session_id);
-                res.json(response);
-            } catch (error) {
-                console.error('Upgrade error:', error);
-                res.status(500).send('Error: ' + error.message);
-            }
+        app.get('stream/keepalive', async (req, res) => {
+            const video_id = req.query.video_id;
+            const target_quality = req.query.quality || 'medium';
+            // to implement
         });
 
         app.get('/music/duration', async (req, res) => {
@@ -107,23 +162,23 @@ class Adaptive_Stream {
         });
 
         // Get session status (useful for checking upgrade progress)
-        app.get('/session/:session_id/status', (req, res) => {
-            const session_id = req.params.session_id;
-            const session = this.active_processes.get(session_id);
+        // app.get('/session/:session_id/status', (req, res) => {
+        //     const session_id = req.params.session_id;
+        //     const session = this.active_processes.get(session_id);
             
-            if (!session) {
-                return res.status(404).json({ error: 'Session not found' });
-            }
+        //     if (!session) {
+        //         return res.status(404).json({ error: 'Session not found' });
+        //     }
 
-            res.json({
-                session_id: session_id,
-                phase: session.phase || 'active',
-                target_quality: session.target_quality,
-                playlist_url: session.playlist_url || `/hls/${session_id}/instant.m3u8`,
-                duration: session.duration || null,
-                upgrade_available: session.phase === 'upgraded'
-            });
-        });
+        //     res.json({
+        //         session_id: session_id,
+        //         phase: session.phase || 'active',
+        //         target_quality: session.target_quality,
+        //         playlist_url: session.playlist_url || `/hls/${session_id}/instant.m3u8`,
+        //         duration: session.duration || null,
+        //         upgrade_available: session.phase === 'upgraded'
+        //     });
+        // });
 
         app.delete('/session/:session_id', async (req, res) => {
             const session_id = req.params.session_id;
@@ -142,47 +197,107 @@ class Adaptive_Stream {
         setInterval(() => this.hls_directory_cleanup(), Adaptive_Stream.hls_playlist_cleanup_interval); 
     }
 
-    async stream(url, start_time = 0, target_quality = 'medium', initial_quality = 'ultra-low') {
-        console.time('dir check');
-        const session_id = Math.random().toString(36).substring(7);
+    does_session_already_exist(session_id, target_quality) {
+        const session = this.active_processes.get(session_id);
+        if (!session) return false;
+
+        // Check if the session has the requested quality
+        const requested_profiles = this.get_requested_profiles(target_quality);
+        return requested_profiles.some(profile => 
+            session.qualities.includes(profile) && 
+            fs.existsSync(path.join(session.session_directory, `${Adaptive_Stream.profiles[profile].bitrate}.m3u8`))
+        );
+    }
+
+    async stream(video_id, target_quality = 'medium', fast_startup = true) {
+        // console.time('dir check');
+        const session_id = video_id;
+        const url = `https://www.youtube.com/watch?v=${video_id}`;
         const session_directory = path.join(Adaptive_Stream.hls_root, session_id);
-        
+        let requested_profiles = this.get_requested_profiles(target_quality);
+
+        // console.log(`Starting stream for video ID: ${video_id} with target quality: ${target_quality}`);
+
+        // Check if session already exists
+        // if so return existing session info if it contains the requested quality
+        if( this.does_session_already_exist(session_id, target_quality) ) {
+            const session = this.active_processes.get(session_id);
+            if (!session) throw new Error(`Session ${session_id} not found`);
+            session.start_time = Date.now(); 
+            return {
+                success: true,
+                playlist_url: `/hls/${session_id}/master.m3u8`,
+                session_id: session_id,
+                qualities: this.get_requested_profiles(target_quality),
+                startup_mode: fast_startup ? 'instant' : 'delayed',
+                origin: 'existing'
+            };
+        }
+
+        // if session with required quakity does not exist
+        // check to see if a session with the same ID exists
+        // if so, add the desired quality to the existing session
+        if( this.active_processes.has(session_id) ) {
+            const existing_session = this.active_processes.get(session_id);
+            const missing_profiles = requested_profiles.filter(profile => !existing_session.qualities.includes(profile));
+            if (missing_profiles.length === 0) {
+                // make sure existing session has the minimum quality, if not wait.
+                try {
+                    await Promise.race([
+                        Promise.all([
+                            this.wait_for_playlist(path.join(session_directory, `${Adaptive_Stream.profiles[Adaptive_Stream.profile_progression[0]].bitrate}.m3u8`)),
+                            this.wait_for_first_segment(session_directory, Adaptive_Stream.profiles[Adaptive_Stream.profile_progression[0]].bitrate),
+                        ]),
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout waiting for low quality stream')), Adaptive_Stream.hls_playlist_generation_timeout))
+                    ]);
+                } catch (error) {
+                    console.error('Failed to wait for low quality stream:', error);
+                    throw new Error('Failed to initialize low quality stream: ' + error.message);
+                }
+
+
+                return {
+                    success: true,
+                    playlist_url: `/hls/${session_id}/master.m3u8`,
+                    session_id: session_id,
+                    qualities: this.get_requested_profiles(target_quality),
+                    startup_mode: fast_startup ? 'instant' : 'delayed',
+                    origin: 'existing#missing'
+                }
+            }
+
+            existing_session.start_time = Date.now(); 
+            requested_profiles = missing_profiles; // Update requested profiles to only include missing ones
+        }
         // Ensure directory exists synchronously for immediate use
-        if(!fs.ensureDirSync(session_directory)) throw new Error('Failed to create session directory');
+        else if(!fs.ensureDirSync(session_directory)) throw new Error(`Failed to create session directory: ${session_directory}`);
 
-        console.timeEnd('dir check');
-        console.time('yt-dlp process');
-
-        // Start all parallel operations immediately - don't wait for yt-dlp
-        const [yt_dlp_process, master_playlist_path] = await Promise.all([
+        const [yt_dlp_process] = await Promise.all([
             this.create_yt_dlp_process(url),
-            this.create_master_playlist(session_directory, initial_quality, target_quality) // Create master playlist immediately
+            this.create_master_playlist(session_directory, target_quality) // Create master playlist immediately
         ]);
-        console.timeEnd('yt-dlp process');
-        console.time('ffmpeg process');
 
         // Create and start FFmpeg immediately after yt-dlp is ready
-        const ffmpeg_process = await this.create_dual_quality_stream(
+        const ffmpeg_process = await this.create_hls_stream(
             yt_dlp_process, 
-            start_time, 
-            initial_quality, 
-            target_quality, 
-            session_directory
+            session_directory, 
+            target_quality, // used as fallback
+            fast_startup,
+            requested_profiles,
         );
 
         // Start FFmpeg process immediately
         ffmpeg_process.run();
-        console.timeEnd('ffmpeg process');
-        console.time('playlist ready');
 
         // Store session info immediately for cleanup
         this.active_processes.set(session_id, {
             ffmpeg: ffmpeg_process,
             yt_dlp: yt_dlp_process,
             url: url,
+            session_id: session_id,
             session_directory: session_directory,
+            qualities: this.get_requested_profiles(target_quality),
             target_quality: target_quality,
-            initial_quality: initial_quality,
             start_time: Date.now()
         });
 
@@ -190,8 +305,8 @@ class Adaptive_Stream {
         try {
             await Promise.race([
                 Promise.all([
-                    this.wait_for_playlist(path.join(session_directory, 'low.m3u8')),
-                    this.wait_for_first_segment(session_directory, 'low')
+                    this.wait_for_playlist(path.join(session_directory, `${Adaptive_Stream.profiles[Adaptive_Stream.profile_progression[0]].bitrate}.m3u8`)),
+                    this.wait_for_first_segment(session_directory, Adaptive_Stream.profiles[Adaptive_Stream.profile_progression[0]].bitrate),
                 ]),
                 new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout waiting for low quality stream')), Adaptive_Stream.hls_playlist_generation_timeout))
             ]);
@@ -200,123 +315,21 @@ class Adaptive_Stream {
             throw new Error('Failed to initialize low quality stream: ' + error.message);
         }
 
-        // console.log('Session directory contents:', fs.readdirSync(session_directory));
-        console.timeEnd('playlist ready');
+        // console.log(`Stream for video ID ${video_id} started successfully with target quality: ${target_quality}`);
+        // console.log(path.join(session_directory, `${Adaptive_Stream.profiles[Adaptive_Stream.profile_progression[0]].bitrate}.m3u8`), 'exists')
 
-        // Return only after low.m3u8 is guaranteed to exist
         return {
             success: true,
             playlist_url: `/hls/${session_id}/master.m3u8`,
             session_id: session_id,
-            qualities: [initial_quality, target_quality],
-            startup_mode: 'instant',
-            ready_quality: initial_quality
+            qualities: this.get_requested_profiles(target_quality),
+            startup_mode: fast_startup ? 'instant' : 'delayed',
+            origin: 'new'
         };
     }
 
-    async preload(url, start_time = 0, target_quality = 'medium', initial_quality = 'ultra-low', duration_seconds = 8) {
-        const session_id = Math.random().toString(36).substring(7);
-        const session_directory = path.join(Adaptive_Stream.hls_root, session_id);
-        
-        // Ensure directory exists synchronously for immediate use
-        if(!fs.ensureDirSync(session_directory)) throw new Error('Failed to create session directory');
-
-        // Start all parallel operations immediately - don't wait for yt-dlp
-        const [yt_dlp_process, master_playlist_path] = await Promise.all([
-            this.create_yt_dlp_process(url),
-            this.create_master_playlist(session_directory, initial_quality, target_quality) // Create master playlist immediately
-        ]);
-
-        // Create and start FFmpeg immediately after yt-dlp is ready
-        const ffmpeg_process = await this.create_dual_quality_preload_stream(
-            yt_dlp_process, 
-            start_time, 
-            initial_quality, 
-            target_quality, 
-            session_directory,
-            duration_seconds,
-            session_id
-        );
-
-        // Start FFmpeg process immediately
-        ffmpeg_process.run();
-
-        // Store session info immediately for cleanup
-        this.active_processes.set(session_id, {
-            ffmpeg: ffmpeg_process,
-            yt_dlp: yt_dlp_process,
-            url: url,
-            session_directory: session_directory,
-            target_quality: target_quality,
-            initial_quality: initial_quality,
-            start_time: Date.now(),
-            phase: 'preload'
-        });
-
-        // Wait for both the playlist and first segment to be ready
-        try {
-            await Promise.race([
-                Promise.all([
-                    this.wait_for_playlist(path.join(session_directory, 'low.m3u8')),
-                    this.wait_for_playlist(path.join(session_directory, 'high.m3u8')),
-                    this.wait_for_first_segment(session_directory, 'low')
-                ]),
-                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout waiting for low quality stream')), Adaptive_Stream.hls_playlist_generation_timeout))
-            ]);
-        } catch (error) {
-            console.error('Failed to wait for low quality stream:', error);
-            throw new Error('Failed to initialize low quality stream: ' + error.message);
-        }
-
-        this.remove_discontinuity_tags(session_directory);
-
-        // Return only after low.m3u8 is guaranteed to exist
-        console.log('preloaded session', session_id, 'with duration', duration_seconds, 'seconds');
-        return {
-            success: true,
-            playlist_url: `/hls/${session_id}/master.m3u8`,
-            session_id: session_id,
-            qualities: [initial_quality, target_quality],
-            startup_mode: 'preload',
-            ready_quality: initial_quality,
-            duration: duration_seconds,
-        };
-    }
-
-    async upgrade_preload(session_id) {
-        const session = this.active_processes.get(session_id);
-        if (!session) {
-            throw new Error('Session not found');
-        }
-        if (session.phase !== 'preload') {
-            throw new Error('Session is not in preload phase');
-        }
-        // Transition to active streaming phase
-        session.phase = 'upgrading';
-
-        const yt_dlp_process = await this.create_yt_dlp_process(session.url);
-        // this.reopen_playlists_for_continuation(session.session_directory);
-
-        // create new ffmpeg process that continues streaming from duration spot
-        const continuation_ffmpeg = await this.create_continuation_stream(
-            yt_dlp_process, 
-            0, // start_time is ignored in continuation
-            session.initial_quality, 
-            session.target_quality, 
-            session.session_directory,
-            session.duration || 8
-        );
-
-        // Start the continuation FFmpeg process
-        continuation_ffmpeg.run();
-
-        // Replace the old ffmpeg process with the new one for cleanup
-        session.ffmpeg = continuation_ffmpeg;
-        session.phase = 'upgraded';
-
-        console.log(`Upgraded session ${session_id} to active streaming phase`);
-
-        return { success: true, session_id: session_id, playlist_url: `/hls/${session_id}/master.m3u8`, phase: 'upgraded' };
+    async preload(video_id, target_quality = 'medium') {
+        return this.stream(video_id, target_quality, false); // Start streaming without fast startup
     }
 
     parse_duration(duration_str) {
@@ -331,305 +344,85 @@ class Adaptive_Stream {
         }
     }
 
-    async create_master_playlist(session_directory, initial_quality, target_quality) {
-        const initial_profile = Adaptive_Stream.profiles[initial_quality];
-        const target_profile = Adaptive_Stream.profiles[target_quality];
-        
-        const master_content = `#EXTM3U
-#EXT-X-VERSION:3
+    async create_master_playlist(session_directory, target_quality) {
+        const profiles = this.get_requested_profiles(target_quality);
+        if (profiles.length === 0) {
+            throw new Error('No valid profiles found for target quality: ' + target_quality);
+        }
 
-#EXT-X-STREAM-INF:BANDWIDTH=${parseInt(initial_profile.bitrate) * 1000},CODECS="mp4a.40.2"
-low.m3u8
-
-#EXT-X-STREAM-INF:BANDWIDTH=${parseInt(target_profile.bitrate) * 1000},CODECS="mp4a.40.2"
-high.m3u8`;
+        const master_lines = ['#EXTM3U', '#EXT-X-VERSION:3'];
+        for (const profile of profiles) {
+            const profile_data = Adaptive_Stream.profiles[profile];
+            if (!profile_data) {
+                console.warn(`Profile ${profile} not found, skipping`);
+                continue;
+            }
+            master_lines.push(`#EXT-X-STREAM-INF:BANDWIDTH=${profile_data.bandwidth},CODECS="${profile_data.codec}"`);
+            master_lines.push(`${profile_data.bitrate}.m3u8`);
+        }
 
         const master_path = path.join(session_directory, 'master.m3u8');
-        fs.writeFileSync(master_path, master_content);
+        fs.writeFileSync(master_path, master_lines.join('\n'));
+
         return master_path;
     }
 
-    async create_stream(yt_dlp_process, start_time = 0, quality = 'medium', session_directory, playlist_path) {
-        if(!yt_dlp_process) throw new Error('yt-dlp process is required to create a stream');
-
-        const profile = Adaptive_Stream.profiles[quality] || Adaptive_Stream.profiles['medium'];
-
-        const ffmpeg_process = ffmpeg(yt_dlp_process.stdout)
-            .audioCodec('aac')
-            .audioBitrate(profile.bitrate)
-            .audioChannels(profile.channels)
-            .audioFrequency(profile.sample_rate)
-            .format('hls')
-            .outputOptions([
-                '-hls_flags append_list',
-                '-hls_allow_cache 1',
-                '-hls_segment_type mpegts',
-                '-start_number 0',
-                '-avoid_negative_ts make_zero',      
-                '-fflags +genpts',                   
-                '-map_metadata -1',                  
-                '-reset_timestamps 1',               
-                '-copyts',                          
-                '-start_at_zero',                   
-                '-hls_time 1', // Shorter segments = faster first segment
-                '-hls_list_size 6', // Keep fewer segments in memory initially
-                '-preset ultrafast', // Faster encoding
-                '-tune zerolatency', // Optimize for low latency
-                '-hls_flags append_list',
-                '-hls_segment_filename', path.join(session_directory, 'stream%d.ts')
-            ])
-            .output(playlist_path);
-
-        ffmpeg_process
-            .on('start', () => {
-                console.log(`FFmpeg started for session ${session_directory}`);
-            })
-            .on('error', (err) => {
-                console.error('FFmpeg error:', err);
-                throw new Error('FFmpeg streaming error: ' + err.message);
-            })
-            .on('end', () => {
-                console.log(`FFmpeg ended for session ${session_directory}`);
-            });
-
-        return ffmpeg_process;
-    }
-
-    async create_dual_quality_stream(yt_dlp_process, start_time = 0, initial_quality = 'ultra-low', target_quality = 'medium', session_directory) {
-        const initial_profile = Adaptive_Stream.profiles[initial_quality];
-        const target_profile = Adaptive_Stream.profiles[target_quality];
-        
-        const ffmpeg_process = ffmpeg(yt_dlp_process.stdout)
-            .seekInput(start_time)
-            .complexFilter([
-                '[0:a]asplit=2[low][high]'
-            ])
-            // Low quality stream (for fast startup)
-            .output(path.join(session_directory, 'low.m3u8'))
-            .audioCodec('aac')
-            .audioBitrate(initial_profile.bitrate)
-            .audioChannels(initial_profile.channels)
-            .audioFrequency(initial_profile.sample_rate)
-            .format('hls')
-            .outputOptions([
-                '-map', '[low]',
-                '-hls_time', '1.0',                      
-                '-hls_list_size', '0',
-                '-hls_segment_type', 'mpegts',
-                '-start_number', '0',
-                '-avoid_negative_ts', 'make_zero',
-                '-fflags', '+genpts+flush_packets',      
-                '-map_metadata', '-1',
-                // '-reset_timestamps', '1',
-                // '-hls_allow_cache', '1',
-                '-preset', 'ultrafast',
-                '-tune', 'zerolatency',
-                // '-threads', '1',  // ✅ Use single thread for faster startup
-                '-hls_flags', 'append_list',
-                '-hls_segment_filename', path.join(session_directory, 'low%d.ts')
-            ])
-            
-            // High quality stream 
-            .output(path.join(session_directory, 'high.m3u8'))
-            .audioCodec('aac')
-            .audioBitrate(target_profile.bitrate)
-            .audioChannels(target_profile.channels)
-            .audioFrequency(target_profile.sample_rate)
-            .format('hls')
-            .outputOptions([
-                '-map', '[high]',
-                '-hls_time', '2.0',
-                '-hls_list_size', '0',
-                '-preset', 'fast',
-                '-avoid_negative_ts', 'make_zero',
-                '-fflags', '+genpts',
-                // '-reset_timestamps', '1',
-                '-hls_flags', 'append_list',
-                '-hls_segment_filename', path.join(session_directory, 'high%d.ts')
-            ]);
-            
-        return ffmpeg_process;
-    }
-
-    async create_dual_quality_preload_stream(yt_dlp_process, start_time = 0, initial_quality = 'ultra-low', target_quality = 'medium', session_directory, duration_seconds = 5, session_id) {
-        const initial_profile = Adaptive_Stream.profiles[initial_quality];
-        const target_profile = Adaptive_Stream.profiles[target_quality];
-        
-        const ffmpeg_process = ffmpeg(yt_dlp_process.stdout)
-            .seekInput(start_time)
-            .complexFilter(['[0:a]asplit=2[low][high]'])
-            
-            // Ultra-fast low quality stream for instant startup
-            .output(path.join(session_directory, 'low.m3u8'))
-            .duration(duration_seconds + 1) // +1 to ensure we get full segments
-            .audioCodec('aac')
-            .audioBitrate(initial_profile.bitrate)
-            .audioChannels(initial_profile.channels)
-            .audioFrequency(initial_profile.sample_rate)
-            .format('hls')
-            .outputOptions([
-                '-map', '[low]',
-                '-hls_time', '1',                      // Tiny segments
-                '-hls_list_size', '0',
-                '-hls_segment_type', 'mpegts',
-                '-start_number', '0',
-                '-avoid_negative_ts', 'make_zero',
-                '-fflags', '+genpts+flush_packets',
-                '-map_metadata', '-1',
-                // '-reset_timestamps', '1',
-                '-preset', 'ultrafast',
-                '-tune', 'zerolatency',
-                '-threads', '1',
-                '-hls_flags', 'append_list+omit_endlist', // Don't end the list yet
-                '-hls_segment_filename', path.join(session_directory, 'low%d.ts')
-            ])
-            
-            // High quality preload (also limited)
-            .output(path.join(session_directory, 'high.m3u8'))
-            .duration(duration_seconds)
-            .audioCodec('aac')
-            .audioBitrate(target_profile.bitrate)
-            .audioChannels(target_profile.channels)
-            .audioFrequency(target_profile.sample_rate)
-            .format('hls')
-            .outputOptions([
-                '-map', '[high]',
-                '-hls_time', '1',
-                '-hls_list_size', '0',
-                '-preset', 'fast',
-                '-avoid_negative_ts', 'make_zero',
-                '-fflags', '+genpts',
-                // '-reset_timestamps', '1',
-                '-hls_flags', 'append_list+omit_endlist', // Don't end the list yet
-                '-hls_segment_filename', path.join(session_directory, 'high%d.ts')
-            ]);
-            
-        // Monitor when preload is complete
-        ffmpeg_process.on('end', () => {
-            const session = this.active_processes.get(session_id);
-            if (session) {
-                session.preload_complete = true;
-                // this.reopen_playlists_for_continuation(session.session_directory);
-                console.log(`Preload complete for session ${session_id}`);
-            }
-        });
-            
-        return ffmpeg_process;
-    }
-
-    async remove_discontinuity_tags(session_directory) {
-        const playlists = ['low.m3u8', 'high.m3u8'];
-        const maxWaitTime = 10000; // 10 seconds
-        const checkInterval = 200; // Check every 200ms
-        
-        for (const playlist of playlists) {
-            const playlistPath = path.join(session_directory, playlist);
-            console.log(`Checking for discontinuity tags in: ${playlistPath}`);
-            
-            try {
-                // Wait for file to exist
-                const startTime = Date.now();
-                while (!fs.existsSync(playlistPath)) {
-                    const elapsed = Date.now() - startTime;
-                    if (elapsed >= maxWaitTime) {
-                        console.log(`⚠️ Timeout waiting for ${playlist} - skipping discontinuity removal`);
-                        continue; // Skip this playlist and try the next one
-                    }
-                    
-                    // Wait before checking again
-                    await new Promise(resolve => setTimeout(resolve, checkInterval));
-                }
-                
-                // File exists, now process it
-                let content = fs.readFileSync(playlistPath, 'utf8');
-                const originalContent = content;
-                
-                // Remove all discontinuity tags
-                content = content.replace(/#EXT-X-DISCONTINUITY\n/g, '');
-                content = content.replace(/#EXT-X-DISCONTINUITY/g, '');
-                
-                // Only write if content changed
-                if (content !== originalContent) {
-                    setTimeout(() => {fs.writeFileSync(playlistPath, content); },500); // Delay to ensure file is not being read
-                } else {
-                    console.warn(`ℹ️ No discontinuity tags found in: ${playlist}`);
-                }
-                
-            } catch (error) {
-                console.error(`Error processing ${playlist}:`, error.message);
-            }
+    async create_hls_stream(yt_dlp_process, session_directory, target_quality = 'medium', fast_startup = false, requested_profiles) {
+        const profiles = requested_profiles || this.get_requested_profiles(target_quality);
+        if (profiles.length === 0) {
+            throw new Error('No valid profiles found for target quality: ' + target_quality);
         }
-    }
-
-    async create_continuation_stream(yt_dlp_process, start_time = 0, initial_quality = 'ultra-low', target_quality = 'medium', session_directory, preload_duration = 5) {
-        if(!yt_dlp_process) throw new Error('yt-dlp process is required to create a continuation stream');
-
-        const initial_profile = Adaptive_Stream.profiles[initial_quality];
-        const target_profile = Adaptive_Stream.profiles[target_quality];
         
-        // Calculate next segment numbers by reading existing segments
-        const files = fs.readdirSync(session_directory);
-        const lowSegments = files.filter(f => f.startsWith('low') && f.endsWith('.ts'))
-            .map(f => parseInt(f.match(/\d+/)?.[0] || '0'))
-            .filter(n => !isNaN(n));
-        const highSegments = files.filter(f => f.startsWith('high') && f.endsWith('.ts'))
-            .map(f => parseInt(f.match(/\d+/)?.[0] || '0'))
-            .filter(n => !isNaN(n));
-        
-        const nextLowSegment = lowSegments.length > 0 ? Math.max(...lowSegments) + 1 : 0;
-        const nextHighSegment = highSegments.length > 0 ? Math.max(...highSegments) + 1 : 0;
-        
-        console.log(`Continuing from segment numbers: low=${nextLowSegment}, high=${nextHighSegment}`);
-        
-        const ffmpeg_process = ffmpeg(yt_dlp_process.stdout)
-            .seekInput(preload_duration) // ✅ Seek to where preload ended
-            .complexFilter(['[0:a]asplit=2[low][high]'])
-            
-            // Continue low quality stream
-            .output(path.join(session_directory, 'low.m3u8'))
-            .audioCodec('aac')
-            .audioBitrate(initial_profile.bitrate)
-            .audioChannels(initial_profile.channels)
-            .audioFrequency(initial_profile.sample_rate)
-            .format('hls')
-            .outputOptions([
-                '-map', '[low]',
-                '-hls_time', '0.5',
-                '-hls_list_size', '0',
-                '-hls_segment_type', 'mpegts',
-                // '-start_number', nextLowSegment.toString(), // ✅ Continue numbering
-                '-avoid_negative_ts', 'make_zero',
-                '-fflags', '+genpts+flush_packets',
-                '-map_metadata', '-1',
-                '-reset_timestamps', '1',
-                '-preset', 'ultrafast',
-                '-tune', 'zerolatency',
-                '-threads', '1',
-                '-hls_flags', 'append_list', // ✅ Append to existing playlist
-                '-hls_segment_filename', path.join(session_directory, 'low%d.ts')
-            ])
-            
-            // Continue high quality stream
-            .output(path.join(session_directory, 'high.m3u8'))
-            .audioCodec('aac')
-            .audioBitrate(target_profile.bitrate)
-            .audioChannels(target_profile.channels)
-            .audioFrequency(target_profile.sample_rate)
-            .format('hls')
-            .outputOptions([
-                '-map', '[high]',
-                '-hls_time', '1',
-                '-hls_list_size', '0',
-                // '-start_number', nextHighSegment.toString(), // ✅ Continue numbering
-                '-preset', 'fast',
-                '-avoid_negative_ts', 'make_zero',
-                '-fflags', '+genpts',
-                '-reset_timestamps', '1',
-                '-hls_flags', 'append_list', // ✅ Append to existing playlist
-                '-hls_segment_filename', path.join(session_directory, 'high%d.ts')
+        const ffmpeg_process = ffmpeg(yt_dlp_process.stdout);
+        if (profiles.length > 1) {
+            // split audio into multiple quality streams
+            const split_outputs = profiles.map((profile) => `[${Adaptive_Stream.profiles[profile].bitrate}]`).join('');
+            ffmpeg_process.complexFilter([
+                `[0:a]asplit=${profiles.length}${split_outputs}`
             ]);
+        }
+
+        for(const profile of profiles) {
+            const profile_data = Adaptive_Stream.profiles[profile];
+            if (!profile_data) {
+                console.warn(`Profile ${profile} not found, skipping`);
+                continue;
+            }
+
+            ffmpeg_process
+                .output(path.join(session_directory, `${profile_data.bitrate}.m3u8`))
+                .audioCodec('aac')
+                .audioBitrate(profile_data.bitrate)
+                .audioChannels(profile_data.channels)
+                .audioFrequency(profile_data.sample_rate)
+                .format('hls')
+                .outputOptions([
+                     '-map', profiles.length > 1 ? `[${profile_data.bitrate}]` : '0:a',
+                    '-hls_time', profile_data.hls_time || '2.0',
+                    '-hls_list_size', '0',
+                    // '-hls_segment_type', 'mpegts',
+                    // '-start_number', '0',
+                    // '-avoid_negative_ts', 'make_zero',
+                    // '-fflags', '+genpts',
+                    '-map_metadata', '-1',
+                    '-preset', this.get_ffmpeg_tune(fast_startup, profile),
+                    '-tune', this.get_ffmpeg_tune(fast_startup, profile),
+                    // '-hls_flags', 'delete_segments',
+                    '-hls_segment_filename', path.join(session_directory, `${profile_data.bitrate}_%d.ts`)
+                ]);
+        }
             
         return ffmpeg_process;
+    }
+
+    get_ffmpeg_tune(fast_startup, profile = 'ultra-low') {
+        if(fast_startup) return 'zerolatency';
+        return 'fastdecode'; // Default for other profiles
+    }
+
+    get_ffmpeg_tune(fast_startup, profile = 'ultra-low') {
+        if(fast_startup) return 'ultrafast';
+        return Adaptive_Stream.profiles[profile].hls_preset || 'fast';
     }
 
     async create_yt_dlp_process(url) {
@@ -653,30 +446,6 @@ high.m3u8`;
         });
         
         return process;
-    }
-
-    wait_for_minimal_playlist(playlist_path) {
-        return new Promise((resolve, reject) => {
-            const timeout = setTimeout(() => reject(new Error('Timeout')), 2000); // Only 2 second max
-            
-            const check = () => {
-                if (fs.existsSync(playlist_path)) {
-                    try {
-                        const content = fs.readFileSync(playlist_path, 'utf8');
-                        // Just check if it has basic M3U structure - don't wait for segments
-                        if (content.includes('#EXTM3U') && content.length > 50) {
-                            clearTimeout(timeout);
-                            resolve();
-                            return;
-                        }
-                    } catch (e) {
-                        // File exists but not readable yet
-                    }
-                }
-                setTimeout(check, 50); // Check every 50ms instead of 200ms
-            };
-            check();
-        });
     }
 
     wait_for_playlist(playlist_path) {
@@ -710,7 +479,7 @@ high.m3u8`;
             const timeout = setTimeout(() => reject(new Error('Timeout waiting for first segment')), Adaptive_Stream.hls_playlist_segment_wait_timeout);
             
             const check = () => {
-                const segment_path = path.join(session_directory, `${quality}0.ts`);
+                const segment_path = path.join(session_directory, `${quality}_0.ts`);
                 if (fs.existsSync(segment_path)) {
                     clearTimeout(timeout);
                     resolve();
@@ -722,22 +491,22 @@ high.m3u8`;
         });
     }
 
-    async seek(session_id, time) {
-        // to implement
-        const session = this.active_processes.get(session_id);
-        if (!session) {
-            throw new Error('Session not found');
-        }
+    // async seek(session_id, time) {
+    //     // to implement
+    //     const session = this.active_processes.get(session_id);
+    //     if (!session) {
+    //         throw new Error('Session not found');
+    //     }
 
-        this.clean(session_id); // Clean up the session before seeking
+    //     this.clean(session_id); // Clean up the session before seeking
 
-        this.stream(session.url, time, session.quality);
-        return {
-            success: true,
-            playlist_url: `/hls/${session_id}/stream.m3u8`,
-            session_id: session_id
-        };
-    }
+    //     this.stream(session.url, time, session.quality);
+    //     return {
+    //         success: true,
+    //         playlist_url: `/hls/${session_id}/stream.m3u8`,
+    //         session_id: session_id
+    //     };
+    // }
 
     health() {
         const sessions = fs.readdirSync(Adaptive_Stream.hls_root).filter(dir => 

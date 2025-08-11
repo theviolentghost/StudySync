@@ -15,7 +15,7 @@ import { HotActionService } from '../../hot.action.service';
 export class SearchComponent implements AfterViewInit {
     @ViewChild('searchInput', { static: false }) searchInput!: ElementRef<HTMLInputElement>;
 
-    search_source: Song_Source = 'youtube'
+    search_source: Song_Source = 'spotify'; // default search source
     search_query: string = '';
     searched: boolean = false; // whether the user has performed a search
     search_history: string[] = []; //list of previous queries

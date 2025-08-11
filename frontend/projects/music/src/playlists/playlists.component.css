@@ -16,13 +16,13 @@
     height: var(--space-8);
     display: flex;
     flex-direction: row;
-    align-items: center;
+    align-items: flex-start;
     justify-content: flex-end;
     gap: var(--space-4);
     padding: var(--space-3);
     background-color: var(--color-background);
     z-index: 10;
-    border-radius: 0 0 var(--space-4) var(--space-4);
+    /* border-radius: 0 0 var(--space-4) var(--space-4); */
     box-shadow: 0 0 10px 10px var(--color-background-200);
 }
 .actions {
@@ -118,6 +118,10 @@
     position: relative;
     border-radius: var(--space-2);
     margin-left: 8px;
+}
+.playlist .thumbnail.single {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
 }
 .playlist .thumbnail::after {
     content: '';

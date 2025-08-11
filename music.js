@@ -97,9 +97,21 @@ const spotify_api = new SpotifyWebApi({
   clientSecret: process.env.SPOTIFY_CLIENT_SECRET
 });
 
-const creds = await spotify_api.clientCredentialsGrant();
-// console.log('Spotify access token:', creds.body.access_token);
-spotify_api.setAccessToken(creds.body.access_token);
+async function setup_spotify_auth(retry_depth = 0) {
+    if( retry_depth > 3) return console.error('Failed to set up Spotify authentication after 3 attempts');
+    try {
+        const creds = await spotify_api.clientCredentialsGrant();
+        spotify_api.setAccessToken(creds.body.access_token);
+    } catch (error) {
+        console.error('Error setting up Spotify authentication');
+        await setup_spotify_auth(retry_depth + 1);
+    }
+}
+setup_spotify_auth();
+setTimeout(() => {
+    setup_spotify_auth();
+    console.log("Spotify authentication setup complete");
+}, 20 * 60 * 1000); 
 
 async function get_audio_file(audio_path = '') {
     try {

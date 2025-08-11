@@ -33,7 +33,7 @@ export class HotActionComponent {
     }
     get title(): string {
         switch (this.action) {
-            case 'add_to_playlist': return 'Add to Playlist';
+            case 'add_to_playlist': return '';
             case 'create_playlist': return 'Create Playlist';
             case 'import_playlist': return 'Import';
             default: return 'Hot Action';
@@ -128,7 +128,7 @@ export class HotActionComponent {
             },
             action: () => {
                 if(!this.song_data) return;
-                this.media.download_audio(this.media.song_key(this.song_data.id), { quality: DownloadQuality.Q0, bit_rate: '128K' });
+                this.media.request_download(this.media.song_key(this.song_data.id), { quality: DownloadQuality.Q0, bit_rate: '128K' });
             },
             is_selectable: () => !!this.song_data && !this.is_downloaded
         },

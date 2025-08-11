@@ -1,7 +1,7 @@
 <div class="backdrop" [style.--primary]="get_playlist_primary_color()"></div>
 <button class="close" (click)="close()" [style.--mask]="'url(\'chevron-left.svg\')'" [style.--primary]="get_playlist_primary_color()"></button>
 <div class="header">
-    <div class="cover">
+    <div class="cover" [ngClass]="{'single': playlist_identifier?.images.length === 1}" [style.--primary]="get_playlist_primary_color()">
         <img *ngFor="let image of playlist_identifier?.images" [src]="image" alt="" />
     </div>
     <h1 class="label">{{playlist_identifier?.name || playlist?.name || '#Playlist Name'}}</h1>
@@ -13,6 +13,13 @@
         <button class="action" (click)="change_color()" [style.--color]="get_playlist_primary_color()" [style.--mask]="'url(\'palette.svg\')'"></button>
         <button class="action" [style.--color]="get_playlist_primary_color()" [style.--mask]="'url(\'share.svg\')'"></button>
         <button class="action" [style.--color]="get_playlist_primary_color()" [style.--mask]="'url(\'edit.svg\')'"></button>
+        <div class="action-wrapper" (click)="request_download_playlist()">
+            <button class="action" [style.--color]="get_playlist_primary_color()" 
+                [style.--mask]="'url(\'' + get_playlist_download_icon() + '\')'"
+                [ngClass]="{'loading': how_many_songs_in_playlist_download_queue() > 0}"
+            ></button>
+            <div *ngIf="how_many_songs_in_playlist_download_queue() > 0" class="download-count" [style.--color]="get_playlist_primary_color()">{{ how_many_songs_in_playlist_download_queue() }}</div>
+        </div>
     </div>
     <button class="shuffle-play" (click)="shuffle_play()" [style.--primary]="get_playlist_primary_color()">
         <div class="icon" [style.--mask]="'url(\'arrows-shuffle.svg\')'"></div>
@@ -24,15 +31,16 @@
         class="result video disable-select" 
         [ngClass]="{selected: get_bare_song_key(current_song_identifier) === get_bare_song_key(video?.id)}" 
         *ngFor="let video of visible_videos" 
-        (touchstart)="video_on_swipe_start($event, video)"
-        (touchmove)="video_on_swipe_move($event)"
-        (touchend)="video_on_swipe_end($event)"
-        (mousedown)="video_on_swipe_start($event, video)"
-        (mousemove)="video_on_swipe_move($event)"
-        (mouseup)="video_on_swipe_end($event)"
-        (mouseleave)="video_on_swipe_end($event)"
-        [attr.data-video-key]="video_key(video)"
-        [style.transform]="swiping_video === video_key(video) ? 'translateX(' + swipe_x + 'px)' : ''"
+            (touchstart)="video_on_swipe_start($event, video)"
+            (touchmove)="video_on_swipe_move($event)"
+            (touchend)="video_on_swipe_end($event)"
+            (mousedown)="video_on_swipe_start($event, video)"
+            (mousemove)="video_on_swipe_move($event)"
+            (mouseup)="video_on_swipe_end($event)"
+            (mouseleave)="video_on_swipe_end($event)"
+            [attr.data-video-key]="video_key(video)"
+            [style.transform]="swiping_video === video_key(video) ? 'translateX(' + swipe_x + 'px)' : ''"
+            [style.border-bottom]="is_downloading(video?.id?.video_id || '') ? 'solid 1px transparent' : null"
     >
     <!-- (click)="play(video)" -->
         <div class="thumbnail" [style.background-color]="video?.colors?.primary || '#1a1c1b'">
@@ -49,12 +57,13 @@
             <div class="downloaded" *ngIf="video?.downloaded && video?.download_audio_blob" [style.--mask]="'url(' + 'cloud-download.svg' + ')'"></div>
         </div>
         <div class="download" *ngIf="is_downloading(video?.id?.video_id || '')">
-            <div class="progress" [style.width.%]="video_progress(video?.id?.video_id || '')"></div>
+            <div class="progress" [style.--color]="get_playlist_primary_color()"  [style.width.%]="video_progress(video?.id?.video_id || '') || is_in_download_queue(video?.id?.video_id || '')" [ngClass]="{'loading': is_in_download_queue(video?.id?.video_id || '')}"></div>
         </div>
         <div class="quick-actions" [style.width.px]="swiping_video === video_key(video) ? swipe_width : 0">
-            <button [ngClass]="{hidden: swipe_x < -delete_swipe_open_size}" [style.background-color]="'var(--color-neutral)'" class="action" [style.--mask]="'url(' + 'dots.svg' + ')'"></button>
-            <button [ngClass]="{hidden: swipe_x < -delete_swipe_open_size}" [style.background-color]="'var(--color-primary)'" class="action" [style.--mask]="'url(' + 'heart-fill.svg' + ')'"></button>
-            <button [style.background-color]="'var(--color-denied)'" class="action" [style.--mask]="'url(' + 'trash.svg' + ')'"></button>
+            <button [ngClass]="{hidden: swipe_x < -delete_swipe_open_size}" (click)="open_video_options(video); $event.preventDefault(); $event.stopPropagation();" [style.background-color]="'var(--color-neutral)'" class="action" [style.--mask]="'url(' + 'dots.svg' + ')'"></button>
+            <button [ngClass]="{hidden: swipe_x < -delete_swipe_open_size}" (click)="toggle_like(video); $event.preventDefault(); $event.stopPropagation();" [style.background-color]="'var(--color-primary)'" class="action" [style.--mask]="'url(' + 'heart-fill.svg' + ')'"></button>
+            <button [ngClass]="{hidden: swipe_x < -delete_swipe_open_size}" (click)="download_video(video); $event.preventDefault(); $event.stopPropagation();" [style.background-color]="get_playlist_primary_color()" class="action" [style.--mask]="'url(' + 'download.svg' + ')'" [style.filter]="'brightness: 0.9;'"></button>
+            <button [ngClass]="{hidden: swipe_x > -delete_swipe_open_size}" [style.background-color]="'var(--color-deny)'" class="action" [style.--mask]="'url(' + 'trash.svg' + ')'"></button>
         </div>
         <!-- <button class="hot-action" [style.mask-image]="'url(\'plus.svg\')'"></button> -->
     </button>

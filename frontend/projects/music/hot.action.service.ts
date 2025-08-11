@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { ViewChild } from '@angular/core';
 
 import { HotActionComponent } from './src/hot.action/hot.action.component';
-import { MusicMediaService, Song_Source, Song_Data, Song_Identifier } from './music.media.service';
+import { MusicMediaService, Song_Source, Song_Data, Song_Identifier, Song_Playlist_Identifier } from './music.media.service';
 
 @Injectable({
   providedIn: 'root'

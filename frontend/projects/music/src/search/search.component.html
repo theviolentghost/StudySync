@@ -37,7 +37,7 @@
                 </div>
                 <!-- Videos -->
                 <ng-container *ngIf="(search_results?.videos?.total || 0) > 0; else noResults">
-                    <div class="search-results-videos">
+                    <div class="search-results-videos hide-scrollbar">
                         <button (click)="youtube_play(video)" class="search-result video disable-select" *ngFor="let video of search_results?.videos?.results" [ngClass]="{saved: is_song_in_collection(video, 'youtube'), selected: get_bare_song_key(current_song_identifier) === get_bare_song_key(get_video_identifier(video, 'youtube'))}" >
                             <div class="thumbnail">
                                 <img [src]="video.snippet.thumbnails.default.url" alt="" />
@@ -61,7 +61,7 @@
                 <div *ngIf="(search_results?.artists?.total || 0) > 0" class="search-results-artists">
                     <div class="search-result artist disable-select" *ngFor="let artist of artist_results">
                         <div class="thumbnail">
-                            <img [src]="artist.images?.[0]?.url || 'default-artist.svg'" alt="" />
+                            <img [src]="artist.images?.[0]?.url || 'users.svg'" alt="" />
                         </div>
                         <a class="name">{{ artist.name }}</a>
                     </div>
@@ -80,10 +80,10 @@
                 </div> -->
                 <!-- Tracks -->
                  
-                <div *ngIf="(search_results?.tracks?.total || 0) > 0" class="search-results-videos">
+                <div *ngIf="(search_results?.tracks?.total || 0) > 0" class="search-results-videos hide-scrollbar">
                     <button (click)="spotify_play(track)" class="search-result video disable-select" *ngFor="let track of search_results?.tracks?.items" [ngClass]="{saved: is_song_in_collection(track, 'spotify'), selected: get_bare_song_key(current_song_identifier) === get_bare_song_key(get_video_identifier(track, 'spotify'))}">
                         <div class="thumbnail">
-                            <img [src]="track.album?.images?.[2]?.url || 'default-track.svg'" alt="" />
+                            <img [src]="track.album?.images?.[2]?.url || 'music.svg'" alt="" />
                             <!-- 0-2 (0 highest quality, 2 lowest) -->
                             <div class="duration">{{ ms_to_time(track.duration_ms) }}</div>
                         </div>
@@ -97,8 +97,8 @@
                                 <div class="liked" *ngIf="get_song_data_in_collection(track, 'spotify')?.liked" [style.--mask]="'url(' + 'heart-fill.svg' + ')'"></div>
                                 <div class="downloaded" *ngIf="get_song_data_in_collection(track, 'spotify')?.downloaded" [style.--mask]="'url(' + 'cloud-download.svg' + ')'"></div>
                             </div> -->
-                            <button class="hot-action" [style.--mask]="'url(\'plus.svg\')'" (click)="open_hot_action(track, 'spotify'); $event.stopPropagation();">
-                                <div *ngIf="is_song_in_collection(track, 'spotify')" class="saved-indicator" [style.--mask]="'url(\'check.svg\')'"></div>
+                            <button class="hot-action" [style.--mask]="'url(\'' + (is_song_in_collection(track, 'spotify') ? 'check.svg' : 'plus.svg') + '\')'" (click)="open_hot_action(track, 'spotify'); $event.stopPropagation();">
+                                <!-- <div *ngIf="is_song_in_collection(track, 'spotify')" class="saved-indicator" [style.--mask]="'url(\'check.svg\')'"></div> -->
                             </button>
                         </div>
                     </button>

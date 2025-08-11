@@ -10,16 +10,17 @@
 .search-container {
     position: relative;
     width: calc(100% - 2 * var(--space-5));
-    max-width: 500px;
-    padding: var(--space-2);
+    max-width: 590px;
+    padding: var(--space-1);
     display: flex;
     flex-direction: row;
     justify-content: center;
     align-items: center;
-    background-color: var(--color-background-200);
+    background-color: var(--color-background);
     border-radius: 99999px;
     margin: var(--space-5);
     gap: var(--space-0);
+    box-shadow: 0 0 10px 10px var(--color-background);
 }
 
 .search-container input {
@@ -81,7 +82,7 @@
     left: 60%;
     width: 40%;
     height: 40%;
-    background-color: var(--color-background-200);
+    background-color: var(--color-background);
     overflow: visible;
     border-top-left-radius: var(--space-1);
 }
@@ -192,6 +193,7 @@
 .search-results-artists {
     position: relative;
     width: 100%;
+    margin: 20px;
     height: var(--space-9);
     flex-shrink: 0;
     display: flex;
@@ -200,6 +202,8 @@
     padding: var(--space-2);
     align-items: center;
     gap: var(--space-4);
+    background-color: var(--color-background);
+    box-shadow: 0 0 10px 10px var(--color-background);
 }
 .search-results-main {
     width: 100%;
@@ -207,6 +211,7 @@
     flex-direction: column;
     overflow-y: auto;
     align-items: center;
+    padding: 20px;
 }
 .search-results-videos {
     /* width: 100%; */
@@ -219,7 +224,7 @@
     display: flex;
     background-color: var(--color-background);
     box-shadow: 0 0 10px 10px var(--color-background);
-    padding: var(--space-2) var(--space-1);
+    padding: 0 var(--space-1);
 }
 
 .search-result {
@@ -236,7 +241,7 @@
 .search-result.video {
     flex-direction: row;
     padding: var(--space-2) 0;
-    border-bottom: solid 1px var(--color-background-400);
+    border-bottom: solid 1px var(--color-background-200);
     width: 100%;
     aspect-ratio: 16 / 9;
     max-height: var(--space-8);

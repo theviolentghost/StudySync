@@ -27,21 +27,27 @@
     justify-content: center;
     gap: var(--space-4);
     background-color: var(--color-background-100);
+    box-shadow: 0 10px 10px 10px var(--color-background-100);
 }
 .header .close {
-    color: var(--color-primary);
+    color: var(--color-background);
     position: absolute;
     left: var(--space-2);
     top: 50%;
-    transform: translateY(-50%);
-    background-color: transparent;
-    font-size: var(--space-4);
-    font-weight: 500;
+    transform: translateY(-25%);
+    background-color: var(--color-primary);
+    border-radius: 999px;
+    padding: var(--space-1) var(--space-3);
+    font-size: var(--space-3);
+    font-weight: 700;
     cursor: pointer;
-    transition: filter 0.15s ease-in-out;
+    transition: filter .15s ease-in-out;
+}
+.header .close:hover {
+    filter: brightness(0.8);
 }
 .header .close:active {
-    filter: brightness(0.8);
+    filter: brightness(0.7);
 }
 .header .title {
     font-weight: 500;
@@ -87,6 +93,7 @@
     justify-content: center;
     gap: var(--space-4);
     background-color: var(--color-background-100);
+    box-shadow: 0 0 10px 10px var(--color-background);
 }
 .finish-container.hide {
     display: none;
@@ -388,4 +395,245 @@
     mask-image: var(--mask);
     background-color: var(--color-text);
     opacity: 0.4;
+}
+.download-confirmation {
+    position: relative;
+    width: 80%;
+    padding: var(--space-4);
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-5);
+    text-align: center;
+}
+.download-confirmation strong {
+    font-size: calc(var(--font-size-base) * 1.3);
+    font-weight: 600;
+}
+.download-confirmation .confirmation {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-3);
+    font-size: calc(var(--font-size-base) * 1.1);
+    font-weight: 300;
+}
+.download-confirmation .selection {
+    position: relative;
+    font-weight: 500;
+    color: var(--color-text);
+    padding: var(--space-4) var(--space-0);
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+}
+.download-confirmation .selection .select {
+    font-weight: 600;
+    padding: var(--space-1) var(--space-2);
+    border-radius: 9999px;
+    color: var(--color-background);
+    cursor: pointer;
+    scale: 1.2;
+}
+.download-confirmation .selection .deny {
+    background-color: var(--color-deny);
+}
+.download-confirmation .selection .confirm {
+    background-color: var(--color-primary);
+}
+.preview {
+    position: relative;
+    width: calc(100% - 4px);
+    margin: 0 0 20px 0;
+    aspect-ratio: 32 / 9;
+    max-height: calc(var(--space-8) + var(--space-5));
+    max-width: 550px;
+    background-color: var(--color-background-200);
+    overflow: hidden;
+    display: flex;
+    flex-shrink: 0;
+    color: var(--color-text);
+    align-items: center;
+    gap: var(--space-2);
+    border-radius: var(--space-2);
+}
+.preview {
+    padding: var(--space-2);
+}
+.preview .thumbnail {
+    position: relative;
+    height: 100%;
+    scale: .9;
+    aspect-ratio: 16 / 9;
+    flex-shrink: 0;
+    background-color: var(--color-background);
+    border-radius: var(--space-1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+/* .action.playlist .thumbnail::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--background);
+    box-shadow: 0 0 8px 2px var(--background);
+    opacity: 0.5;
+    border-radius: inherit;
+    z-index: -1;
+}
+.action .thumbnail {
+    scale: .8;
+    aspect-ratio: 1 / 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    height: 80%;
+    aspect-ratio: 1 / 1;
+    position: relative;
+} */
+.preview .thumbnail img {
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+.preview .info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 100%;
+    gap: var(--space-1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-align: left;
+}
+.preview .info .title {
+    font-size: calc(1.2 * var(--font-size-base));
+    font-weight: 500;
+    color: var(--color-text);
+    display: -webkit-box;           /* REQUIRED */
+    line-clamp: 2;
+    -webkit-line-clamp: 2;          /* REQUIRED */
+    -webkit-box-orient: vertical;   /* REQUIRED */
+    overflow: hidden;               /* REQUIRED */
+    text-overflow: ellipsis;
+    white-space: normal;
+}
+.preview .info .artist {
+    font-size: calc(var(--font-size-base) * .8);
+    color: var(--color-neutral);
+    text-overflow: ellipsis;
+}
+
+/* Drag and Drop Styles */
+.drop-list {
+    height: max(50px, fit-content);
+    width: 100%;
+    transition: background-color 0.2s ease-in-out;
+}
+
+/* .drop-list.cdk-drop-list-receiving {
+    background-color: var(--color-background-300);
+    border-radius: var(--space-2);
+} */
+
+.result.video.cdk-drag {
+    transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+    /* cursor: grab; */
+}
+
+.result.video.cdk-drag-dragging {
+    transform: rotate(5deg);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    opacity: 0.9;
+    cursor: grabbing;
+}
+
+.result.video.cdk-drag-placeholder {
+    opacity: 0.3;
+    background-color: var(--color-background-300);
+    border: 2px dashed var(--color-primary);
+    min-height: 80px;
+}
+
+.result.video.cdk-drag-animating {
+    transition: transform 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.moveable {
+    opacity: 0.6;
+    transition: opacity 0.2s ease-in-out;
+    cursor: grab;
+}
+
+.result.video:hover .moveable {
+    opacity: 1;
+}
+
+.result.video.cdk-drag-dragging .moveable {
+    cursor: grabbing;
+}
+
+/* Enhanced visual feedback for drag handle */
+.moveable:hover {
+    opacity: 1;
+    filter: brightness(1.2);
+}
+
+/* Drop zone indicator */
+.drop-list.cdk-drop-list-receiving::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+/* Disable pointer events on children while dragging */
+.result.video.cdk-drag-dragging * {
+    pointer-events: none;
+}
+
+/* Improve touch experience */
+@media (hover: none) and (pointer: coarse) {
+    .moveable {
+        opacity: 1;
+    }
+    
+    .result.video.cdk-drag {
+        cursor: default;
+    }
+    
+    .result.video.cdk-drag-dragging {
+        cursor: default;
+    }
+}
+.backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 90%;
+    flex-shrink: 0;
+    background: linear-gradient(180deg, var(--primary), transparent);
+    opacity: .35;
+    z-index: -1;
 }

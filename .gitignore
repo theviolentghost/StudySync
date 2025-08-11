@@ -37,3 +37,4 @@ tools/
 *.rest
 .gitignore
 **/__pycache__/*
+test.py

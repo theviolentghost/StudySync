@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 
 import { MusicPlayerService } from '../../music.player.service';
-import { MusicMediaService, Song_Source } from '../../music.media.service';
+import { DownloadQuality, MusicMediaService, Song_Source } from '../../music.media.service';
 import { PlaylistsService } from '../../playlists.service';
 import { Song_Data, Song_Identifier } from '../../music.media.service';
 import { QuickActionService } from '../../quick.action.service';
@@ -20,6 +20,7 @@ export class PlaylistComponent {
     videos: (Song_Data | null)[] = [];
     loaded_videos: Map<number, Song_Data | null> = new Map();
     
+    
     // Virtual scrolling properties
     significant_change_size = 5; // how many elements you have to scroll past before loading new ones
     visible_start_index = 0;
@@ -34,8 +35,9 @@ export class PlaylistComponent {
     swipe_start_x: number = 0;
     swipe_delta_x: number = 0;
     swipe_x: number = 0;
-    idle_swipe_open_size: number = 120; 
-    delete_swipe_open_size: number = 150; // distance to travel before deleting
+    idle_swipe_open_size: number = 160; 
+    delete_swipe_open_size: number = 245; // distance to travel before deleting
+    dont_play: boolean = false; 
     get swipe_width(): number {
         return Math.abs(this.swipe_x);
     }
@@ -220,6 +222,7 @@ export class PlaylistComponent {
         // Reset gesture state
         this.is_gesture_active = false;
         this.gesture_type = 'none';
+        this.dont_play = false; 
 
         event.stopPropagation();
     }
@@ -337,6 +340,9 @@ export class PlaylistComponent {
     video_progress(video_id: string): number {
         return this.media.download_progress(video_id); // return the current download progress
     }
+    is_in_download_queue(video_id: string): boolean {
+        return this.media.is_in_download_queue(video_id); 
+    }
 
     constructor(
         private playlists: PlaylistsService,
@@ -442,6 +448,7 @@ export class PlaylistComponent {
 
     async play(track_data: Song_Data | null) {
         if (!track_data) return;
+        if(this.dont_play) return;
         console.log('Playing track:', track_data);
         
         this.player.open_player.emit();
@@ -547,5 +554,42 @@ export class PlaylistComponent {
         
         // Optionally, you can show a confirmation or feedback message
         console.log(`Video ${video.song_name} removed from playlist.`);
+    }
+
+    get_playlist_download_icon(): string {
+        if (this.media.is_song_in_playlist_download_queue(this.playlists.selected_playlist_identifier)) {
+            return 'loader.svg'; 
+        }
+
+        return 'download.svg'; 
+    }
+
+    how_many_songs_in_playlist_download_queue(): number {
+        return this.media.how_many_songs_in_playlist_download_queue(this.playlists.selected_playlist_identifier);
+    }
+
+    request_download_playlist(): void {
+        this.quick_action.quick_action_open = true;
+        this.quick_action.action = 'download_playlist';
+    }
+
+    open_video_options(video: Song_Data | null): void {
+        if (!video) return;
+        this.dont_play = true;
+        
+    }
+
+    toggle_like(video: Song_Data | null): void {
+        if (!video) return;
+        this.dont_play = true;
+        
+        // this.media.toggle_like(video);
+    }
+
+    download_video(video: Song_Data | null): void {
+        if (!video) return;
+        this.dont_play = true;
+        
+        this.media.request_download(this.media.song_key(video.id), {quality: DownloadQuality.Q0, bit_rate: '128k'});
     }
 }

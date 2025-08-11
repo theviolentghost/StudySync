@@ -21,6 +21,7 @@
 }
 .container.hidden {
     height: 0px;
+    overflow: hidden;
 }
 .media-header {
     position: relative;
@@ -93,17 +94,26 @@
     mask-size: contain;
     mask-repeat: no-repeat;
 }
-.queue {
+.queue-container {
     position: absolute;
-    right: var(--space-3);
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 var(--space-2);
+    height: 100%;
+    width: var(--space-8);
+    cursor: pointer;
+}
+.queue {
+    position: relative;
     background-color: var(--color-primary);
-    width: var(--space-4);
-    height: var(--space-4);
+    width: var(--space-5);
+    height: var(--space-5);
     mask-position: center;
     mask-size: contain;
     mask-repeat: no-repeat;
     border-radius: 50%;
-    cursor: pointer;
 }
 .player-status {
     --mask: url('/plus.svg');
@@ -185,6 +195,17 @@
     height: 100%;
     padding-top: var(--space-2);
 }
+.duration {
+    width: 100%;
+    padding: var(--space-2);
+    display: flex;
+    justify-content: space-between;
+}
+.duration .time {
+    font-size: var(--space-3);
+    font-weight: 600;
+    color: var(--color-neutral);
+}
 .metadata {
     align-self: flex-start;
     width: calc(100% - 2 * var(--space-5));
@@ -196,7 +217,7 @@
     align-items: flex-start;
     justify-content: center;
     width: 100%;
-    padding: var(--space-2);
+    padding: 0 var(--space-2);
     gap: var(--space-1);
 }
 .info .title {
@@ -388,6 +409,19 @@
     top: 0;
     left: 0;
     background-color: var(--color-background-950);
+}
+.controls .control-button .indicator {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    width: var(--space-1);
+    height: var(--space-1);
+    transform: translateX(-50%);
+    border-radius: 50%;
+    background-color: var(--color-neutral);
+}
+.controls .control-button.active .indicator {
+    background-color: var(--color-primary);
 }
 .modifiers {
     width: 35%;

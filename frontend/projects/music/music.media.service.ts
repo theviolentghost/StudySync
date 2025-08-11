@@ -128,7 +128,7 @@ export class MusicMediaService {
     private all_songs_cache: Set<string> = new Set(); // song key
     private all_songs_cache_initialized: boolean = false;
 
-    private _preload_duration: number = 8; // seconds (3-20)
+    private _preload_duration: number = 15; // seconds (3-20)
 
     async initialize_all_songs_cache(playlist_identifiers: Song_Playlist_Identifier[]): Promise<void> {
         if (this.all_songs_cache_initialized) return;
@@ -274,17 +274,77 @@ export class MusicMediaService {
         }
         return this.download_progress_map.get(video_id) || 0; // Return the progress percentage
     }
-    private download_progress_map: Map<string, number> = new Map(); // video_id -> progress percentage
-    public is_downloading(video_id: string): boolean {
-        return this.download_progress_map.has(video_id) && this.download_progress_map.get(video_id)! < 100;
+    public is_in_download_queue(song_key: string): boolean {
+        return this.download_queue_set.has(song_key);
     }
+    private download_progress_interval: number = 1000; // interval in ms to check download progress
+    private max_downloads: number = 2; // maximum concurrent downloads
+    private download_progress_map: Map<string, number> = new Map(); // video_id -> progress percentage
+    private download_queue_set: Set<string> = new Set(); // to prevent duplicate downloads
+    private download_queue: {song_key: string, download_options: { quality: DownloadQuality, bit_rate: string } }[] = [];
+    public is_downloading(video_id: string): boolean {
+        return (this.download_progress_map.has(video_id) && this.download_progress_map.get(video_id)! < 100) || this.download_queue_set.has(video_id);
+    }
+    public async request_download(song_key: string, download_options: { quality: DownloadQuality, bit_rate: string }): Promise<void> {
+        if(this.download_queue_set.has(song_key)) return console.warn('Download already requested for this song:', song_key);
+
+        const video_id = song_key.split(':').pop() || ''; 
+        const song_data = await this.get_song_from_indexDB(song_key);
+        if(song_data && song_data.downloaded) return console.warn('Song already downloaded:', song_key);
+        this.download_queue_set.add(video_id);
+        this.download_queue.push({ song_key, download_options });
+
+        this.proccess_download_queue();
+    }
+
+    private async proccess_download_queue(): Promise<void> {
+        if (this.download_progress_map.size >= this.max_downloads) {
+            setTimeout(this.proccess_download_queue.bind(this), this.download_progress_interval); 
+            return;
+        }
+        if (this.download_queue.length === 0) {
+            console.log('Download queue is empty, nothing to process'); // temporary debug log
+            return;
+        }
+
+        const next_download = this.download_queue.shift();
+        if (!next_download) return;
+
+        const { song_key, download_options } = next_download;
+        const video_id = song_key.split(':').pop() || ''; 
+        this.download_queue_set.delete(video_id);
+
+        this.download_progress_map.set(video_id, 0); // reset progress for this download
+
+        await this.download_audio(song_key, download_options);
+        this.proccess_download_queue();
+    }
+
+    public get_total_downloads(): number {
+        return this.download_queue.length + this.download_progress_map.size;
+    }
+
+    public is_song_in_playlist_download_queue(playlist_identifier: Song_Playlist_Identifier): boolean {
+        return this.download_queue.some((item) => {
+            const playlists_that_song_is_in_set = this.playlist_songs_cache.get(item.song_key);
+            return playlists_that_song_is_in_set && playlists_that_song_is_in_set.has(playlist_identifier.id);
+        });
+    }
+
+    public how_many_songs_in_playlist_download_queue(playlist_identifier: Song_Playlist_Identifier): number {
+        return this.download_queue.filter((item) => {
+            const playlists_that_song_is_in_set = this.playlist_songs_cache.get(item.song_key);
+            return playlists_that_song_is_in_set && playlists_that_song_is_in_set.has(playlist_identifier.id);
+        }).length;
+    }
+
     public async download_audio(song_key: string, download_options: {quality: DownloadQuality, bit_rate: string}): Promise<void> {
         try {
             const video_id = song_key.split(':').pop() || ''; 
             let song_data = (song_key === this.song_key(this.playerService.song_data?.id) ? this.playerService.song_data : await this.get_song_from_indexDB(song_key)) || {
-                original_song_name: '', 
-                original_artists: [{ id: '', name: '', source: 'youtube' as Song_Source }], 
-                song_name: '', 
+                original_song_name: '#no name', 
+                original_artists: [{ id: '', name: '#no name', source: 'youtube' as Song_Source }], 
+                song_name: '#no name', 
                 downloaded: false,
                 download_audio_blob: null,
                 download_artwork_blob: null,
@@ -314,7 +374,7 @@ export class MusicMediaService {
             ]);
 
             setTimeout(()=>{
-                this.download_progress_map.delete(video_id);
+                this.download_progress_map.delete(video_id); //temp
             }, 850); // allow the progress bar to finish visually before removing it
 
             if(!audio_blob || audio_blob.size === 0 || audio_blob.type !== 'audio/mpeg') {
@@ -338,7 +398,7 @@ export class MusicMediaService {
 
             // alert(`got audio blob of size ${audio_blob.size} bytes, Mb: ${(audio_blob.size / (1024 * 1024)).toFixed(2)}`);
 
-            const result = await this.save_song_to_indexDB(this.song_key(song_data.id), song_data);
+            const result = await this.save_song_to_indexDB(song_key, song_data);
             if (!result) {
                 alert('Failed to save song data to IndexedDB');
                 return;
@@ -348,9 +408,10 @@ export class MusicMediaService {
                 this.playerService.song_data = song_data; // Update the player service with the new song data if the song is currently playing
                 // this.playerService.playlist_song_data_map.set(this.bare_song_key(song_data.id), song_data);
                 // this.playlists.update_song_in_playlist(song_data, null, null);
-                this.song_data_updated.emit(song_data); 
+                // this.song_data_updated.emit(song_data); 
                 // this.playlists.add_song_to_playlist(song_data, null, null)
             }
+            this.song_data_updated.emit(song_data); 
         } catch (error) {
             console.error('Error downloading audio blob:', error);
         }
@@ -426,7 +487,7 @@ export class MusicMediaService {
         const video_id = key.split(':').pop() || '';
         const response = ((await lastValueFrom(
             this.http.get(
-                `/stream?video_id=${encodeURIComponent(video_id)}&t=0`,
+                `/stream?video_id=${encodeURIComponent(video_id)}`,
             )
         )) as any);
         console.log('HLS stream response:', response);
@@ -453,15 +514,6 @@ export class MusicMediaService {
         const response = ((await lastValueFrom(
             this.http.get(
                 `/stream/preload?video_id=${encodeURIComponent(video_id)}`,
-            )
-        )) as any);
-        return response || null;
-    }
-
-    async upgrade_hls_preload(session_id: string): Promise<any | null> {
-        const response = ((await lastValueFrom(
-            this.http.get(
-                `/stream/upgrade?session_id=${encodeURIComponent(session_id)}&duration=${this._preload_duration || 5}`, 
             )
         )) as any);
         return response || null;
@@ -677,7 +729,7 @@ export class MusicMediaService {
                         const imageData = ctx.getImageData(0, 0, scaledWidth, scaledHeight);
                         const data = imageData.data;
 
-                        console.log(`Processing image data: ${data.length} values for ${scaledWidth}x${scaledHeight} image`);
+                        // console.log(`Processing image data: ${data.length} values for ${scaledWidth}x${scaledHeight} image`);
 
                         // Method 1: Find most frequent color with better grouping
                         const colorCount = new Map<string, number>();
@@ -702,7 +754,7 @@ export class MusicMediaService {
                             totalPixels++;
                         }
 
-                        console.log(`Processed ${totalPixels} pixels, found ${colorCount.size} unique colors`);
+                        // console.log(`Processed ${totalPixels} pixels, found ${colorCount.size} unique colors`);
 
                         if (colorCount.size === 0) {
                             console.warn('No valid colors found in image');
@@ -721,11 +773,11 @@ export class MusicMediaService {
                             }
                         }
 
-                        console.log(`Most frequent color: ${dominantColor} (${maxCount} pixels, ${((maxCount/totalPixels)*100).toFixed(1)}%)`);
+                        // console.log(`Most frequent color: ${dominantColor} (${maxCount} pixels, ${((maxCount/totalPixels)*100).toFixed(1)}%)`);
 
                         // Method 2: Fallback - Average color calculation
                         if (maxCount < totalPixels * 0.05) { // If no color dominates (less than 5%)
-                            console.log('No dominant color found, calculating average color instead');
+                            // console.log('No dominant color found, calculating average color instead');
                             
                             let totalR = 0, totalG = 0, totalB = 0, validPixels = 0;
                             
@@ -748,7 +800,7 @@ export class MusicMediaService {
                                 const avgG = Math.round(totalG / validPixels);
                                 const avgB = Math.round(totalB / validPixels);
                                 dominantColor = `${avgR},${avgG},${avgB}`;
-                                console.log(`Average color: ${dominantColor}`);
+                                // console.log(`Average color: ${dominantColor}`);
                             }
                         }
 
@@ -857,7 +909,7 @@ export class MusicMediaService {
                             .sort((a, b) => b[1].count - a[1].count)
                             .map(([key, data]) => data);
 
-                        console.log(`Found ${sortedColors.length} unique colors for diversity selection`);
+                        // console.log(`Found ${sortedColors.length} unique colors for diversity selection`);
 
                         // Step 3: Select diverse colors
                         const selectedColors: { r: number, g: number, b: number }[] = [];
@@ -990,7 +1042,7 @@ export class MusicMediaService {
         try {
             // call the backend endpoint to import the playlist
             const response = await lastValueFrom(
-                this.http.get(`${this.Auth.backendURL}/import/musi`, { params: { url } })
+                this.http.get(`/import/musi`, { params: { url } })
             );
             return response;
         } catch (error) {
@@ -1011,7 +1063,7 @@ export class MusicMediaService {
             
             // call the backend endpoint to import the playlist
             const response = await lastValueFrom(
-                this.http.post(`${this.Auth.backendURL}/import/musix`, form_data)
+                this.http.post(`/import/musix`, form_data)
             );
             return response;
         } catch (error) {
@@ -1023,7 +1075,7 @@ export class MusicMediaService {
     async get_search_recommendations(query: string): Promise<any> {
         try {
             const response = await lastValueFrom(
-                this.http.get(`${this.Auth.backendURL}/music/search_recommendations`, { params: { q: query } })
+                this.http.get(`/music/search_recommendations`, { params: { q: query } })
             );
             return response; 
         } catch (error) {
@@ -1040,7 +1092,7 @@ export class MusicMediaService {
         
         try {
             const response = await lastValueFrom(
-                this.http.get(`${this.Auth.backendURL}/music/watch_playlist/${track_id}`)
+                this.http.get(`/music/watch_playlist/${track_id}`)
             );
             return response; 
         } catch (error) {

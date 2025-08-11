@@ -18,7 +18,9 @@
         </div>
         <!-- <div class="player-status" (click)="toggle_play(); $event.stopPropagation();" [style.display]="visibility_status === 'reduced' ? 'block' : 'none'" [style.--mask]="'url(' + (player_status === 'paused' ? 'player-play.svg' : 'player-pause.svg') + ')'"></div> -->
         <div class="player-status inverse" [style.display]="visibility_status === 'reduced' ? 'block' : 'none'" [ngClass]="{active: player_status !== 'loading', spinner: player_status === 'loading'}" (click)="toggle_play(); $event.stopPropagation();" [style.--mask]="'url(' + (player_status !== 'loading' ? (player_status === 'paused' ? 'player-play.svg' : 'player-pause.svg') : 'loader.svg') + ')'"></div>
-        <div class="queue" (click)="open_queue_management(); $event.stopPropagation();" [style.display]="visibility_status === 'visible' ? 'block' : 'none'" [style.mask-image]="'url(\'playlist.svg\')'"></div>
+        <div class="queue-container" [style.display]="visibility_status === 'visible' ? 'flex' : 'none'" (click)="open_queue_management(); $event.stopPropagation();">
+            <div class="queue" [style.mask-image]="'url(\'playlist.svg\')'"></div>
+        </div>
     </button>
     <div class="media">
         <div #media class="draggable"></div>
@@ -45,8 +47,13 @@
             Your browser does not support the audio element.
         </audio>
         <div class="dashboard">
+            <div class="duration">
+                <span class="time">{{ seconds_to_time(audio_current_time) }}</span>
+                <span class="time">-{{ seconds_to_time(audio_duration - audio_current_time) }}</span>
+
+            </div>
             <div class="metadata" style="margin-bottom: auto;">
-                <button class="liked" [style.background-color]="player_status === 'loading' ? 'var(--color-neutral)' : 'var(--color-primary)'" [style.mask-image]="'url(' + ((current_song_data?.liked === true || buffer_like === true) ? 'heart-fill.svg' : 'heart.svg') + ')'" (click)="toggle_like()" (touchend)="toggle_like()"></button>
+                <button class="liked" [style.background-color]="player_status === 'loading' ? 'var(--color-neutral)' : 'var(--color-primary)'" [style.mask-image]="'url(' + ((current_song_data?.liked === true || buffer_like === true) ? 'heart-fill.svg' : 'heart.svg') + ')'" (click)="toggle_like()"></button>
                 <div class="info">
                     <div class="title">{{current_media_data?.song_name || current_media_data?.original_song_name || "#no name"}}</div>
                     <div class="artist">{{current_media_data?.original_artists?.[0]?.name || "#no artist"}}</div>
@@ -54,10 +61,14 @@
                 </div>
             </div>
             <div class="controls" style="margin-bottom: auto;">
-                <button class="control-button" [ngClass]="{active: shuffle}" (click)="toggle_shuffle()" (touchend)="toggle_shuffle()" [style.--mask]="'url(' + 'arrows-shuffle.svg' + ')'"></button> <!-- shuffle-->
-                <button class="control-button active" [ngClass]="{active: player_status !== 'loading'}" (click)="previous()" (touchend)="previous()" [style.--mask]="'url(' + 'player-skip-back.svg' + ')'"></button> <!-- previous-->
-                <button class="control-button inverse" [ngClass]="{active: player_status !== 'loading', spinner: player_status === 'loading'}" (click)="toggle_play()" (touchend)="toggle_play()" [style.--mask]="'url(' + (player_status !== 'loading' ? (player_status === 'paused' ? 'player-play.svg' : 'player-pause.svg') : 'loader.svg') + ')'"></button> <!-- play/pause-->
-                <button class="control-button active" [ngClass]="{active: player_status !== 'loading'}" (click)="next()" (touchend)="next()" [style.--mask]="'url(' + 'player-skip-forward.svg' + ')'"></button> <!-- skip-->
+                <button class="control-button" [ngClass]="{active: shuffle}" (click)="toggle_shuffle()" [style.--mask]="'url(' + 'arrows-shuffle.svg' + ')'">
+                    <div class="indicator" *ngIf="shuffle"></div>
+                </button> <!-- shuffle-->
+                <button class="control-button active" [ngClass]="{active: player_status !== 'loading'}" (click)="previous()" [style.--mask]="'url(' + 'player-skip-back.svg' + ')'"></button> <!-- previous-->
+                <button class="control-button inverse" [ngClass]="{active: player_status !== 'loading', spinner: player_status === 'loading'}" (click)="toggle_play()" [style.--mask]="'url(' + (player_status !== 'loading' ? (player_status === 'paused' ? 'player-play.svg' : 'player-pause.svg') : 'loader.svg') + ')'"></button> <!-- play/pause-->
+                <button class="control-button active" [ngClass]="{active: player_status !== 'loading'}" (click)="next()" [style.--mask]="'url(' + 'player-skip-forward.svg' + ')'">
+                    <div class="indicator" *ngIf="preloaded_next_song"></div>
+                </button> <!-- skip-->
                 <button class="control-button" [style.--mask]="'url(' + 'repeat.svg' + ')'"></button> <!-- repeat-->
             </div>
             <!-- <div class="volume-control" style="display: none;"> not available on pwa

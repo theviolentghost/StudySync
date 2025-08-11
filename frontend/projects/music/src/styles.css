@@ -33,10 +33,10 @@
     --color-text: hsl(243, 76%, 5%);
     --color-primary: hsl(38, 100%, 50%);
 
-    --color-denied: hsl(0, 97%, 45%);
+    --color-deny:rgb(185, 18, 18);
     --color-success: hsl(142, 100%, 41%);
 }
-
+    
 @media (prefers-color-scheme: dark) {
     :root {
         --color-background-50: hsl(60, 4%, 5%);

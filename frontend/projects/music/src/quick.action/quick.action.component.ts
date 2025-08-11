@@ -1,6 +1,7 @@
 import { Component, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { BehaviorSubject } from 'rxjs';
+import { DragDropModule, CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 
 import { QuickActionService } from '../../quick.action.service';
 import { PlaylistsService } from '../../playlists.service';
@@ -10,7 +11,7 @@ import { MusicMediaService, Song_Identifier, Song_Playlist_Identifier, Song_Data
 
 @Component({
   selector: 'quick-action',
-  imports: [CommonModule],
+  imports: [CommonModule, DragDropModule],
   templateUrl: './quick.action.component.html',
   styleUrl: './quick.action.component.css'
 })
@@ -22,6 +23,7 @@ export class QuickActionComponent {
         switch (this.action) {
             case 'pick_playlist_color': return 'Pick Playlist Color';
             case 'queue_management': return 'Queue';
+            case 'download_playlist': return 'Download Playlist';
             default: return 'Quick Action';
         }
     }
@@ -47,7 +49,7 @@ export class QuickActionComponent {
     get play_next_queue(): Song_Identifier[] {
         return this.player.play_next_queue.queue;
     }
-    get play_next_queue_width_song_data(): Song_Data[] {
+    get play_next_queue_with_song_data(): Song_Data[] {
         return this.play_next_queue.map(song_identifier => {
             return this.player.playlist_song_data_map.get(this.media.song_key(song_identifier)) || null;
         }).filter(song_data => song_data !== null) as Song_Data[];
@@ -55,13 +57,30 @@ export class QuickActionComponent {
     get playlist_queue(): Song_Identifier[] {
         return this.player.playlist_queue.queue.slice(this.visible_start_index, this.visible_end_index); 
     }
-    get playlist_queue_width_song_data(): Song_Data[] {
+    get playlist_queue_with_song_data(): Song_Data[] {
         return this.playlist_queue.map(song_identifier => {
             return this.player.playlist_song_data_map.get(this.media.song_key(song_identifier)) || null;
         }).filter(song_data => song_data !== null) as Song_Data[];
     }
     get current_song_identifier(): Song_Identifier | null {
         return this.player.song_data ? this.player.song_data.id : null;
+    }
+    get song_data(): Song_Data | null {
+        return this.player.song_data;
+    }
+    get play_next_queue_duration(): string {
+        const songs = this.play_next_queue_with_song_data;
+        const total_duration = songs.reduce((acc, song) => {
+            return acc + (song.video_duration || 0);
+        }, 0);
+        return this.ms_to_time(total_duration);
+    }
+    get playlist_queue_duration(): string {
+        const songs = this.playlist_queue_with_song_data;
+        const total_duration = songs.reduce((acc, song) => {
+            return acc + (song.video_duration || 0);
+        }, 0);
+        return this.ms_to_time(total_duration);
     }
 
     @HostListener('scroll', ['$event'])
@@ -179,6 +198,7 @@ export class QuickActionComponent {
     set_playlist_color() {
         this.quick_action.quick_action_open = false;
         if (!this.playlists.selected_playlist_identifier) return;
+        if(!this.quick_action.playlist_view_color) return;
 
         this.playlists.set_playlist_color(
             this.playlists.selected_playlist_identifier.id,
@@ -186,6 +206,15 @@ export class QuickActionComponent {
         );
 
         this.quick_action.playlist_view_color = '';
+    }
+
+    get_playlist_color(): string {
+        if (!this.playlists.selected_playlist_identifier) return '';
+        return this.playlists.selected_playlist_identifier.colors?.primary || '';
+    }
+
+    set quick_action_open(value: boolean) {
+        this.quick_action.quick_action_open = value;
     }
 
     significant_change_size = 5; // how many elements you have to scroll past before loading new ones
@@ -422,7 +451,9 @@ export class QuickActionComponent {
             const elapsed = Date.now() - startTime;
             this.hold_progress = Math.min(elapsed / this.hold_timeout, 1) * 100;
             
+            if(this.dragging) return; // If dragging, don't update hold progress
             if (elapsed >= this.hold_timeout) {
+                if(this.dragging) return;
                 // Hold gesture completed
                 this.gesture_type = 'hold';
                 this.swipe_x = 0;
@@ -450,6 +481,7 @@ export class QuickActionComponent {
 
     private trigger_add_to_next(video: Song_Data | null): void {
         if (!video) return;
+        if(this.dragging) return;
         this.player.add_song_to_play_next(video);
         
         // Trigger success animation
@@ -533,5 +565,127 @@ export class QuickActionComponent {
         
         // Optionally, you can show a confirmation or feedback message
         console.log(`Video ${video.song_name} removed from playlist.`);
+    }
+
+    get playlist_identifier(): Song_Playlist_Identifier | null {
+        return this.playlists.selected_playlist_identifier;
+    }
+
+    download_playlist(): void {
+        this.quick_action.quick_action_open = false;
+        if (!this.playlists.selected_playlist_identifier) return;
+
+        this.playlists.download_playlist(
+            this.playlists.selected_playlist
+        );
+    }
+
+    get_object_url(blob: Blob | null): string {
+        if (!blob) return '';
+        return URL.createObjectURL(blob);
+    }
+
+    // Drag and Drop Methods
+    onDrop(event: CdkDragDrop<Song_Identifier[]>) {
+        const previousContainer = event.previousContainer;
+        const currentContainer = event.container;
+        
+        if (previousContainer === currentContainer) {
+            // Reordering within the same queue
+            if (currentContainer.id === 'play-next-queue') {
+                this.reorderPlayNextQueue(event.previousIndex, event.currentIndex);
+            } else if (currentContainer.id === 'playlist-queue') {
+                this.reorderPlaylistQueue(event.previousIndex, event.currentIndex);
+            }
+        } else {
+            // Moving between queues
+            if (previousContainer.id === 'play-next-queue' && currentContainer.id === 'playlist-queue') {
+                this.moveFromPlayNextToPlaylist(event.previousIndex, event.currentIndex);
+            } else if (previousContainer.id === 'playlist-queue' && currentContainer.id === 'play-next-queue') {
+                this.moveFromPlaylistToPlayNext(event.previousIndex, event.currentIndex);
+            }
+        }
+        
+        // Reset any active swipe state after drag operation
+        this.resetSwipeState();
+    }
+
+    private resetSwipeState() {
+        this.swipe_x = 0;
+        this.swipe_state = 'closed';
+        this.swiping_video = '';
+        this.swiping_video_data = null;
+        this.is_gesture_active = false;
+        this.gesture_type = 'none';
+    }
+
+    private reorderPlayNextQueue(previousIndex: number, currentIndex: number) {
+        const queue = [...this.player.play_next_queue.queue];
+        moveItemInArray(queue, previousIndex, currentIndex);
+        this.player.play_next_queue.queue = queue;
+    }
+
+    private reorderPlaylistQueue(previousIndex: number, currentIndex: number) {
+        const queue = [...this.player.playlist_queue.queue];
+        const adjustedPreviousIndex = previousIndex + this.visible_start_index;
+        const adjustedCurrentIndex = currentIndex + this.visible_start_index;
+        moveItemInArray(queue, adjustedPreviousIndex, adjustedCurrentIndex);
+        this.player.playlist_queue.queue = queue;
+    }
+
+    private moveFromPlayNextToPlaylist(previousIndex: number, currentIndex: number) {
+        const playNextQueue = [...this.player.play_next_queue.queue];
+        const playlistQueue = [...this.player.playlist_queue.queue];
+        const adjustedCurrentIndex = currentIndex + this.visible_start_index;
+        
+        transferArrayItem(
+            playNextQueue,
+            playlistQueue,
+            previousIndex,
+            adjustedCurrentIndex
+        );
+        
+        this.player.play_next_queue.queue = playNextQueue;
+        this.player.playlist_queue.queue = playlistQueue;
+    }
+
+    private moveFromPlaylistToPlayNext(previousIndex: number, currentIndex: number) {
+        const playNextQueue = [...this.player.play_next_queue.queue];
+        const playlistQueue = [...this.player.playlist_queue.queue];
+        const adjustedPreviousIndex = previousIndex + this.visible_start_index;
+        
+        transferArrayItem(
+            playlistQueue,
+            playNextQueue,
+            adjustedPreviousIndex,
+            currentIndex
+        );
+        
+        this.player.play_next_queue.queue = playNextQueue;
+        this.player.playlist_queue.queue = playlistQueue;
+    }
+
+    // Predicate functions for drag-and-drop constraints
+    canDropInPlayNext = (item: any) => {
+        return true; // Allow all items to be dropped in play next
+    }
+
+    canDropInPlaylist = (item: any) => {
+        return true; // Allow all items to be dropped in playlist
+    }
+
+
+    dragging = false;
+    onDragStart() {
+        // Disable swipe when drag starts
+        this.resetSwipeState();
+        this.dragging = true;
+
+    }
+
+    onDragEnd() {
+        this.dragging = false;
+        // Re-enable swipe functionality after drag ends
+        // No action needed as swipe state is already reset
     }
 }

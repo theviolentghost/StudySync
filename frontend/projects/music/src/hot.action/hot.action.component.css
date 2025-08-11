@@ -8,7 +8,7 @@
     display: flex;
     align-items: center;
     flex-direction: column;
-    background-color: var(--color-background-200);
+    background-color: var(--color-background);
     z-index: 10000;
     transition: bottom 0.65s ease-in-out;
 }
@@ -25,21 +25,27 @@
     justify-content: center;
     gap: var(--space-4);
     background-color: var(--color-background-100);
+    box-shadow: 0 10px 10px 10px var(--color-background-100);
 }
 .header .close {
-    color: var(--color-primary);
+    color: var(--color-background);
     position: absolute;
     left: var(--space-2);
     top: 50%;
-    transform: translateY(-50%);
-    background-color: transparent;
-    font-size: var(--space-4);
-    font-weight: 500;
+    transform: translateY(-25%);
+    background-color: var(--color-primary);
+    border-radius: 999px;
+    padding: var(--space-1) var(--space-3);
+    font-size: var(--space-3);
+    font-weight: 700;
     cursor: pointer;
-    transition: filter 0.15s ease-in-out;
+    transition: filter .15s ease-in-out;
+}
+.header .close:hover {
+    filter: brightness(0.8);
 }
 .header .close:active {
-    filter: brightness(0.8);
+    filter: brightness(0.7);
 }
 .header .title {
     font-weight: 500;
@@ -61,7 +67,7 @@
     aspect-ratio: 32 / 9;
     max-height: calc(var(--space-8) + var(--space-5));
     max-width: 550px;
-    background-color: var(--color-background-300);
+    background-color: var(--color-background-100);
     overflow: hidden;
     display: flex;
     flex-shrink: 0;
@@ -118,7 +124,6 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding: var(--space-2);
     width: 100%;
     gap: var(--space-1);
     white-space: nowrap;
@@ -145,13 +150,16 @@
 .action {
     background-color: transparent;
     font-size: var(--space-5);
-    border-bottom: solid 1px var(--color-background-400);
+    border-bottom: solid 2px var(--color-background-200);
     border-radius: 0;
     cursor: pointer;
 }
 .action.null {
     pointer-events: none;
     opacity: 0.5;
+}
+.action.null .name {
+    color: var(--color-background-300) !important;
 }
 .action:last-child {
     border-bottom: solid 1px transparent;
@@ -219,6 +227,7 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     transition: color 0.15s ease-in-out;
+    text-align: left;
 }
 .action.playlist .name {
     color: var(--text);

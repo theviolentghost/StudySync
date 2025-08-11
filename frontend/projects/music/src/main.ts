@@ -49,31 +49,41 @@ if ('serviceWorker' in navigator && !isDevMode()) {
                     const { type, payload } = event.data;
                     
                     switch(type) {
-                        case 'UPDATE_STATUS_RESPONSE':
-                            console.log('📊 Update Status:', payload);
-                            if (!payload.isFullyUpdated) {
-                                console.log(`⚠️ ${payload.pendingUpdates} files still need updating`);
-                                // Optionally show user notification about pending updates
-                            }
-                            break;
-                            
-                        case 'FORCE_UPDATE_COMPLETE':
-                            console.log('✅ Force update complete:', payload);
-                            if (payload.failed > 0) {
-                                console.warn(`⚠️ ${payload.failed} files failed to update`);
+                        case 'update_stored_version':
+                            if (LOGGING_ENABLED) console.log('Received update_stored_version message:', payload);
+                            if (payload && payload.version) {
+                                window.version_service.version = payload.version.trim().toLowerCase();
+                                if (LOGGING_ENABLED) console.log('Updated version:', window.version_service.version);
                             }
                             break;
                     }
                 });
 
+                // ✅ Wait for service worker to be ready, then request version
+                if (registration.active) {
+                    // SW is already active, request version immediately
+                    registration.active.postMessage({ type: 'GET_VERSION' });
+                } else {
+                    // Wait for SW to become active
+                    registration.addEventListener('statechange', () => {
+                        if (registration.active) {
+                            registration.active.postMessage({ type: 'GET_VERSION' });
+                        }
+                    });
+                }
+
+                // ✅ Get initial cached version manually as fallback
                 const cache = await caches.open(CURRENT_CACHE_NAME);
                 const stored_version_response = await cache.match(VERSION_URL);
                 const stored_version = stored_version_response ?
                     (await stored_version_response.text()).trim().toLowerCase() :
                     '0.0.0'; // Default version if not found
-                window.version_service.version = stored_version;
-                if (LOGGING_ENABLED) console.log(window.version_service.version);
-                if (LOGGING_ENABLED) console.log(stored_version);
+                
+                // Set initial version if not already set by SW message
+                if (!window.version_service.version || window.version_service.version === '0.0.0') {
+                    window.version_service.version = stored_version;
+                    if (LOGGING_ENABLED) console.log('Set initial version from cache:', stored_version);
+                }
 
                 const should_update = await should_update_app(stored_version);
                 if (LOGGING_ENABLED) console.log('🔄 Update check complete, should update:', should_update);
@@ -92,13 +102,20 @@ if ('serviceWorker' in navigator && !isDevMode()) {
 
 async function should_update_app(stored_version: string): Promise<boolean> {
     try {
+        if(!stored_version || stored_version === '0.0.0') {
+            if (LOGGING_ENABLED) console.warn('No stored version found, assuming first visit');
+            // If no stored version, assume first visit and always prompt for update
+            return false; // Do not prompt for update on first visit, or cause infinte loop
+        }
         // Fetch server version with cache busting
+        if (LOGGING_ENABLED) console.log('Checking server version...');
         const server_version_response = await fetch(VERSION_URL, { cache: 'no-cache' });
         if (!server_version_response.ok) {
             throw new Error(`Failed to fetch version.txt: ${server_version_response.status}`);
         }
 
         const server_version = (await server_version_response.text()).trim();
+        if (LOGGING_ENABLED) console.log('Server version:', server_version);
 
         if(!server_version) return false;
 

@@ -1,7 +1,7 @@
 import { Injectable, Injector } from '@angular/core';
 import { Router } from '@angular/router';
 
-import { MusicMediaService, Song_Data, Song_Playlist, Song_Playlist_Identifier, Song_Identifier } from './music.media.service';
+import { MusicMediaService, Song_Data, Song_Playlist, Song_Playlist_Identifier, Song_Identifier, DownloadQuality } from './music.media.service';
 import { MusicPlayerService } from './music.player.service';
 
 @Injectable({
@@ -337,5 +337,15 @@ export class PlaylistsService {
         }
 
         this.save_playlists();
+    }
+
+    public async download_playlist(playlist: Song_Playlist): Promise<void> {
+        if (!playlist) return;
+
+        const songs = Array.from(playlist.songs.values());
+        for (const song of songs) {
+            this.media.request_download(this.media.song_key(song), {quality: DownloadQuality.Q0, bit_rate: '128k'});
+        }
+
     }
 }
