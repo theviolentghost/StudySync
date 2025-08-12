@@ -15,6 +15,7 @@
         "build:frontend": "cd frontend && ng build --configuration production",
         "build:all": "npm run build:frontend && npm run build:music",
         "build:all:run": "npm run update:music && npm run build:all && npm run serve",
+        "build:all:run:noupdate": "npm run build:all && npm run serve",
         "update:music": "node update_version.js"
     },
     "dependencies": {

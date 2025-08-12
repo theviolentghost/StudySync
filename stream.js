@@ -272,22 +272,32 @@ class Adaptive_Stream {
         // Ensure directory exists synchronously for immediate use
         else if(!fs.ensureDirSync(session_directory)) throw new Error(`Failed to create session directory: ${session_directory}`);
 
+        // console.log('yt-dlp')
         const [yt_dlp_process] = await Promise.all([
             this.create_yt_dlp_process(url),
             this.create_master_playlist(session_directory, target_quality) // Create master playlist immediately
         ]);
+        // console.log('yt-dlp process started');
 
         // Create and start FFmpeg immediately after yt-dlp is ready
-        const ffmpeg_process = await this.create_hls_stream(
-            yt_dlp_process, 
-            session_directory, 
-            target_quality, // used as fallback
-            fast_startup,
-            requested_profiles,
-        );
+        let ffmpeg_process;
+        try {
+            ffmpeg_process = await this.create_hls_stream(
+                yt_dlp_process, 
+                session_directory, 
+                target_quality, // used as fallback
+                fast_startup,
+                requested_profiles,
+            );
 
-        // Start FFmpeg process immediately
-        ffmpeg_process.run();
+            // Start FFmpeg process immediately
+            ffmpeg_process.run();
+        } catch (error) {
+            console.error('Failed to create HLS stream:', error);
+            yt_dlp_process.kill('SIGTERM'); // Clean up yt-dlp process
+            throw new Error('Failed to initialize HLS stream: ' + error.message);
+        }
+        // console.log('FFmpeg process started');
 
         // Store session info immediately for cleanup
         this.active_processes.set(session_id, {
