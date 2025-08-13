@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterModule, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 
 import { MediaPlayerComponent } from '../media.player/media.player.component';
 import { AuthService } from '../../../../src/app/auth.service';
@@ -20,7 +21,7 @@ import { VersionService } from '../../version.service';
     templateUrl: './app.component.html',
     styleUrl: './app.component.css'
 })
-export class AppComponent {
+export class AppComponent implements OnInit, OnDestroy {
     navigation_links = [
         {
             url: 'artists',
@@ -49,6 +50,8 @@ export class AppComponent {
         },
     ];
 
+    private subscriptions: Subscription[] = [];
+
     constructor(
         private router: Router,
         private player: MusicPlayerService,
@@ -57,6 +60,28 @@ export class AppComponent {
         this.player.open_player.subscribe(() => {
             this.is_music_idle = false;
         });
+    }
+
+    ngOnInit() {
+        // Subscribe to critical update notifications
+        const criticalUpdateSub = this.version_service.critical_update_available$.subscribe(
+            (hasUpdate) => {
+                if (hasUpdate && this.is_standalone_mode()) {
+                    console.log('🔄 Critical update detected in standalone mode');
+                }
+            }
+        );
+        this.subscriptions.push(criticalUpdateSub);
+    }
+
+    ngOnDestroy() {
+        // Clean up subscriptions
+        this.subscriptions.forEach(sub => sub.unsubscribe());
+    }
+
+    private is_standalone_mode(): boolean {
+        return window.matchMedia('(display-mode: standalone)').matches ||
+               (window.navigator as any).standalone === true;
     }
 
     active_link: string = 'playlists';

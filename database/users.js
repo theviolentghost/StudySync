@@ -1,30 +1,51 @@
 import jwt from 'jsonwebtoken';
-import Database from 'better-sqlite3';
+import sqlite3 from 'sqlite3';
+import { promisify } from 'util';
 import moment from 'moment';
-const user_database = new Database('storage/users.sqlite', {});
+
+const user_database = new sqlite3.Database('storage/users.sqlite');
+
+// Create promisified versions of database methods
+const db_all = promisify(user_database.all.bind(user_database));
+const db_get = promisify(user_database.get.bind(user_database));
+const db_run = promisify(user_database.run.bind(user_database));
+const db_exec = promisify(user_database.exec.bind(user_database));
 
 import Authentication from "../authentication.js";
 
-user_database.exec(`
-    CREATE TABLE IF NOT EXISTS users (
-        id           INTEGER PRIMARY KEY AUTOINCREMENT,
-        email        TEXT UNIQUE NOT NULL,
-        password     TEXT NOT NULL,
-        display_name TEXT,
-        created_at   DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-`);
+// Initialize database tables
+async function initializeUserDatabase() {
+    try {
+        await db_exec(`
+            CREATE TABLE IF NOT EXISTS users (
+                id           INTEGER PRIMARY KEY AUTOINCREMENT,
+                email        TEXT UNIQUE NOT NULL,
+                password     TEXT NOT NULL,
+                display_name TEXT,
+                created_at   DATETIME DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
 
-user_database.exec(`
-    CREATE TABLE IF NOT EXISTS refresh_tokens (
-        id           INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id      INTEGER NOT NULL,
-        token        TEXT NOT NULL,
-        created_at   DATETIME DEFAULT CURRENT_TIMESTAMP,
-        expires_at   DATETIME,
-        FOREIGN KEY(user_id) REFERENCES users(id)
-    );
-`);
+        await db_exec(`
+            CREATE TABLE IF NOT EXISTS refresh_tokens (
+                id           INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id      INTEGER NOT NULL,
+                token        TEXT NOT NULL,
+                created_at   DATETIME DEFAULT CURRENT_TIMESTAMP,
+                expires_at   DATETIME,
+                FOREIGN KEY(user_id) REFERENCES users(id)
+            );
+        `);
+        
+        console.log('User database initialized successfully');
+    } catch (error) {
+        console.error('Error initializing user database:', error);
+        throw error;
+    }
+}
+
+// Call initialization
+initializeUserDatabase();
 
 //
 //
@@ -40,86 +61,76 @@ function get_token_expiration(token) {
 }
 
 async function store_refresh_token(user_id, token) {
-    const stmt = user_database.prepare(`
-        INSERT INTO refresh_tokens (user_id, token, expires_at)
-        VALUES (?, ?, ?)
-    `);
-    return stmt.run(user_id, token, get_token_expiration(token));
+    return await db_run(
+        `INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES (?, ?, ?)`,
+        [user_id, token, get_token_expiration(token)]
+    );
 }
 
 async function find_refresh_token(token) {
-    const stmt = user_database.prepare(`
-        SELECT * FROM refresh_tokens WHERE token = ?
-    `);
-    return stmt.get(token);
+    return await db_get(
+        `SELECT * FROM refresh_tokens WHERE token = ?`,
+        [token]
+    );
 }
 
 async function delete_refresh_token(token) {
-    const stmt = user_database.prepare(`
-        DELETE FROM refresh_tokens WHERE token = ?
-    `);
-    return stmt.run(token);
+    return await db_run(
+        `DELETE FROM refresh_tokens WHERE token = ?`,
+        [token]
+    );
 }
 
 async function delete_all_refresh_tokens_for_user(user_id) {
-    const stmt = user_database.prepare(`
-        DELETE FROM refresh_tokens WHERE user_id = ?
-    `);
-    return stmt.run(user_id);
+    return await db_run(
+        `DELETE FROM refresh_tokens WHERE user_id = ?`,
+        [user_id]
+    );
 }
 
 async function delete_expired_refresh_tokens() {
     const now = new Date().toISOString();
-    const stmt = user_database.prepare(`DELETE FROM refresh_tokens WHERE expires_at < ?`);
-    stmt.run(now);
+    return await db_run(`DELETE FROM refresh_tokens WHERE expires_at < ?`, [now]);
 }
 setInterval(delete_expired_refresh_tokens, 24 * 60 * 60 * 1000); // every 24 hours
 delete_expired_refresh_tokens(); // cold start - clean up
 
-//
-//
 // users
 
 async function register_user(email, password, display_name) {
     const hashed_password = await Authentication.hash_password(password);
-
-    const stmt = user_database.prepare(`
-        INSERT INTO users (email, password, display_name)
-        VALUES (?, ?, ?)
-    `);
-    return stmt.run(email, hashed_password, display_name);
+    return await db_run(
+        `INSERT INTO users (email, password, display_name) VALUES (?, ?, ?)`,
+        [email, hashed_password, display_name]
+    );
 }
 
 async function find_user_by_email(email) {
-    const stmt = user_database.prepare(`
-        SELECT * FROM users
-        WHERE email = ?
-    `);
-    return stmt.get(email);
+    return await db_get(
+        `SELECT * FROM users WHERE email = ?`,
+        [email]
+    );
 }
 
 async function find_user_by_id(id) {
-    const stmt = user_database.prepare(`
-        SELECT * FROM users
-        WHERE id = ?
-    `);
-    return stmt.get(id);
+    return await db_get(
+        `SELECT * FROM users WHERE id = ?`,
+        [id]
+    );
 }
 
 async function delete_user_with_id(id) {
-    const stmt = user_database.prepare(`
-        DELETE FROM users
-        WHERE id = ?
-    `);
-    return stmt.run(id);
+    return await db_run(
+        `DELETE FROM users WHERE id = ?`,
+        [id]
+    );
 }
 
 async function delete_user_with_email(email) {
-    const stmt = user_database.prepare(`
-        DELETE FROM users
-        WHERE email = ?
-    `);
-    return stmt.run(email);
+    return await db_run(
+        `DELETE FROM users WHERE email = ?`,
+        [email]
+    );
 }
 
 

@@ -84,7 +84,8 @@ const Downloader = new YtDlp({
     cwd: process.cwd(),
     shell: false,
     windowsHide: true,
-    detached: false
+    detached: false,
+    binaryPath: '/opt/homebrew/bin/yt-dlp' // Specify the correct path to yt-dlp
 });
 
 const youtube = google.youtube({

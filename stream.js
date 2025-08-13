@@ -273,28 +273,51 @@ class Adaptive_Stream {
         else if(!fs.ensureDirSync(session_directory)) throw new Error(`Failed to create session directory: ${session_directory}`);
 
         // console.log('yt-dlp')
-        const [yt_dlp_process] = await Promise.all([
-            this.create_yt_dlp_process(url),
-            this.create_master_playlist(session_directory, target_quality) // Create master playlist immediately
-        ]);
         // console.log('yt-dlp process started');
 
         // Create and start FFmpeg immediately after yt-dlp is ready
+        let yt_dlp_process;
         let ffmpeg_process;
+        // In your stream method, update the error handling:
         try {
+            [yt_dlp_process] = await Promise.all([
+                this.create_yt_dlp_process(url),
+                this.create_master_playlist(session_directory, target_quality)
+            ]);
+
             ffmpeg_process = await this.create_hls_stream(
                 yt_dlp_process, 
                 session_directory, 
-                target_quality, // used as fallback
+                target_quality,
                 fast_startup,
                 requested_profiles,
             );
 
-            // Start FFmpeg process immediately
             ffmpeg_process.run();
         } catch (error) {
-            console.error('Failed to create HLS stream:', error);
-            yt_dlp_process.kill('SIGTERM'); // Clean up yt-dlp process
+            console.error('Failed to create HLS stream:', error.message);
+            
+            // Clean up processes
+            if (yt_dlp_process && !yt_dlp_process.killed) {
+                yt_dlp_process.kill('SIGTERM');
+            }
+            if (ffmpeg_process) {
+                try {
+                    ffmpeg_process.kill('SIGTERM');
+                } catch (e) {
+                    // Ignore ffmpeg cleanup errors
+                }
+            }
+            
+            // Clean up directory
+            try {
+                if (fs.existsSync(session_directory)) {
+                    fs.removeSync(session_directory);
+                }
+            } catch (e) {
+                console.error('Error cleaning up session directory:', e);
+            }
+            
             throw new Error('Failed to initialize HLS stream: ' + error.message);
         }
         // console.log('FFmpeg process started');
@@ -436,26 +459,94 @@ class Adaptive_Stream {
     }
 
     async create_yt_dlp_process(url) {
-        const process = spawn('yt-dlp', [
-            '-f', 'bestaudio[ext=m4a]/bestaudio/best',
-            '--no-playlist',
-            '--quiet',
-            '--no-warnings',
-            '--buffer-size', Adaptive_Stream.stream_buffer_size,
-            '--no-part',
-            '--socket-timeout', '10', // Faster timeout
-            '--fragment-retries', '3', // Fewer retries for speed
-            '--retries', '2', // Fewer retries for speed
-            '-o', '-',
-            url
-        ]);
-        
-        process.on('error', (err) => {
-            console.error('yt-dlp error:', err);
-            throw new Error('Failed to start yt-dlp process: ' + err.message);
+        return new Promise((resolve, reject) => {
+            const process = spawn('yt-dlp', [
+                '-f', 'bestaudio[ext=m4a]/bestaudio/best',
+                '--no-playlist',
+                '--quiet',
+                '--no-warnings',
+                '--buffer-size', Adaptive_Stream.stream_buffer_size,
+                '--no-part',
+                '--socket-timeout', '10',
+                '--fragment-retries', '3',
+                '--retries', '2',
+                '-o', '-',
+                url
+            ]);
+            
+            let resolved = false;
+            let stderr_output = '';
+            
+            // Handle process errors
+            process.on('error', (err) => {
+                if (!resolved) {
+                    resolved = true;
+                    console.error('yt-dlp spawn error:', err);
+                    reject(new Error('Failed to start yt-dlp process: ' + err.message));
+                }
+            });
+            
+            // Handle stderr to capture error messages
+            if (process.stderr) {
+                process.stderr.on('data', (data) => {
+                    stderr_output += data.toString();
+                });
+                
+                process.stderr.on('error', (err) => {
+                    if (!resolved) {
+                        resolved = true;
+                        console.error('yt-dlp stderr error:', err);
+                        reject(new Error('yt-dlp stderr error: ' + err.message));
+                    }
+                });
+            }
+            
+            // Handle stdout errors
+            if (process.stdout) {
+                process.stdout.on('error', (err) => {
+                    if (!resolved) {
+                        resolved = true;
+                        console.error('yt-dlp stdout error:', err);
+                        reject(new Error('yt-dlp stdout error: ' + err.message));
+                    }
+                });
+            }
+            
+            // Handle process exit/close
+            process.on('close', (code, signal) => {
+                if (!resolved) {
+                    resolved = true;
+                    if (code !== 0) {
+                        const error_msg = stderr_output || `Process exited with code ${code}`;
+                        console.error('yt-dlp failed:', error_msg);
+                        reject(new Error(`yt-dlp failed: ${error_msg}`));
+                    } else if (signal) {
+                        reject(new Error(`yt-dlp killed by signal: ${signal}`));
+                    }
+                }
+            });
+            
+            process.on('exit', (code, signal) => {
+                if (!resolved) {
+                    resolved = true;
+                    if (code !== 0) {
+                        const error_msg = stderr_output || `Process exited with code ${code}`;
+                        console.error('yt-dlp exited with error:', error_msg);
+                        reject(new Error(`yt-dlp exited with error: ${error_msg}`));
+                    } else if (signal) {
+                        reject(new Error(`yt-dlp terminated by signal: ${signal}`));
+                    }
+                }
+            });
+            
+            // Wait a bit to ensure the process started successfully
+            setTimeout(() => {
+                if (!resolved && !process.killed) {
+                    resolved = true;
+                    resolve(process);
+                }
+            }, 100);
         });
-        
-        return process;
     }
 
     wait_for_playlist(playlist_path) {

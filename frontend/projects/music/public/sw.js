@@ -4,6 +4,9 @@ const LOGGING_ENABLED = false;
 
 let CURRENT_CACHE_NAME = `${CACHE_NAME_PREFIX}_v1`;
 
+// Track if we need to notify clients about critical updates
+let pending_critical_update = false;
+
 class File_Manager {
     static database_name = 'sinc_music_file_manager';
     static store_name = 'files';
@@ -290,6 +293,9 @@ class File_Manager {
             const network_response = await fetch(request, { cache: 'no-cache' });
             if (!network_response.ok) throw new Error(`Network response not ok: ${network_response.status}`);
 
+            // Check if this is a critical file (JS files that need reload)
+            const is_critical = this.is_critical_file(url);
+            
             // Cache successful responses
             const cache = await caches.open(CURRENT_CACHE_NAME);
             await cache.put(request, network_response.clone());
@@ -297,6 +303,12 @@ class File_Manager {
 
             // Store in IndexedDB
             this.store_file(url.pathname, 'updated');
+
+            // If this is a critical JS file update, notify clients to reload
+            if (is_critical) {
+                pending_critical_update = true;
+                this.notify_clients_critical_update();
+            }
 
             return network_response; // Return the network response directly
         } catch (error) {
@@ -352,6 +364,31 @@ class File_Manager {
             // CLEAR CACHE AND DATABASE
             if( LOGGING_ENABLED) console.warn('Clearing all files in IndexedDB');
         }
+
+        // For any version update, notify clients that a reload may be needed
+        pending_critical_update = true;
+        this.notify_clients_critical_update();
+    }
+
+    // Notify clients about critical updates that require reload
+    async notify_clients_critical_update() {
+        try {
+            if (self.clients && self.clients.matchAll) {
+                const clients = await self.clients.matchAll({ type: 'window' });
+                clients.forEach(client => {
+                    if (LOGGING_ENABLED) console.log('Notifying client of critical update');
+                    client.postMessage({
+                        type: 'critical_update_available',
+                        payload: {
+                            message: 'A critical update is available that requires a reload.',
+                            requires_reload: true
+                        }
+                    });
+                });
+            }
+        } catch (error) {
+            console.error('Error notifying clients of critical update:', error);
+        }
     }
 
     get_version_update_type(current_version, server_version) {
@@ -363,6 +400,57 @@ class File_Manager {
         if (server_parts[2] > current_parts[2]) return 'tiny'; // Tiny update
 
         return null; // No update needed
+    }
+
+    // Check if a file is critical (JS files that require full reload)
+    is_critical_file(url) {
+        const pathname = typeof url === 'string' ? url : url.pathname;
+        
+        // Angular critical files that require reload
+        const critical_patterns = [
+            'main.',           // Angular main bundle
+            'polyfills.',      // Polyfills bundle
+            'runtime.',        // Angular runtime
+            'vendor.',         // Vendor libraries
+            'chunk-',          // Lazy-loaded chunks
+            'scripts.'         // Additional scripts
+        ];
+        
+        // Must be a JavaScript file and match critical patterns
+        if (!pathname.endsWith('.js')) return false;
+        
+        return critical_patterns.some(pattern => pathname.includes(pattern));
+    }
+
+    async check_and_notify_critical_updates() {
+        const db = await this.open_database();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(File_Manager.store_name, 'readonly');
+            const store = transaction.objectStore(File_Manager.store_name);
+            const index = store.index('status');
+            const request = index.getAll('updated');
+            request.onsuccess = () => {
+                const files = request.result;
+                const critical_files = files.filter(file => this.is_critical_file(file.url));
+                
+                if (critical_files.length > 0) {
+                    pending_critical_update = true;
+                    if (LOGGING_ENABLED) console.log('Pending critical update for files:', critical_files);
+                }
+                
+                resolve(request.result);
+            };
+            request.onerror = () => reject(request.error);
+
+            transaction.oncomplete = () => {
+                if (LOGGING_ENABLED) console.log('Checked for critical updates');
+                db.close();
+            }
+            transaction.onerror = () => {
+                console.error('Transaction error:', transaction.error);
+                reject(transaction.error);
+            }
+        });
     }
 }
 
@@ -388,10 +476,16 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', event => {
     event.waitUntil(
         (async () => {
+            // Take control of all clients immediately
             await self.clients.claim();
             
             // ✅ Send cached version to all clients after activation
             await send_version_to_clients();
+
+            // If there was a critical update, notify clients to reload
+            if (pending_critical_update) {
+                file_manager.notify_clients_critical_update();
+            }
         })()
     );
 });
@@ -469,11 +563,16 @@ async function check_version_and_cache() {
         // compare versions
         if (server_version && server_version !== stored_version) {
             // version mismatch - update cache
-            // update_cache(server_version);
-            file_manager.update_all_files_status_by_version_update(file_manager.get_version_update_type(stored_version, server_version));
+            const update_type = file_manager.get_version_update_type(stored_version, server_version);
+            if(LOGGING_ENABLED) console.log('Version update detected:', stored_version, '->', server_version, 'Type:', update_type);
+            
+            file_manager.update_all_files_status_by_version_update(update_type);
+            
+            // For any version change, we should consider it critical since Angular apps
+            // can have breaking changes even in minor updates
+            pending_critical_update = true;
         } else {
             // version match or no server version available (use existing cache)
-
             console.log(server_version ? 'Version match, using existing cache' : 'No server version available, using existing cache');
         }
 
@@ -707,6 +806,33 @@ self.addEventListener('message', (event) => {
           }
         })()
       );
+      break;
+
+    case "SKIP_WAITING":
+      // Force the service worker to become active immediately
+      event.waitUntil(
+        (async () => {
+          try {
+            await self.skipWaiting();
+            pending_critical_update = false;
+            if (LOGGING_ENABLED) console.log('Service worker skipped waiting');
+          } catch (error) {
+            console.error('❌ Skip waiting failed:', error);
+          }
+        })()
+      );
+      break;
+
+    case "CHECK_CRITICAL_UPDATE":
+      // Check if there's a pending critical update
+      if (event.source && event.source.postMessage) {
+        event.source.postMessage({
+          type: "critical_update_status",
+          payload: {
+            has_critical_update: pending_critical_update
+          }
+        });
+      }
       break;
       
     default:
