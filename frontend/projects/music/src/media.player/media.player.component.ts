@@ -501,7 +501,7 @@ export class MediaPlayerComponent implements AfterViewInit, OnDestroy {
     }
     download_song(): void {
         if (!this.current_song_data) return;
-        if (this.current_song_data.downloaded) {
+        if (this.current_song_data.downloaded || this.media.is_downloading(this.media.song_key(this.current_song_data.id))) {
             console.warn('Song already downloaded');
             return;
         }

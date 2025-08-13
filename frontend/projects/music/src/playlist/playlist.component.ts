@@ -457,6 +457,7 @@ export class PlaylistComponent {
 
         await this.player.load_playlist(this.playlists.selected_playlist, false, false, false, this.playlists.selected_playlist_identifier);
         await this.player.load_and_play_track(this.media.song_key(track_data.id), track_data);
+        this.player.unshuffle_playlist();
         this.player.remove_current_song_from_queue();
     }
 

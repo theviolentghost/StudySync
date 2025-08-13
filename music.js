@@ -406,46 +406,58 @@ async function download_audio(youtube_video_id, options = {quality: '0', bit_rat
 }
 
 async function download_audio_to_stream(res, youtube_video_id, options = {quality: '0', bit_rate: '192K'}) {
-    const download_options = {
-        extractAudio: true,
-        audioFormat: 'mp3',
-        audioQuality: options.quality || '0',
-        output: '-',
-        args: [
-            '--audio-format', 'mp3',
-            '--postprocessor-args', `ffmpeg:-b:a ${options.bit_rate}`,
-        ],
-    };
+    try {
+        const download_options = {
+            extractAudio: true,
+            audioFormat: 'mp3',
+            audioQuality: options.quality || '0',
+            output: '-',
+            args: [
+                '--audio-format', 'mp3',
+                '--postprocessor-args', `ffmpeg:-b:a ${options.bit_rate}`,
+            ],
+        };
 
-    const downloadProcess = Downloader.download(
-        `https://www.youtube.com/watch?v=${youtube_video_id}`,
-        download_options
-    );
+        const downloadProcess = Downloader.download(
+            `https://www.youtube.com/watch?v=${youtube_video_id}`,
+            download_options
+        );
 
-    res.setHeader('Content-Type', 'audio/mpeg');                             // Crucial for Safari
-    res.setHeader('Content-Disposition', 'inline; filename="track.mp3"');    // Helps with Blob usability
-    res.setHeader('Cache-Control', 'no-cache');                              // Prevent aggressive caching
-    res.setHeader('Accept-Ranges', 'bytes');                                 // Allows seeking/streaming
+        res.setHeader('Content-Type', 'audio/mpeg');                             // Crucial for Safari
+        res.setHeader('Content-Disposition', 'inline; filename="track.mp3"');    // Helps with Blob usability
+        res.setHeader('Cache-Control', 'no-cache');                              // Prevent aggressive caching
+        res.setHeader('Accept-Ranges', 'bytes');                                 // Allows seeking/streaming
 
-    downloadProcess.stdout.pipe(res);
+        downloadProcess.stdout.pipe(res);
 
-    downloadProcess.stderr.on('data', (data) => {
-        const str = data.toString();
-        if (str.trim().startsWith('bright-')) {
-            try {
-                const progress = JSON.parse(str.trim().replace(/^bright-/, ''));
-                progress_emitter.emit(youtube_video_id, progress);
-            } catch (error) {}
-        }
-    });
+        downloadProcess.stderr.on('data', (data) => {
+            const str = data.toString();
+            if (str.trim().startsWith('bright-')) {
+                try {
+                    const progress = JSON.parse(str.trim().replace(/^bright-/, ''));
+                    progress_emitter.emit(youtube_video_id, progress);
+                } catch (error) {}
+            }
+        });
 
-    downloadProcess.on('close', (code) => {
-        console.log(`Download process exited with code ${code}`);
-        if (code !== 0) {
-            res.end();
-        }
-        progress_emitter.emit(`${youtube_video_id}_done`);
-    });
+        downloadProcess.on('close', (code) => {
+            console.log(`Download process exited with code ${code}`);
+            progress_emitter.emit(`${youtube_video_id}_done`);
+            if (code !== 0) {
+                if (!res.headersSent) {
+                    res.status(500).send(`Download process failed with code ${code}`);
+                } else if (!res.writableEnded) {
+                    res.end();
+                }
+                // Do NOT throw here!
+                return;
+            }
+            // throw new Error(`Download process failed with code ${code}`);
+        });
+    } catch (error) {
+        // console.error('Error during audio download:', error);   
+        throw error;
+    }
 }
 
 async function download_audio_artwork_to_stream(res, youtube_video_id) {

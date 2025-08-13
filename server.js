@@ -564,7 +564,7 @@ app.post("/audio/download/:audio_id", async (req, res) => {
         console.log('Downloading audio file with ID:', audio_id);
         Music.youtube.download_stream(res, audio_id, req.body);
     } catch (error) {
-        console.error('Error fetching audio file:', error);
+        console.error('Error fetching audio file:', error.message);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
@@ -578,7 +578,7 @@ app.get("/audio/artwork/:audio_id", async (req, res) => {
         console.log('getting artwork with ID:', audio_id);
         Music.get_artwork(res, audio_id);
     } catch (error) {
-        console.error('Error fetching audio file:', error);
+        console.error('Error fetching audio file:', error.message);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
@@ -592,7 +592,7 @@ app.get("/audio/stream/:audio_id", async (req, res) => {
         console.log('Streaming audio file with ID:', audio_id);
         Music.youtube.stream(res, audio_id);
     } catch (error) {
-        console.error('Error fetching audio file:', error);
+        console.error('Error fetching audio file:', error.message);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
@@ -606,7 +606,7 @@ app.get("/music/stream/:audio_id", async (req, res) => {
         console.log('Streaming audio file with ID:', audio_id);
         Music.youtube.download_stream(res, audio_id);
     } catch (error) {
-        console.error('Error fetching audio file:', error);
+        console.error('Error fetching audio file:', error.message);
         res.status(500).json({ error: 'Internal server error' });
     }
 });

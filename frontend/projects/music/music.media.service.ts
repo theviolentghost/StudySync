@@ -355,11 +355,11 @@ export class MusicMediaService {
             };
             
             this.download_progress_map.set(video_id, 0); 
-            this.listen_to_progress(video_id);
+            const event_source = this.listen_to_progress(video_id);
             let [audio_blob, artwork_blob] = await Promise.all([
                 lastValueFrom(
                     this.http.post(
-                        `${this.Auth.backendURL}/audio/download/${video_id}`,
+                        `/audio/download/${video_id}`,
                         { ...download_options },
                         { responseType: 'blob' }
                     )
@@ -367,18 +367,23 @@ export class MusicMediaService {
                 null
                 // lastValueFrom(
                 //     this.http.get(
-                //         `${this.Auth.backendURL}/audio/artwork/${video_id}`,
+                //         `/audio/artwork/${video_id}`,
                 //         { responseType: 'blob' }
                 //     )
                 // )
             ]);
+            console.log('Audio blob received:', audio_blob);
 
             setTimeout(()=>{
                 this.download_progress_map.delete(video_id); //temp
             }, 850); // allow the progress bar to finish visually before removing it
+            (await event_source).close();
 
             if(!audio_blob || audio_blob.size === 0 || audio_blob.type !== 'audio/mpeg') {
                 console.error('No audio blob received from server');
+                clearInterval(this._fake_update_interval);
+                this.download_progress_map.delete(video_id);
+                this.download_queue_set.delete(video_id); // just in case
                 return;
             }
             if(!artwork_blob) {
@@ -417,29 +422,34 @@ export class MusicMediaService {
         }
     }
 
+    private _fake_update_interval: any = null;
     async listen_to_progress(video_id: string) {
         let fake_loading_limit = Math.floor(Math.random() * 50) + 15; // Random limit between 15 and 65
         let fake_loading_progress = 0;
-        console.log('Listening to progress for video ID:', video_id);
-        const eventSource = new EventSource(`${this.Auth.backendURL}/audio/progress/${video_id}`);
+
+        const eventSource = new EventSource(`/audio/progress/${video_id}`);
         eventSource.onmessage = (event) => {
             const progress = JSON.parse(event.data);
-            clearInterval(fake_loading);
+            clearInterval(this._fake_update_interval);
             let total = progress.total || progress.total_estimate;
             this.download_progress_map.set(video_id, ((fake_loading_limit / 100) + (progress.downloaded / (total)) * .75) * 100); 
         };
         eventSource.onerror = (err) => {
             this.download_progress_map.set(video_id, 100);
             eventSource.close();
+            console.error('Error listening to progress:', err);
+            clearInterval(this._fake_update_interval);
         };
-        let fake_loading = setInterval(() => {
+        this._fake_update_interval = setInterval(() => {
             if (fake_loading_progress >= fake_loading_limit) {
-                clearInterval(fake_loading);
+                clearInterval(this._fake_update_interval);
                 return;
             }
             fake_loading_progress += Math.floor(Math.random() * 2) + 1; // Simulate progress
             this.download_progress_map.set(video_id, Math.min(fake_loading_limit, fake_loading_progress));
         }, Math.floor(Math.random() * 340) + 140);
+
+        return eventSource;
     }
 
     async save_song_to_indexDB(key: string, data: Song_Data): Promise<boolean> {

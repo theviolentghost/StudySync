@@ -147,7 +147,7 @@ export class SearchComponent implements AfterViewInit {
 
         this.media.get_watch_playlist(track_data.id.video_id).then(async (playlist) => {
             if (playlist && playlist.songs && playlist.songs.length > 0) {
-                await this.player.load_playlist(playlist, false, false);
+                await this.player.load_playlist(playlist, true, false);
                 this.player.load_song_data_array_into_playlist_cache(playlist.song_data || []);
             } else {
                 console.warn('No tracks found in the watch playlist for:', track_data?.id.video_id);

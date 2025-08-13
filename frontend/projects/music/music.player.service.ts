@@ -156,6 +156,7 @@ export class MusicPlayerService {
     set shuffle(value: boolean) {
         this._shuffle = value;
         if (value) this.shuffle_playlist();
+        else this.unshuffle_playlist();
     }
     get shuffle(): boolean {
         return this._shuffle;
@@ -296,6 +297,8 @@ export class MusicPlayerService {
 
     private async load_track(track_key: string, track_data?: Song_Data | null): Promise<void> {
         if (!this.audio_element) throw new Error("Audio element is not set.");
+
+        this.unload_audio();
 
         this.song_changed.emit();
         this.loading = true;
@@ -443,6 +446,9 @@ export class MusicPlayerService {
                     // fresh url with fresh blob
                     source_url = URL.createObjectURL(new Blob([array_buffer]));
                     is_local_content = true; // Local content, safe to use audio context
+
+                    // in future, when download quality matters, change index based on quality
+                    this.hls_level_changed.emit({index: 3, details: {downloaded: true}});
                 }
             } else {
                 const hls_stream_data = await this.media.get_hls_stream(track_key);
@@ -489,6 +495,22 @@ export class MusicPlayerService {
                 this.loadAudioController = null;
             }
         }
+    }
+
+    private unload_audio(): void {
+        if (!this.audio_element) return;
+
+        this.audio_element.pause();
+        this.audio_element.src = '';
+        this.audio_element.load();
+
+        // Reset HLS if it exists
+        if (this.hls) {
+            this.hls.loadSource('');
+        }
+
+        // Reset current song data
+        this.current_song_data = null;
     }
 
     async load_and_play_track(track_key: string, track_data?: Song_Data): Promise<void> {
@@ -951,6 +973,36 @@ export class MusicPlayerService {
         }
     }
 
+    unshuffle_playlist(): void {
+        if (this.current_playlist && this.current_playlist.songs.size > 0) {
+            // Reset to original order based on playlist
+            const original_order = Array.from(this.current_playlist.songs.values());
+            
+            if (this.current_song) {
+                // Find the current song's index in the original playlist
+                const current_song_index = original_order.findIndex(song => 
+                    this.media.song_key(song) === this.media.song_key(this.current_song!)
+                );
+                
+                if (current_song_index !== -1) {
+                    // Split the playlist: songs after current + songs before current
+                    const songs_after_current = original_order.slice(current_song_index + 1);
+                    const songs_before_current = original_order.slice(0, current_song_index);
+                    
+                    // Combine: songs after current come first, then songs before current
+                    this.playlist_queue.queue = [...songs_after_current, ...songs_before_current];
+                } else {
+                    // Current song not found in playlist, use original order without current song
+                    this.playlist_queue.queue = original_order.filter(song => 
+                        this.media.song_key(song) !== this.media.song_key(this.current_song!)
+                    );
+                }
+            } else {
+                // No current song, use original order
+                this.playlist_queue.queue = [...original_order];
+            }
+        }
+    }
     load_and_play_random_song(): void {
         if (this.playlist_queue.queue.length === 0) {
             console.warn("No songs available to load.");
