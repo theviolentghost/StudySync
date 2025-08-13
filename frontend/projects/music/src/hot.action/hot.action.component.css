@@ -10,7 +10,7 @@
     flex-direction: column;
     background-color: var(--color-background);
     z-index: 10000;
-    transition: bottom 0.65s ease-in-out;
+    transition: bottom 0.25s ease-in-out;
 }
 :host.revealed {
     bottom: 0%;

@@ -74,8 +74,8 @@
                         cdkDrag
                         cdkDragLockAxis="y"
                         [cdkDragData]="video"
-                        (cdkDragStarted)="onDragStart()"
-                        (cdkDragEnded)="onDragEnd()"
+                        (cdkDragStarted)="start_dragging()"
+                        (cdkDragEnded)="stop_dragging()"
                         [ngClass]="{
                             selected: get_bare_song_key(current_song_identifier) === get_bare_song_key(video?.id),
                             'added-to-next': added_to_next_swiping_video === video_key(video, i),
@@ -115,7 +115,16 @@
                             <button [ngClass]="{hidden: swipe_x < -delete_swipe_open_size}" [style.background-color]="'var(--color-neutral)'" class="action" [style.--mask]="'url(' + 'dots.svg' + ')'"></button>
                             <button [style.background-color]="'var(--color-deny)'" class="action" [style.--mask]="'url(' + 'trash.svg' + ')'"></button>
                         </div>
-                        <div class="moveable" cdkDragHandle [style.--mask]="'url(' + 'grip-horizontal.svg' + ')'"></div>
+                        <div 
+                            class="moveable" 
+                            cdkDragHandle 
+                            [style.--mask]="'url(' + 'grip-horizontal.svg' + ')'"
+                            (mousedown)="start_dragging();"
+                            (touchstart)="start_dragging();"
+                            (mouseup)="stop_dragging();"
+                            (touchend)="stop_dragging();"
+                            (mouseleave)="stop_dragging();"
+                        ></div>
                     </button>
                 </div>
                 <div style="width: 100%; margin: var(--space-2);">
@@ -136,8 +145,8 @@
                         cdkDrag
                         cdkDragLockAxis="y"
                         [cdkDragData]="video"
-                        (cdkDragStarted)="onDragStart()"
-                        (cdkDragEnded)="onDragEnd()"
+                        (cdkDragStarted)="start_dragging()"
+                        (cdkDragEnded)="stop_dragging()"
                         [ngClass]="{
                             selected: get_bare_song_key(current_song_identifier) === get_bare_song_key(video?.id),
                             'added-to-next': added_to_next_swiping_video === video_key(video, i + play_next_queue_length ),
@@ -177,7 +186,16 @@
                             <button [ngClass]="{hidden: swipe_x < -delete_swipe_open_size}" [style.background-color]="'var(--color-neutral)'" class="action" [style.--mask]="'url(' + 'dots.svg' + ')'"></button>
                             <button [style.background-color]="'var(--color-deny)'" class="action" [style.--mask]="'url(' + 'trash.svg' + ')'"></button>
                         </div>
-                        <div class="moveable" cdkDragHandle [style.--mask]="'url(' + 'grip-horizontal.svg' + ')'"></div>
+                        <div 
+                            class="moveable" 
+                            cdkDragHandle 
+                            [style.--mask]="'url(' + 'grip-horizontal.svg' + ')'"
+                            (mousedown)="start_dragging();"
+                            (touchstart)="start_dragging();"
+                            (mouseup)="stop_dragging();"
+                            (touchend)="stop_dragging();"
+                            (mouseleave)="stop_dragging();"
+                        ></div>
                     </button>
                 </div>
                 <div class="add-to-queue">

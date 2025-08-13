@@ -103,6 +103,7 @@ async function setup_spotify_auth(retry_depth = 0) {
     try {
         const creds = await spotify_api.clientCredentialsGrant();
         spotify_api.setAccessToken(creds.body.access_token);
+        console.log('Spotify authentication set up successfully');
     } catch (error) {
         console.error('Error setting up Spotify authentication');
         await setup_spotify_auth(retry_depth + 1);

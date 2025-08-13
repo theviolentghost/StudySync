@@ -457,6 +457,7 @@ export class QuickActionComponent {
                 // Hold gesture completed
                 this.gesture_type = 'hold';
                 this.swipe_x = 0;
+                console.log('Hold gesture detected');
                 this.trigger_add_to_next(video);
                 this.hold_progress = 100;
             } else {
@@ -676,16 +677,13 @@ export class QuickActionComponent {
 
 
     dragging = false;
-    onDragStart() {
+    start_dragging() {
         // Disable swipe when drag starts
         this.resetSwipeState();
         this.dragging = true;
-
     }
 
-    onDragEnd() {
+    stop_dragging() {
         this.dragging = false;
-        // Re-enable swipe functionality after drag ends
-        // No action needed as swipe state is already reset
     }
 }

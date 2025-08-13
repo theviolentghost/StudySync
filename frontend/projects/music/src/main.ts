@@ -59,31 +59,14 @@ if ('serviceWorker' in navigator && !isDevMode()) {
                     }
                 });
 
-                // ✅ Wait for service worker to be ready, then request version
-                if (registration.active) {
-                    // SW is already active, request version immediately
-                    registration.active.postMessage({ type: 'GET_VERSION' });
-                } else {
-                    // Wait for SW to become active
-                    registration.addEventListener('statechange', () => {
-                        if (registration.active) {
-                            registration.active.postMessage({ type: 'GET_VERSION' });
-                        }
-                    });
-                }
-
-                // ✅ Get initial cached version manually as fallback
                 const cache = await caches.open(CURRENT_CACHE_NAME);
                 const stored_version_response = await cache.match(VERSION_URL);
                 const stored_version = stored_version_response ?
                     (await stored_version_response.text()).trim().toLowerCase() :
                     '0.0.0'; // Default version if not found
-                
-                // Set initial version if not already set by SW message
-                if (!window.version_service.version || window.version_service.version === '0.0.0') {
-                    window.version_service.version = stored_version;
-                    if (LOGGING_ENABLED) console.log('Set initial version from cache:', stored_version);
-                }
+                window.version_service.version = stored_version;
+                if (LOGGING_ENABLED) console.log(window.version_service.version);
+                if (LOGGING_ENABLED) console.log(stored_version);
 
                 const should_update = await should_update_app(stored_version);
                 if (LOGGING_ENABLED) console.log('🔄 Update check complete, should update:', should_update);
@@ -115,7 +98,7 @@ async function should_update_app(stored_version: string): Promise<boolean> {
         }
 
         const server_version = (await server_version_response.text()).trim();
-        if (LOGGING_ENABLED) console.log('Server version:', server_version);
+        
 
         if(!server_version) return false;
 

@@ -351,6 +351,9 @@
 .control-button.active, .modifiers .modifier-button.active {
     --color: var(--color-primary);
 }
+.control-button.error, .modifiers .modifier-button.error {
+    --color: var(--color-deny);
+}
 .controls .control-button:first-child {
     margin-right: auto;
 }
@@ -372,6 +375,10 @@
 }
 .controls .control-button.inverse.active, .modifiers .modifier-button.inverse.active, .player-status.inverse.active {
     background-color: var(--color-primary);
+    cursor: pointer;
+}
+.controls .control-button.inverse.error, .modifiers .modifier-button.inverse.error, .player-status.inverse.error {
+    background-color: var(--color-deny);
     cursor: pointer;
 }
 .controls .control-button.inverse.spinner, .modifiers .modifier-button.inverse.spinner, .player-status.inverse.spinner {
@@ -422,6 +429,9 @@
 }
 .controls .control-button.active .indicator {
     background-color: var(--color-primary);
+}
+.controls .control-button.error .indicator {
+    background-color: var(--color-deny);
 }
 .modifiers {
     width: 35%;
@@ -502,4 +512,35 @@
     z-index: 4;
     pointer-events: none;
     background: transparent;
+}
+.audio-info {
+    width: 100%;
+    position: absolute;
+    bottom: var(--space-1);
+    z-index: 100;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+.audio-info .quality{
+    position: relative;
+    width: var(--space-6);
+    height: var(--space-6);
+}
+.audio-info .quality-update {
+    position: relative;
+    width: var(--space-4);
+    height: var(--space-5);
+}
+.audio-info .quality::before, .audio-info .quality-update::before {
+    content: "";
+    mask-image: var(--mask);
+    mask-position: center;
+    mask-size: cover;
+    mask-repeat: no-repeat;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    background-color: var(--primary);
 }

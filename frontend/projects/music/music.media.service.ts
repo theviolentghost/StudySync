@@ -485,12 +485,18 @@ export class MusicMediaService {
     async get_hls_stream(key: string): Promise<any | null> {
         // returns hls data for the song
         const video_id = key.split(':').pop() || '';
-        const response = ((await lastValueFrom(
-            this.http.get(
-                `/stream?video_id=${encodeURIComponent(video_id)}`,
-            )
-        )) as any);
-        console.log('HLS stream response:', response);
+        let response: any;
+        try {
+            response = ((await lastValueFrom(
+                this.http.get(
+                    `/stream?video_id=${encodeURIComponent(video_id)}`,
+                )
+            )) as any);
+        } catch (error) {
+            console.error('Error fetching HLS stream:', error);
+            return null;
+        }
+        // console.log('HLS stream response:', response);
         return response || null;
     }
 

@@ -549,7 +549,9 @@
 
 .result.video.cdk-drag {
     transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
-    /* cursor: grab; */
+    cursor: grab;
+    border: none;
+    opacity: 0.9;
 }
 
 .result.video.cdk-drag-dragging {
@@ -564,7 +566,6 @@
     opacity: 0.3;
     background-color: var(--color-background-300);
     border: 2px dashed var(--color-primary);
-    min-height: 80px;
 }
 
 .result.video.cdk-drag-animating {

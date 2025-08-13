@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Output, EventEmitter } from '@angular/core';
 import { ViewChild } from '@angular/core';
 
 import { HotActionComponent } from './src/hot.action/hot.action.component';
@@ -9,9 +9,19 @@ import { MusicMediaService, Song_Source, Song_Data, Song_Identifier, Song_Playli
 })
 export class HotActionService {
     @ViewChild('hot_action') hot_action!: HotActionComponent;
-    hot_action_open: boolean = false;
+    @Output() hot_action_opened: EventEmitter<boolean> = new EventEmitter<boolean>();
+    _hot_action_open: boolean = false;
     song_data: Song_Data | null = null;
     action: string = 'add_to_playlist';
+
+    get hot_action_open(): boolean {
+        return this._hot_action_open;
+    }
+
+    set hot_action_open(value: boolean) {
+        this._hot_action_open = value;
+        this.hot_action_opened.emit(value);
+    }
     
 
     constructor(private media: MusicMediaService) { }

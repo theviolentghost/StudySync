@@ -43,7 +43,7 @@
             [style.--primary]="get_playlist_primary_color(playlist)"
             [style.border-bottom]="isLast ? 'solid 1px transparent' : null"
         >
-            <div class="thumbnail">
+            <div class="thumbnail" [ngClass]="{'single': playlist.images.length === 1}">
                 <img *ngFor="let image of playlist?.images" [src]="image" alt="" />
             </div>
             <div class="name">{{ playlist.name }}</div>

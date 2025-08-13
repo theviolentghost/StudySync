@@ -205,6 +205,13 @@
 .result.video.delete-animation .extra-info {
     display: none;
 }
+.result.video.added-to-next {
+    animation: added-to-next-animation .20s ease-in-out forwards;
+    border: none;
+}
+.result-videos:has(.result.video.added-to-next) {
+    overflow-x: visible;
+}
 
 @keyframes delete-animation {
     0% {
@@ -219,9 +226,15 @@
 @keyframes added-to-next-animation {
     0% {
         scale: 1;
+        filter: brightness(1);
+    }
+    80% {
+        scale: 1.08;
+        filter: brightness(1.1);
     }
     100% {
-        scale: 1.05;
+        scale: 1;
+        filter: brightness(1);
     }
 }
 

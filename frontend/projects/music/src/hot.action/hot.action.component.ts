@@ -51,29 +51,34 @@ export class HotActionComponent {
         return this.hot_action.song_data;
     }
 
-    get playlist_identifiers(): Song_Playlist_Identifier[] {
-        return this.playlists.playlist_identifiers;
-    }
-
+    // get playlist_identifiers(): Song_Playlist_Identifier[] {
+    //     return this.playlists.playlist_identifiers;
+    // }
+    playlist_identifiers: Song_Playlist_Identifier[] = [];
+    playlist_selectors: { identifier: Song_Playlist_Identifier, selected: boolean, select: () => void, is_selectable: () => boolean, action: () => void }[] = [];
     private selected_playlists: Set<string> = new Set();
-    get playlist_selectors(): { identifier: Song_Playlist_Identifier, selected: boolean, select: () => void, is_selectable: () => boolean, action: () => void }[] {
-        return this.playlist_identifiers.map(playlist => {
-            let isSelected = this.selected_playlists.has(playlist.id);
+
+    private update_playlist_selectors(): void {
+        this.playlist_identifiers = this.playlists.playlist_identifiers;
+        this.selected_playlists.clear();
+        this.playlist_selectors = this.playlist_identifiers.map(playlist => {
+            let is_selected = this.selected_playlists.has(playlist.id);
         
             return {
-                identifier: playlist, // Return the full playlist object, not just the ID
-                selected: isSelected,
+                identifier: playlist,
+                get selected() {
+                    return is_selected;
+                },
                 select: () => {
-                    if (isSelected) {
+                    if (is_selected) {
                         this.selected_playlists.delete(playlist.id);
-                        isSelected = false;
+                        is_selected = false;
                     } else {
                         this.selected_playlists.add(playlist.id);
-                        isSelected = true;
+                        is_selected = true;
                     }
                 },
                 is_selectable: () => {
-                    // check if playlist contains song
                     if (!this.song_data) return true;
                     return !this.media.is_song_in_playlist(this.media.bare_song_key(this.song_data.id), playlist.id);
                 },
@@ -82,11 +87,15 @@ export class HotActionComponent {
                     this.playlists.add_song_to_playlist(this.song_data, playlist, await this.playlists.get_playlist(playlist));
                     console.log(`Adding song to playlist: ${playlist.id}`, this.song_data);
                 },
-            }
+            };
         });
     }
 
-    constructor(private playlists: PlaylistsService, private hot_action: HotActionService, private media: MusicMediaService, private player: MusicPlayerService, private router: Router) {}
+    constructor(private playlists: PlaylistsService, private hot_action: HotActionService, private media: MusicMediaService, private player: MusicPlayerService, private router: Router) {
+        this.hot_action.hot_action_opened.subscribe((opened: boolean) => {
+            if(opened) this.update_playlist_selectors();
+        });
+    }
 
     get actions(): {no_check?:boolean, name: string, icon: () => string, selected: boolean, select: () => void, action: () => void, is_selectable: () => boolean}[] {
         return this.default_actions;

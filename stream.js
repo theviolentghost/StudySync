@@ -411,7 +411,6 @@ class Adaptive_Stream {
                 let ffmpeg_started = false;
                 
                 ffmpeg_process.on('start', (commandLine) => {
-                    console.log('FFmpeg process started with command:', commandLine);
                     ffmpeg_started = true;
                     resolve(); // Resolve when FFmpeg starts, not when it ends
                 });
@@ -423,9 +422,9 @@ class Adaptive_Stream {
                     }
                 });
 
-                ffmpeg_process.on('end', () => {
-                    console.log('FFmpeg process ended normally');
-                });
+                // ffmpeg_process.on('end', () => {
+                //     console.log('FFmpeg process ended normally');
+                // });
 
                 // Start the FFmpeg process
                 ffmpeg_process.run();

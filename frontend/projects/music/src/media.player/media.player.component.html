@@ -50,6 +50,19 @@
                     [style.--color]="player_status === 'loading' ? 'var(--color-neutral)' : 'var(--color-primary)'"
                 />
             </div>
+            <div class="audio-info">
+                <div 
+                    class="quality" 
+                    [style.--mask]="'url(\'' + get_quality_icon + '\')'"
+                    [style.--primary]="(player_quality_update === 'up' ? 'var(--color-success)' : (player_quality_update === 'down' ? 'var(--color-deny)' : 'var(--color-primary)'))"
+                ></div>
+                <div 
+                    *ngIf="player_quality_update !== 'none'" 
+                    class="quality-update" 
+                    [style.--mask]="'url(\'' + get_quality_update_icon + '\')'"
+                    [style.--primary]="player_quality_update === 'up' ? 'var(--color-success)' : 'var(--color-deny)'"
+                ></div>
+            </div>
         </div>
         <audio id="audio" preload="auto" controls playsinline>
             <source id="audio-src" src="" type="audio/mpeg">
@@ -73,9 +86,14 @@
                 <button class="control-button" [ngClass]="{active: shuffle}" (click)="toggle_shuffle()" [style.--mask]="'url(' + 'arrows-shuffle.svg' + ')'">
                     <div class="indicator" *ngIf="shuffle"></div>
                 </button> <!-- shuffle-->
-                <button class="control-button active" [ngClass]="{active: player_status !== 'loading'}" (click)="previous()" [style.--mask]="'url(' + 'player-skip-back.svg' + ')'"></button> <!-- previous-->
-                <button class="control-button inverse" [ngClass]="{active: player_status !== 'loading', spinner: player_status === 'loading'}" (click)="toggle_play()" [style.--mask]="'url(' + (player_status !== 'loading' ? (player_status === 'paused' ? 'player-play.svg' : 'player-pause.svg') : 'loader.svg') + ')'"></button> <!-- play/pause-->
-                <button class="control-button active" [ngClass]="{active: player_status !== 'loading'}" (click)="next()" [style.--mask]="'url(' + 'player-skip-forward.svg' + ')'">
+                <button class="control-button active" [ngClass]="{active: player_status !== 'loading' && player_error == null, error: player_error !== null}" (click)="previous()" [style.--mask]="'url(' + 'player-skip-back.svg' + ')'"></button> <!-- previous-->
+                <button 
+                    class="control-button inverse"
+                    [ngClass]="{active: player_status !== 'loading' && player_error == null, spinner: player_status === 'loading' && player_error == null, error: player_error !== null}" 
+                    (click)="toggle_play()" 
+                    [style.--mask]="'url(' + play_button_icon + ')'"
+                ></button> <!-- play/pause-->
+                <button class="control-button active" [ngClass]="{active: player_status !== 'loading' && player_error == null, error: player_error !== null}" (click)="next()" [style.--mask]="'url(' + 'player-skip-forward.svg' + ')'">
                     <div class="indicator" *ngIf="preloaded_next_song"></div>
                 </button> <!-- skip-->
                 <button class="control-button" [style.--mask]="'url(' + 'repeat.svg' + ')'"></button> <!-- repeat-->

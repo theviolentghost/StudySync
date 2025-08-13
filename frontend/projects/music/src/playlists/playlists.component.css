@@ -22,8 +22,7 @@
     padding: var(--space-3);
     background-color: var(--color-background);
     z-index: 10;
-    /* border-radius: 0 0 var(--space-4) var(--space-4); */
-    box-shadow: 0 0 10px 10px var(--color-background-200);
+    box-shadow: 0 0 10px 10px var(--color-background);
 }
 .actions {
     position: relative;
@@ -99,7 +98,7 @@
     color: var(--color-text);
     flex-direction: row;
     padding: var(--space-2) 0;
-    border-bottom: solid 1px var(--color-background-400);
+    border-bottom: solid 1px var(--color-background-200);
     width: 100%;
     aspect-ratio: 16 / 16;
     max-height: var(--space-9);
@@ -141,6 +140,9 @@
     height: 100%;
     object-fit: cover;
     display: block;
+}
+.playlist .thumbnail.single img:nth-child(1) {
+    border-radius: var(--space-2);
 }
 .playlist .thumbnail img:nth-child(1) {
     border-top-left-radius: var(--space-2);

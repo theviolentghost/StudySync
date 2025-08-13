@@ -17,6 +17,12 @@ interface Noise_Node {
     color: [number, number, number]; 
 }
 
+export enum Player_Error {
+    NO_AUDIO = 'No audio playing',
+    COULD_NOT_LOAD = 'Could not load audio',
+    AUDIO_TIMED_OUT = 'Audio timed out',
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -25,6 +31,8 @@ export class MusicPlayerService {
     @Output() reduce_player: EventEmitter<void> = new EventEmitter<void>();
     @Output() track_loaded: EventEmitter<void> = new EventEmitter<void>();
     @Output() song_changed: EventEmitter<void> = new EventEmitter<void>();
+    @Output() song_error: EventEmitter<Player_Error> = new EventEmitter<Player_Error>();
+    @Output() hls_level_changed: EventEmitter<{index: number, details: any}> = new EventEmitter<{index: number, details: any}>();
     // private song_blob_cache: Map<string, Blob> = new Map();
 
     private current_media: Song_Data | null = null; // Current media data for media session
@@ -49,6 +57,7 @@ export class MusicPlayerService {
     public thumbnail_element: HTMLImageElement | null = null;
     loading: boolean = true;
     started_playing: boolean = false; 
+    error: string | null = null; // Error message if any
 
     private audio_context: AudioContext | null = null; // For advanced audio processing
     private audio_analyser: AnalyserNode | null = null; // For audio visualizations
@@ -68,8 +77,8 @@ export class MusicPlayerService {
                 startLevel: 0,                
                 autoStartLoad: true,             // Start loading immediately
                 enableWorker: true,              // Disable worker for immediate processing
-                maxBufferLength: 10,        // Increase from 5 to 10 seconds
-                maxMaxBufferLength: 30,     // Max buffer size
+                maxBufferLength: 120,        // Increase from 5 to 10 seconds
+                maxMaxBufferLength: 150,     // Max buffer size
                 maxBufferSize: 60 * 1000 * 1000, // 60MB buffer
                 
                 // ✅ Segment loading optimization
@@ -103,13 +112,16 @@ export class MusicPlayerService {
                 }
             });
 
-            // this.hls.on(Hls.Events.BUFFERED_TO_END, () => {
-            //     this.hls.startLoad(); // force resume fetching
-            // });
+            this.hls.on(Hls.Events.LEVEL_SWITCHED, (event, data) => {
+                // console.log('HLS level switched to:', data.level);
+                this.hls_level_changed.emit({index: data.level, details: this.hls?.levels[data.level]});
+
+            });
             
             this.hls.on(Hls.Events.ERROR, (event, data) => {
                 // console.error('HLS Error:', data);
                 if (data.fatal) {
+                    this.song_error.emit(Player_Error.COULD_NOT_LOAD);
                     console.error('Fatal HLS error encountered:', data);
                 }
             });
@@ -289,7 +301,7 @@ export class MusicPlayerService {
         this.loading = true;
         this.started_playing = false;
 
-        console.log("Loading track:", track_key, "with preloaded key:", this.media.song_key(this.next_song_data?.id), 'and next song data:', this.next_song_data);
+        // console.log("Loading track:", track_key, "with preloaded key:", this.media.song_key(this.next_song_data?.id), 'and next song data:', this.next_song_data);
         if(this.preloaded_next_song) {
             if(track_key === this.media.song_key(this.next_song_data?.id)) {
                 console.log("Loading preloaded next track:", this.next_song);
@@ -434,6 +446,12 @@ export class MusicPlayerService {
                 }
             } else {
                 const hls_stream_data = await this.media.get_hls_stream(track_key);
+                if( !hls_stream_data || !hls_stream_data?.success) {
+                    // could not get HLS stream, fallback to audio source
+                    console.log(`No HLS stream available for track ${track_key}, using audio source.`, hls_stream_data);
+                    this.song_error.emit(Player_Error.COULD_NOT_LOAD);
+                    return;
+                }
                 this.load_source_to_hls(hls_stream_data!);
 
                 is_local_content = false; // External content, likely CORS restricted
@@ -447,6 +465,7 @@ export class MusicPlayerService {
 
             if (!source_url) {
                 console.error(`No audio source found for track key: ${track_key}`);
+                this.song_error.emit(Player_Error.COULD_NOT_LOAD);
                 this.loading = false;
                 return;
             }
@@ -643,6 +662,17 @@ export class MusicPlayerService {
                         title: song.song_name,
                         artist: song.original_artists[0]?.name || 'Unknown Artist',
                     });
+                }
+
+                try {
+                    navigator.mediaSession.setPositionState({
+                        duration: (song.video_duration || 0) / 1000, // ms to s if needed
+                        playbackRate: 1,
+                        position: 0
+                    });
+                } catch (e) {
+                    // Some browsers may throw if not supported
+                    console.warn('Could not set position state:', e);
                 }
 
                 // HIGH PRIORITY: Use downloaded artwork blob first

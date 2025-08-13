@@ -9,7 +9,7 @@ import {
 } from '@angular/animations';
 
 import { MusicMediaService, Song_Data, DownloadQuality, Song_Playlist, Song_Source } from '../../music.media.service';
-import { MusicPlayerService } from '../../music.player.service';
+import { MusicPlayerService, Player_Error } from '../../music.player.service';
 import { PlaylistsService } from '../../playlists.service';
 import { HotActionComponent } from '../hot.action/hot.action.component';
 import { HotActionService } from '../../hot.action.service';
@@ -143,6 +143,11 @@ export class MediaPlayerComponent implements AfterViewInit, OnDestroy {
     }
     audio_current_time = 0;
     audio_duration = 0;
+    player_error: Player_Error | null = null; // Error message if any
+    player_hls_level = 0;
+    player_quality_update: 'up' | 'down' | 'none' = 'none';
+    player_quality_timeout = null;
+    user_has_internet = navigator.onLine; // Track internet connectivity
 
     constructor(
         private media: MusicMediaService,
@@ -151,6 +156,13 @@ export class MediaPlayerComponent implements AfterViewInit, OnDestroy {
         private hot_action: HotActionService,
         private quick_action: QuickActionService
     ) {
+        // check if the user has internet connection
+        window.addEventListener('online', () => {
+            this.user_has_internet = true;
+        });
+        window.addEventListener('offline', () => {
+            this.user_has_internet = false;
+        });
         this.player.open_player.subscribe(() => {
             this._visibility_status = 'visible';
             this.animationState = 'visible';
@@ -163,10 +175,28 @@ export class MediaPlayerComponent implements AfterViewInit, OnDestroy {
             if(this.player.song_data?.liked != this.buffer_like && this.buffer_like_clicked) this.toggle_like(); // sync like button state with song data after loading
             this.buffer_like = false;
             this.buffer_like_clicked = false;
+            this.player_error = null; // Reset player error on track load
         });
         this.player.song_changed.subscribe(() => {
             this.buffer_like = false; 
             this.buffer_like_clicked = false;
+            this.player_error = null; // Reset player error on song change
+        });
+        this.player.song_error.subscribe((error: Player_Error) => {
+            console.error('Player error:', error);
+            this.player_error = error;
+        });
+        this.player.hls_level_changed.subscribe((level: {index: number, details: any}) => {
+            clearTimeout(this.player_quality_timeout);
+            if(level.index !== this.player_hls_level) {
+                this.player_quality_timeout = setTimeout(()=>{
+                    this.player_quality_update = 'none';
+                }, 15 * 1000); // 15 sec
+                this.player_quality_update = this.player_hls_level > level.index ? 'down' : 'up';
+            }
+            this.player_hls_level = level.index;
+            console.log('HLS level changed to:', level.index);
+            console.log('HLS level details:', level.details);
         });
     }
 
@@ -175,6 +205,33 @@ export class MediaPlayerComponent implements AfterViewInit, OnDestroy {
     }
     get audio_started(): boolean {
         return this.player.started_playing;
+    }
+    get play_button_icon(): string {
+        if( this.player_error ) {
+            switch(this.player_error) {
+                case Player_Error.NO_AUDIO:
+                case Player_Error.COULD_NOT_LOAD:
+                    return 'alert-triangle.svg';
+                case Player_Error.AUDIO_TIMED_OUT:
+                    return 'reload.svg';
+            }
+        }
+        if (this.player_status === 'loading') return 'loader.svg';
+        return this.player_status === 'paused' ? 'player-play.svg' : 'player-pause.svg';
+    }
+
+    get get_quality_icon(): string {
+        if( !this.user_has_internet ) return 'antenna-bars-off.svg'; // Default icon for no internet
+        if( this.player_error !== null ) return 'antenna-bars-1.svg'; // Default icon for errors
+        if( this.player_hls_level === -1 ) return 'antenna-bars-5.svg';
+        if( typeof this.player_hls_level === 'number' ) return `antenna-bars-${this.player_hls_level+2}.svg`;
+        return 'antenna-bars-1.svg'; 
+    }
+
+    get get_quality_update_icon(): string {
+        if(this.player_quality_update === 'up') return 'arrow-narrow-up.svg';
+        if(this.player_quality_update === 'down') return 'arrow-narrow-down.svg';
+        return '';
     }
 
     source_options: Map<Song_Source, string> = new Map([

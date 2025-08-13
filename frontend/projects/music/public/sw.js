@@ -16,6 +16,53 @@ class File_Manager {
         '/music/index.html',
         '/music/app/manifest.webmanifest',
         '/music/app/version.txt',
+        '/music/alert-triangle.svg',
+        '/music/antenna-bars-1.svg',
+        '/music/antenna-bars-2.svg',
+        '/music/antenna-bars-3.svg',
+        '/music/antenna-bars-4.svg',
+        '/music/antenna-bars-5.svg',
+        '/music/antenna-bars-off.svg',
+        '/music/arrow-narrow-down.svg',
+        '/music/arrow-narrow-up.svg',
+        '/music/arrows-shuffle.svg',
+        '/music/badge-cc-fill.svg',
+        '/music/badge-cc.svg',
+        '/music/brand-musi.svg',
+        '/music/brand-musix.svg',
+        '/music/brand-spotify.svg',
+        '/music/brand-youtube.svg',
+        '/music/check.svg',
+        '/music/chevron-down.svg',
+        '/music/chevron-left.svg',
+        '/music/chevron-up.svg',
+        '/music/cloud-down.svg',
+        '/music/cloud-download.svg',
+        '/music/disco-ball-fill.svg',
+        '/music/dots.svg',
+        '/music/download.svg',
+        '/music/edit.svg',
+        '/music/grip-horizontal.svg',
+        '/music/heart-fill.svg',
+        '/music/heart.svg',
+        '/music/loader.svg',
+        '/music/music.svg',
+        '/music/palette.svg',
+        '/music/player-pause.svg',
+        '/music/player-play.svg',
+        '/music/player-skip-back.svg',
+        '/music/player-skip-forward.svg',
+        '/music/playlist.svg',
+        '/music/plus.svg',
+        '/music/reload.svg',
+        '/music/repeat.svg',
+        '/music/search.svg',
+        '/music/share.svg',
+        '/music/trash.svg',
+        '/music/users.svg',
+        '/music/world-search.svg',
+        '/music/x.svg',
+        ''
     ];
     static STATIC_ASSET_DIRECTORIES = [
         '/music/app/'
@@ -369,6 +416,16 @@ class File_Manager {
         pending_critical_update = true;
         this.notify_clients_critical_update();
     }
+
+
+
+
+
+
+
+
+
+
 
     // Notify clients about critical updates that require reload
     async notify_clients_critical_update() {

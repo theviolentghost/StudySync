@@ -47,8 +47,11 @@
                                 <div class="title">{{ video.snippet.title }}</div>
                                 <div class="artist">{{ video.snippet.channelTitle }}</div>
                             </div>
-                            <button class="hot-action" [style.--mask]="'url(\'plus.svg\')'" (click)="open_hot_action(video, 'youtube'); $event.stopPropagation();">
+                            <!-- <button class="hot-action" [style.--mask]="'url(\'plus.svg\')'" (click)="open_hot_action(video, 'youtube'); $event.stopPropagation();">
                                 <div *ngIf="is_song_in_collection(video, 'youtube')" class="saved-indicator" [style.--mask]="'url(\'check.svg\')'"></div>
+                            </button> -->
+                            <button class="hot-action" [style.--mask]="'url(\'' + (is_song_in_collection(video, 'youtube') ? 'check.svg' : 'plus.svg') + '\')'" (click)="open_hot_action(video, 'youtube'); $event.stopPropagation();">
+                                <!-- <div *ngIf="is_song_in_collection(track, 'spotify')" class="saved-indicator" [style.--mask]="'url(\'check.svg\')'"></div> -->
                             </button>
                         </button>
                     </div>
