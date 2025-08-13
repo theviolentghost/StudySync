@@ -124,7 +124,7 @@ body {
 .show-scrollbar::-webkit-scrollbar {
     display: block;
 }
-button, input, select, textarea {
+/* button, input, select, textarea {
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
@@ -137,7 +137,7 @@ button:hover, input:hover, select:hover, textarea:hover, div:hover{
     color: inherit;
     transform: none;
     box-shadow: none;
-}
+} */
 /* button {
     transition: filter 0.15s ease-in-out;
 }
