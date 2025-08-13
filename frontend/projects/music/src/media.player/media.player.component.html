@@ -23,7 +23,16 @@
         </div>
     </button>
     <div class="media">
-        <div #media class="draggable"></div>
+        <div #media 
+            class="draggable"
+            (touchstart)="onTouchStart($event)"
+            (touchmove)="onTouchMove($event)"
+            (touchend)="onTouchEnd($event)"
+            (mousedown)="onMouseDown($event)"
+            (mousemove)="onMouseMove($event)"
+            (mouseup)="onMouseUp($event)"
+            (mouseleave)="onMouseUp($event)"
+        ></div>
         <div class="thumbnail">
             <img id="thumbnail" src="" style="pointer-events: none;" [ngClass]="{disco: disco_mode }"/>
             <div class="main-audio-progress">

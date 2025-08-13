@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, ElementRef, ViewChild } from '@angular/core';
+import { Component, AfterViewInit, ElementRef, ViewChild, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { 
   trigger, 
@@ -70,13 +70,13 @@ import { QuickActionService } from '../../quick.action.service';
     ])
   ]
 })
-export class MediaPlayerComponent implements AfterViewInit {
+export class MediaPlayerComponent implements AfterViewInit, OnDestroy {
     @ViewChild('playerContainer', { static: false }) playerContainer!: ElementRef<HTMLElement>;
     @ViewChild('media', { static: false }) mediaContainer!: ElementRef<HTMLElement>;
 
     _visibility_status: 'visible' | 'reduced' | 'hidden' = 'hidden';
 
-    set _isibility_status(status: 'visible' | 'reduced' | 'hidden') {
+    set visibility_status(status: 'visible' | 'reduced' | 'hidden') {
         this._visibility_status = status;
         if (status === 'hidden') {
             this.dragOffset = 0; // Reset drag offset when hiding
@@ -188,6 +188,11 @@ export class MediaPlayerComponent implements AfterViewInit {
         return this.source_options.get(source) || 'var(--color-primary)'; // default to gray if source not found
     }
 
+    ngOnDestroy(): void {
+        // Clean up any remaining document event listeners
+        this.removeDocumentMouseListeners();
+    }
+
     ngAfterViewInit() {
         const audio = document.getElementById('audio') as HTMLAudioElement;
         audio.ontimeupdate = () => this.audio_current_time = audio.currentTime;
@@ -206,73 +211,170 @@ export class MediaPlayerComponent implements AfterViewInit {
         this.setupTouchListeners();
     }
 
-    private setupTouchListeners(): void {
-        if (!this.mediaContainer) return;
+    // Touch event handlers
+    onTouchStart(event: TouchEvent): void {
+        if (this.visibility_status !== 'visible') return;
+        
+        this.isDragging = true;
+        this.startY = event.touches[0].clientY;
+        this.lastTouchTime = Date.now();
+        this.lastTouchY = this.startY;
+        
+        // Prevent body scroll
+        document.body.style.overflow = 'hidden';
+    }
 
-        const element = this.mediaContainer.nativeElement;
+    onTouchMove(event: TouchEvent): void {
+        if (!this.isDragging || this.visibility_status !== 'visible') return;
+        
+        event.preventDefault();
+        const currentY = event.touches[0].clientY;
+        const deltaY = currentY - this.startY;
+        
+        // Only allow downward dragging
+        if (deltaY > 0) {
+            // Apply resistance
+            this.currentDragOffset = Math.min(deltaY * 0.8, window.innerHeight * 0.85);
+            this.dragOffset = this.currentDragOffset;
+            this.animationState = 'dragging';
 
-        // Touch start
-        element.addEventListener('touchstart', (e: TouchEvent) => {
-            if (this.visibility_status !== 'visible') return;
-            
-            this.isDragging = true;
-            this.startY = e.touches[0].clientY;
-            this.lastTouchTime = Date.now();
-            this.lastTouchY = this.startY;
-            
-            // Prevent body scroll
-            document.body.style.overflow = 'hidden';
-        }, { passive: true });
+            this.calculatedHeight = Math.max(0, this.window_height - this.dragOffset); 
+        }
+        
+        // Track velocity
+        const now = Date.now();
+        if (now - this.lastTouchTime > 16) { // ~60fps throttling
+            this.lastTouchTime = now;
+            this.lastTouchY = currentY;
+        }
+    }
 
-        // Touch move
-        element.addEventListener('touchmove', (e: TouchEvent) => {
-            if (!this.isDragging || this.visibility_status !== 'visible') return;
-            
-            e.preventDefault();
-            const currentY = e.touches[0].clientY;
-            const deltaY = currentY - this.startY;
-            
-            // Only allow downward dragging
-            if (deltaY > 0) {
-                // Apply resistance
-                this.currentDragOffset = Math.min(deltaY * 0.8, window.innerHeight * 0.85);
-                this.dragOffset = this.currentDragOffset;
-                this.animationState = 'dragging';
+    onTouchEnd(event: TouchEvent): void {
+        if (!this.isDragging || this.visibility_status !== 'visible') return;
+        
+        this.isDragging = false;
+        document.body.style.overflow = '';
+        
+        const velocity = this.calculateVelocity();
+        const shouldReduce = this.currentDragOffset > this.dragThreshold || velocity > this.velocityThreshold - 2;
+        
+        if (shouldReduce) {
+            this._visibility_status = 'reduced';
+            this.animationState = 'reduced';
+        } else {
+            this.animationState = 'visible';
+        }
+        
+        this.currentDragOffset = 0;
+    }
 
-                this.calculatedHeight = Math.max(0, this.window_height - this.dragOffset); 
-            }
-            
-            // Track velocity
-            const now = Date.now();
-            if (now - this.lastTouchTime > 16) { // ~60fps throttling
-                this.lastTouchTime = now;
-                this.lastTouchY = currentY;
-            }
-        }, { passive: false });
+    // Mouse event handlers
+    onMouseDown(event: MouseEvent): void {
+        if (this.visibility_status !== 'visible') return;
+        
+        this.isDragging = true;
+        this.startY = event.clientY;
+        this.lastTouchTime = Date.now();
+        this.lastTouchY = this.startY;
+        
+        // Prevent text selection and other mouse behaviors
+        event.preventDefault();
+        document.body.style.userSelect = 'none';
+        document.body.style.overflow = 'hidden';
+        
+        // Change cursor to indicate dragging
+        document.body.style.cursor = 'grabbing';
+        
+        // Add document listeners for mouse move and up
+        this.addDocumentMouseListeners();
+    }
 
-        // Touch end
-        element.addEventListener('touchend', () => {
-            if (!this.isDragging || this.visibility_status !== 'visible') return;
-            
+    onMouseMove(event: MouseEvent): void {
+        if (!this.isDragging || this.visibility_status !== 'visible') return;
+        
+        const currentY = event.clientY;
+        const deltaY = currentY - this.startY;
+        
+        // Only allow downward dragging
+        if (deltaY > 0) {
+            // Apply resistance (slightly more for mouse since it's easier to control)
+            this.currentDragOffset = Math.min(deltaY * 0.8, window.innerHeight * 0.85);
+            this.dragOffset = this.currentDragOffset;
+            this.animationState = 'dragging';
+
+            this.calculatedHeight = Math.max(0, this.window_height - this.dragOffset);
+        }
+        
+        // Track velocity for mouse movements
+        const now = Date.now();
+        if (now - this.lastTouchTime > 16) { // ~60fps throttling
+            this.lastTouchTime = now;
+            this.lastTouchY = currentY;
+        }
+    }
+
+    onMouseUp(event: MouseEvent): void {
+        if (!this.isDragging || this.visibility_status !== 'visible') return;
+        
+        this.isDragging = false;
+        
+        // Restore body styles
+        document.body.style.userSelect = '';
+        document.body.style.overflow = '';
+        document.body.style.cursor = '';
+        
+        const velocity = this.calculateVelocity();
+        const shouldReduce = this.currentDragOffset > this.dragThreshold || velocity > this.velocityThreshold;
+        
+        if (shouldReduce) {
+            this._visibility_status = 'reduced';
+            this.animationState = 'reduced';
+        } else {
+            this.animationState = 'visible';
+        }
+        
+        this.currentDragOffset = 0;
+        
+        // Remove document listeners
+        this.removeDocumentMouseListeners();
+    }
+
+    onMouseLeave(event: MouseEvent): void {
+        if (this.isDragging) {
             this.isDragging = false;
+            document.body.style.userSelect = '';
             document.body.style.overflow = '';
+            document.body.style.cursor = '';
             
-            const velocity = this.calculateVelocity();
-            const shouldReduce = this.currentDragOffset > this.dragThreshold || velocity > this.velocityThreshold - 2;
-            
-            if (shouldReduce) {
-                this._visibility_status = 'reduced';
-                this.animationState = 'reduced';
-            } else {
-                this.animationState = 'visible';
-            }
-            
+            // Snap back to visible when mouse leaves
+            this.animationState = 'visible';
             this.currentDragOffset = 0;
-            // this.dragOffset = 0;
-        }, { passive: true });
+            
+            // Remove document listeners
+            this.removeDocumentMouseListeners();
+        }
+    }
 
-        // Desktop mouse support
-        this.setupMouseListeners(element);
+    private addDocumentMouseListeners(): void {
+        document.addEventListener('mousemove', this.boundMouseMove);
+        document.addEventListener('mouseup', this.boundMouseUp);
+        document.addEventListener('mouseleave', this.boundMouseLeave);
+    }
+
+    private removeDocumentMouseListeners(): void {
+        document.removeEventListener('mousemove', this.boundMouseMove);
+        document.removeEventListener('mouseup', this.boundMouseUp);
+        document.removeEventListener('mouseleave', this.boundMouseLeave);
+    }
+
+    // Bound methods for proper event listener cleanup
+    private boundMouseMove = (event: MouseEvent) => this.onMouseMove(event);
+    private boundMouseUp = (event: MouseEvent) => this.onMouseUp(event);
+    private boundMouseLeave = (event: MouseEvent) => this.onMouseLeave(event);
+
+    private setupTouchListeners(): void {
+        // This method is now empty since we use HTML event bindings
+        // Keep it for backwards compatibility if needed
     }
 
     private calculateVelocity(): number {
@@ -281,101 +383,6 @@ export class MediaPlayerComponent implements AfterViewInit {
         
         const distance = this.currentDragOffset;
         return distance / timeDelta;
-    }
-
-    private setupMouseListeners(element: HTMLElement): void {
-        let isMouseDragging = false;
-        let mouseStartY = 0;
-
-        // Mouse down
-        element.addEventListener('mousedown', (e: MouseEvent) => {
-            // console.log('Mouse down on media player');
-            if (this.visibility_status !== 'visible') return;
-            
-            isMouseDragging = true;
-            mouseStartY = e.clientY;
-            this.startY = e.clientY;
-            this.lastTouchTime = Date.now();
-            this.lastTouchY = this.startY;
-            
-            // Prevent text selection and other mouse behaviors
-            e.preventDefault();
-            document.body.style.userSelect = 'none';
-            document.body.style.overflow = 'hidden';
-            
-            // Change cursor to indicate dragging
-            document.body.style.cursor = 'grabbing';
-        });
-
-        // Mouse move - attach to document to handle movement outside element
-        document.addEventListener('mousemove', (e: MouseEvent) => {
-            if (!isMouseDragging || this.visibility_status !== 'visible') return;
-            
-            const currentY = e.clientY;
-            const deltaY = currentY - mouseStartY;
-            
-            // Only allow downward dragging
-            if (deltaY > 0) {
-                // Apply resistance (slightly more for mouse since it's easier to control)
-                this.currentDragOffset = Math.min(deltaY * 0.8, window.innerHeight * 0.85);
-                this.dragOffset = this.currentDragOffset;
-                this.animationState = 'dragging';
-
-                this.calculatedHeight = Math.max(0, this.window_height - this.dragOffset); // Update calculated height
-            }
-
-            // console.log('mouse drag - offset:', this.currentDragOffset, 'px', this.calculateVelocity());
-            
-            // Track velocity for mouse movements
-            const now = Date.now();
-            if (now - this.lastTouchTime > 16) { // ~60fps throttling
-                this.lastTouchTime = now;
-                this.lastTouchY = currentY;
-            }
-        });
-
-        // Mouse up - attach to document to handle release outside element
-        document.addEventListener('mouseup', () => {
-            if (!isMouseDragging || this.visibility_status !== 'visible') return;
-            
-            isMouseDragging = false;
-            
-            // Restore body styles
-            document.body.style.userSelect = '';
-            document.body.style.overflow = '';
-            document.body.style.cursor = '';
-            
-            const velocity = this.calculateVelocity();
-            const shouldReduce = this.currentDragOffset > this.dragThreshold || velocity > this.velocityThreshold;
-
-            // console.log(this.currentDragOffset)
-
-            
-            if (shouldReduce) {
-                this._visibility_status = 'reduced';
-                this.animationState = 'reduced';
-            } else {
-                this.animationState = 'visible';
-            }
-            
-            this.currentDragOffset = 0;
-            // this.dragOffset = 0;
-        });
-
-        // Handle mouse leave to prevent issues when mouse leaves window
-        document.addEventListener('mouseleave', () => {
-            if (isMouseDragging) {
-                isMouseDragging = false;
-                document.body.style.userSelect = '';
-                document.body.style.overflow = '';
-                document.body.style.cursor = '';
-                
-                // Snap back to visible when mouse leaves
-                this.animationState = 'visible';
-                this.currentDragOffset = 0;
-                // this.dragOffset = 0;
-            }
-        });
     }
 
     // Get animation parameters - add method if not already present

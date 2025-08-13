@@ -483,13 +483,13 @@
     transition: background 0.3s linear;
 }
 
-/* .draggable {
+.draggable {
     position: absolute;
     width: 100%;
     height: 100%;
     z-index: 5;
     background: transparent;
-} */
+}
 .container.hidden .draggable, .container.reduced .draggable {
     display: none;
 }
