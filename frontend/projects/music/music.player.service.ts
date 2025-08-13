@@ -637,7 +637,13 @@ export class MusicPlayerService {
                 // Check abort status before processing artwork
                 if (signal.aborted) return;
 
-                this._song_duration = song.video_duration || await this.media.get_audio_duration(track_key) || 0;
+                // Set media session metadata immediately
+                if ('mediaSession' in navigator && navigator.mediaSession && song) {
+                    navigator.mediaSession.metadata = new MediaMetadata({
+                        title: song.song_name,
+                        artist: song.original_artists[0]?.name || 'Unknown Artist',
+                    });
+                }
 
                 // HIGH PRIORITY: Use downloaded artwork blob first
                 if (song.download_artwork_blob) {
@@ -683,6 +689,8 @@ export class MusicPlayerService {
                     ]
                 });
             }
+
+            this._song_duration = song.video_duration || await this.media.get_audio_duration(track_key) || 0;
 
             // if colors are not set generate them
             if (song && (!song.colors.primary || !song.colors.common)) {

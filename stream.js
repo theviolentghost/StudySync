@@ -113,15 +113,51 @@ class Adaptive_Stream {
             const video_id = req.query.video_id;
             const target_quality = req.query.quality || 'medium';
 
-            if (!video_id) return res.status(400).send('Missing video_id');
+            if (!video_id) {
+                return res.status(400).json({ 
+                    error: 'Missing video_id parameter', 
+                    success: false 
+                });
+            }
 
             try {
                 // console.log('stream:', video_id);
                 const response = await this.stream(video_id, target_quality);
                 res.json(response);
             } catch (error) {
-                console.error('Streaming error:', error.message);
-                res.status(500).json({ error: 'Error generating stream', success: false });
+                console.error(`Streaming error for ${video_id}:`, error.message);
+                
+                // Return appropriate error based on the type
+                if (error.message.includes('Video not available') || 
+                    error.message.includes('Video not found') ||
+                    error.message.includes('unavailable') ||
+                    error.message.includes('does not exist') ||
+                    error.message.includes('not found') ||
+                    error.message.includes('members-only') ||
+                    error.message.includes('age-restricted') ||
+                    error.message.includes('region-blocked') ||
+                    error.message.includes('copyright') ||
+                    error.message.includes('removed') ||
+                    error.message.includes('deleted')) {
+                    res.status(404).json({ 
+                        error: 'Video not found or unavailable', 
+                        message: 'The requested song/video could not be found or is not accessible.',
+                        video_id: video_id,
+                        success: false 
+                    });
+                } else if (error.message.includes('Timeout')) {
+                    res.status(408).json({ 
+                        error: 'Stream timeout', 
+                        message: 'The stream took too long to initialize. Please try again.',
+                        success: false 
+                    });
+                } else {
+                    res.status(500).json({ 
+                        error: 'Error generating stream', 
+                        message: 'An internal error occurred while processing your request.',
+                        success: false 
+                    });
+                }
             }
         });
 
@@ -129,15 +165,51 @@ class Adaptive_Stream {
             const video_id = req.query.video_id;
             const target_quality = req.query.quality || 'medium';
 
-            if (!video_id) return res.status(400).send('Missing video_id');
+            if (!video_id) {
+                return res.status(400).json({ 
+                    error: 'Missing video_id parameter', 
+                    success: false 
+                });
+            }
 
             try {
                 // console.log(`Preloading stream for video ID: ${video_id} with target quality: ${target_quality}`);
                 const response = await this.preload(video_id, target_quality);
                 res.json(response);
             } catch (error) {
-                console.error('Preload error:', error.message);
-                res.status(500).json({ error: 'Error generating preload stream', success: false });
+                console.error(`Preload error for ${video_id}:`, error.message);
+                
+                // Return appropriate error based on the type
+                if (error.message.includes('Video not available') || 
+                    error.message.includes('Video not found') ||
+                    error.message.includes('unavailable') ||
+                    error.message.includes('does not exist') ||
+                    error.message.includes('not found') ||
+                    error.message.includes('members-only') ||
+                    error.message.includes('age-restricted') ||
+                    error.message.includes('region-blocked') ||
+                    error.message.includes('copyright') ||
+                    error.message.includes('removed') ||
+                    error.message.includes('deleted')) {
+                    res.status(404).json({ 
+                        error: 'Video not found or unavailable', 
+                        message: 'The requested song/video could not be found or is not accessible.',
+                        video_id: video_id,
+                        success: false 
+                    });
+                } else if (error.message.includes('Timeout')) {
+                    res.status(408).json({ 
+                        error: 'Preload timeout', 
+                        message: 'The preload took too long to initialize. Please try again.',
+                        success: false 
+                    });
+                } else {
+                    res.status(500).json({ 
+                        error: 'Error generating preload stream', 
+                        message: 'An internal error occurred while processing your request.',
+                        success: false 
+                    });
+                }
             }
         });
 
@@ -149,15 +221,56 @@ class Adaptive_Stream {
 
         app.get('/music/duration', async (req, res) => {
             const video_id = req.query.video_id;
-            if (!video_id) return res.status(400).send('Missing video_id'); 
+            if (!video_id) {
+                return res.status(400).json({ 
+                    error: 'Missing video_id parameter', 
+                    success: false 
+                });
+            }
+            
             const video_url = `https://www.youtube.com/watch?v=${video_id}`;
             try {
                 const duration_str = await this.get_duration(video_url);
                 const duration_ms = this.parse_duration(duration_str);
-                res.json({ duration: duration_ms });
+                res.json({ 
+                    duration: duration_ms,
+                    video_id: video_id,
+                    success: true 
+                });
             } catch (error) {
-                console.error('Error getting duration:', error);
-                res.status(500).send('Error: ' + error.message);
+                console.error(`Duration error for ${video_id}:`, error.message);
+                
+                // Return appropriate error based on the type
+                if (error.message.includes('Video not available') || 
+                    error.message.includes('Video not found') ||
+                    error.message.includes('unavailable') ||
+                    error.message.includes('does not exist') ||
+                    error.message.includes('not found') ||
+                    error.message.includes('members-only') ||
+                    error.message.includes('age-restricted') ||
+                    error.message.includes('region-blocked') ||
+                    error.message.includes('copyright') ||
+                    error.message.includes('removed') ||
+                    error.message.includes('deleted')) {
+                    res.status(404).json({ 
+                        error: 'Video not found or unavailable', 
+                        message: 'The requested song/video could not be found or is not accessible.',
+                        video_id: video_id,
+                        success: false 
+                    });
+                } else if (error.message.includes('Timeout')) {
+                    res.status(408).json({ 
+                        error: 'Duration timeout', 
+                        message: 'The duration lookup took too long. Please try again.',
+                        success: false 
+                    });
+                } else {
+                    res.status(500).json({ 
+                        error: 'Error getting duration', 
+                        message: 'An internal error occurred while getting video duration.',
+                        success: false 
+                    });
+                }
             }
         });
 
@@ -293,19 +406,53 @@ class Adaptive_Stream {
                 requested_profiles,
             );
 
-            ffmpeg_process.run();
+            // Wrap FFmpeg run in a Promise for better error handling
+            await new Promise((resolve, reject) => {
+                let ffmpeg_started = false;
+                
+                ffmpeg_process.on('start', (commandLine) => {
+                    console.log('FFmpeg process started with command:', commandLine);
+                    ffmpeg_started = true;
+                    resolve(); // Resolve when FFmpeg starts, not when it ends
+                });
+
+                ffmpeg_process.on('error', (err) => {
+                    console.error('FFmpeg process error:', err.message);
+                    if (!ffmpeg_started) {
+                        reject(new Error(`FFmpeg failed to start: ${err.message}`));
+                    }
+                });
+
+                ffmpeg_process.on('end', () => {
+                    console.log('FFmpeg process ended normally');
+                });
+
+                // Start the FFmpeg process
+                ffmpeg_process.run();
+                
+                // Fallback timeout in case 'start' event doesn't fire
+                setTimeout(() => {
+                    if (!ffmpeg_started) {
+                        reject(new Error('FFmpeg process failed to start within timeout'));
+                    }
+                }, 5000);
+            });
         } catch (error) {
-            console.error('Failed to create HLS stream:', error.message);
+            console.error(`Failed to create HLS stream for ${video_id}:`, error.message);
             
             // Clean up processes
             if (yt_dlp_process && !yt_dlp_process.killed) {
-                yt_dlp_process.kill('SIGTERM');
+                try {
+                    yt_dlp_process.kill('SIGTERM');
+                } catch (e) {
+                    console.error('Error killing yt-dlp process:', e.message);
+                }
             }
             if (ffmpeg_process) {
                 try {
                     ffmpeg_process.kill('SIGTERM');
                 } catch (e) {
-                    // Ignore ffmpeg cleanup errors
+                    console.error('Error killing ffmpeg process:', e.message);
                 }
             }
             
@@ -315,10 +462,20 @@ class Adaptive_Stream {
                     fs.removeSync(session_directory);
                 }
             } catch (e) {
-                console.error('Error cleaning up session directory:', e);
+                console.error('Error cleaning up session directory:', e.message);
             }
             
-            throw new Error('Failed to initialize HLS stream: ' + error.message);
+            // Remove from active processes if it was added
+            if (this.active_processes.has(session_id)) {
+                this.active_processes.delete(session_id);
+            }
+            
+            // Re-throw with more specific error message
+            if (error.message.includes('Video not found or unavailable')) {
+                throw new Error(`Video not available: ${video_id}. The requested song/video could not be found or is not accessible.`);
+            } else {
+                throw new Error(`Failed to initialize stream for ${video_id}: ${error.message}`);
+            }
         }
         // console.log('FFmpeg process started');
 
@@ -367,6 +524,10 @@ class Adaptive_Stream {
 
     parse_duration(duration_str) {
         // Parse duration string in format "HH:MM:SS" or "MM:SS"
+        if (!duration_str || duration_str.trim() === '' || duration_str === '00:00') {
+            throw new Error('No valid duration available');
+        }
+        
         const parts = duration_str.split(':').map(Number);
         if (parts.length === 3) {
             return (parts[0] * 3600 + parts[1] * 60 + parts[2]) * 1000; // HH:MM:SS
@@ -407,6 +568,20 @@ class Adaptive_Stream {
         }
         
         const ffmpeg_process = ffmpeg(yt_dlp_process.stdout);
+        
+        // Add error handling for FFmpeg process
+        ffmpeg_process.on('error', (err) => {
+            console.error('FFmpeg error:', err.message);
+            // Don't throw here, let the calling code handle it
+        });
+
+        ffmpeg_process.on('stderr', (stderrLine) => {
+            // Log FFmpeg stderr for debugging, but don't treat as fatal error
+            if (stderrLine.includes('Error') || stderrLine.includes('error')) {
+                console.error('FFmpeg stderr:', stderrLine);
+            }
+        });
+
         if (profiles.length > 1) {
             // split audio into multiple quality streams
             const split_outputs = profiles.map((profile) => `[${Adaptive_Stream.profiles[profile].bitrate}]`).join('');
@@ -460,10 +635,26 @@ class Adaptive_Stream {
 
     async create_yt_dlp_process(url) {
         return new Promise((resolve, reject) => {
+            // Validate URL first
+            if (!url || typeof url !== 'string') {
+                reject(new Error('Invalid URL provided to yt-dlp'));
+                return;
+            }
+
+            // Add timeout for yt-dlp process startup
+            const startup_timeout = setTimeout(() => {
+                if (!resolved && process && !process.killed) {
+                    process.kill('SIGTERM');
+                }
+                if (!resolved) {
+                    resolved = true;
+                    reject(new Error('Timeout waiting for yt-dlp process to start'));
+                }
+            }, 30000); // 30 second timeout
+
             const process = spawn('yt-dlp', [
                 '-f', 'bestaudio[ext=m4a]/bestaudio/best',
                 '--no-playlist',
-                '--quiet',
                 '--no-warnings',
                 '--buffer-size', Adaptive_Stream.stream_buffer_size,
                 '--no-part',
@@ -476,13 +667,15 @@ class Adaptive_Stream {
             
             let resolved = false;
             let stderr_output = '';
+            let has_stdout_data = false;
             
             // Handle process errors
             process.on('error', (err) => {
                 if (!resolved) {
                     resolved = true;
-                    console.error('yt-dlp spawn error:', err);
-                    reject(new Error('Failed to start yt-dlp process: ' + err.message));
+                    clearTimeout(startup_timeout);
+                    console.error(`yt-dlp spawn error for URL ${url}:`, err.message);
+                    reject(new Error(`Failed to start yt-dlp process: ${err.message}`));
                 }
             });
             
@@ -490,24 +683,54 @@ class Adaptive_Stream {
             if (process.stderr) {
                 process.stderr.on('data', (data) => {
                     stderr_output += data.toString();
+                    
+                    // Check for immediate error patterns in stderr
+                    const current_stderr = data.toString();
+                    
+                    if (!resolved && (
+                        current_stderr.includes('Video unavailable') || 
+                        current_stderr.includes('Private video') ||
+                        current_stderr.includes('This video is not available') ||
+                        current_stderr.includes('does not exist') ||
+                        current_stderr.includes('not found') ||
+                        current_stderr.includes('ERROR: [youtube]') ||
+                        current_stderr.includes('members-only') ||
+                        current_stderr.includes('age-restricted') ||
+                        current_stderr.includes('region-blocked') ||
+                        current_stderr.includes('copyright') ||
+                        current_stderr.includes('removed') ||
+                        current_stderr.includes('deleted')
+                    )) {
+                        resolved = true;
+                        clearTimeout(startup_timeout);
+                        process.kill('SIGTERM');
+                        reject(new Error(`Video not found or unavailable: ${url}`));
+                        return;
+                    }
                 });
                 
                 process.stderr.on('error', (err) => {
                     if (!resolved) {
                         resolved = true;
-                        console.error('yt-dlp stderr error:', err);
-                        reject(new Error('yt-dlp stderr error: ' + err.message));
+                        clearTimeout(startup_timeout);
+                        console.error(`yt-dlp stderr error for URL ${url}:`, err.message);
+                        reject(new Error(`yt-dlp stderr error: ${err.message}`));
                     }
                 });
             }
             
             // Handle stdout errors
             if (process.stdout) {
+                process.stdout.on('data', (data) => {
+                    has_stdout_data = true;
+                });
+
                 process.stdout.on('error', (err) => {
                     if (!resolved) {
                         resolved = true;
-                        console.error('yt-dlp stdout error:', err);
-                        reject(new Error('yt-dlp stdout error: ' + err.message));
+                        clearTimeout(startup_timeout);
+                        console.error(`yt-dlp stdout error for URL ${url}:`, err.message);
+                        reject(new Error(`yt-dlp stdout error: ${err.message}`));
                     }
                 });
             }
@@ -516,10 +739,30 @@ class Adaptive_Stream {
             process.on('close', (code, signal) => {
                 if (!resolved) {
                     resolved = true;
+                    clearTimeout(startup_timeout);
                     if (code !== 0) {
                         const error_msg = stderr_output || `Process exited with code ${code}`;
-                        console.error('yt-dlp failed:', error_msg);
-                        reject(new Error(`yt-dlp failed: ${error_msg}`));
+                        console.error(`yt-dlp failed for URL ${url}:`, error_msg);
+                        
+                        // Check for specific error types
+                        if (stderr_output.includes('Video unavailable') || 
+                            stderr_output.includes('Private video') ||
+                            stderr_output.includes('This video is not available') ||
+                            stderr_output.includes('does not exist') ||
+                            stderr_output.includes('not found') ||
+                            stderr_output.includes('Video not available') ||
+                            stderr_output.includes('members-only') ||
+                            stderr_output.includes('age-restricted') ||
+                            stderr_output.includes('region-blocked') ||
+                            stderr_output.includes('copyright') ||
+                            stderr_output.includes('removed') ||
+                            stderr_output.includes('deleted') ||
+                            stderr_output.includes('ERROR: Unable to download') ||
+                            code === 1) {
+                            reject(new Error(`Video not found or unavailable: ${url}`));
+                        } else {
+                            reject(new Error(`yt-dlp failed: ${error_msg}`));
+                        }
                     } else if (signal) {
                         reject(new Error(`yt-dlp killed by signal: ${signal}`));
                     }
@@ -529,10 +772,30 @@ class Adaptive_Stream {
             process.on('exit', (code, signal) => {
                 if (!resolved) {
                     resolved = true;
+                    clearTimeout(startup_timeout);
                     if (code !== 0) {
                         const error_msg = stderr_output || `Process exited with code ${code}`;
-                        console.error('yt-dlp exited with error:', error_msg);
-                        reject(new Error(`yt-dlp exited with error: ${error_msg}`));
+                        console.error(`yt-dlp exited with error for URL ${url}:`, error_msg);
+                        
+                        // Check for specific error types
+                        if (stderr_output.includes('Video unavailable') || 
+                            stderr_output.includes('Private video') ||
+                            stderr_output.includes('This video is not available') ||
+                            stderr_output.includes('does not exist') ||
+                            stderr_output.includes('not found') ||
+                            stderr_output.includes('Video not available') ||
+                            stderr_output.includes('members-only') ||
+                            stderr_output.includes('age-restricted') ||
+                            stderr_output.includes('region-blocked') ||
+                            stderr_output.includes('copyright') ||
+                            stderr_output.includes('removed') ||
+                            stderr_output.includes('deleted') ||
+                            stderr_output.includes('ERROR: Unable to download') ||
+                            code === 1) {
+                            reject(new Error(`Video not found or unavailable: ${url}`));
+                        } else {
+                            reject(new Error(`yt-dlp exited with error: ${error_msg}`));
+                        }
                     } else if (signal) {
                         reject(new Error(`yt-dlp terminated by signal: ${signal}`));
                     }
@@ -543,9 +806,10 @@ class Adaptive_Stream {
             setTimeout(() => {
                 if (!resolved && !process.killed) {
                     resolved = true;
+                    clearTimeout(startup_timeout);
                     resolve(process);
                 }
-            }, 100);
+            }, 500); // Reduced initial timeout, let the process start normally
         });
     }
 
@@ -687,23 +951,62 @@ class Adaptive_Stream {
         if (!url) return Promise.reject(new Error('URL is required to get duration'));
 
         return new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+                if (!yt_dlp.killed) {
+                    yt_dlp.kill('SIGTERM');
+                }
+                reject(new Error('Timeout waiting for video duration'));
+            }, 15000); // 15 second timeout
+
             const yt_dlp = spawn('yt-dlp', [
                 '--get-duration',
                 '--no-playlist',
                 '--quiet',
+                '--socket-timeout', '10',
+                '--retries', '1',
                 url
             ]);
             
             let duration = '';
+            let stderr_output = '';
+
             yt_dlp.stdout.on('data', (data) => {
                 duration += data.toString();
             });
+
+            yt_dlp.stderr.on('data', (data) => {
+                stderr_output += data.toString();
+            });
+
+            yt_dlp.on('error', (err) => {
+                clearTimeout(timeout);
+                reject(new Error(`Failed to start yt-dlp for duration: ${err.message}`));
+            });
             
             yt_dlp.on('close', (code) => {
+                clearTimeout(timeout);
                 if (code === 0) {
-                    resolve(duration.trim());
+                    const trimmed_duration = duration.trim();
+                    if (trimmed_duration) {
+                        resolve(trimmed_duration);
+                    } else {
+                        reject(new Error('No duration returned from yt-dlp'));
+                    }
                 } else {
-                    resolve('00:00'); // Default duration if yt-dlp fails
+                    const error_msg = stderr_output || `Process exited with code ${code}`;
+                    console.error(`yt-dlp duration failed for URL ${url}:`, error_msg);
+                    
+                    // Check for specific error types
+                    if (stderr_output.includes('Video unavailable') || 
+                        stderr_output.includes('Private video') ||
+                        stderr_output.includes('This video is not available') ||
+                        stderr_output.includes('does not exist') ||
+                        stderr_output.includes('not found') ||
+                        code === 1) {
+                        reject(new Error(`Video not found or unavailable: ${url}`));
+                    } else {
+                        reject(new Error(`Failed to get duration: ${error_msg}`));
+                    }
                 }
             });
         });
