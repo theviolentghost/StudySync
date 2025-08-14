@@ -191,7 +191,7 @@ export class MediaPlayerComponent implements AfterViewInit, OnDestroy {
             if(level.index !== this.player_hls_level) {
                 this.player_quality_timeout = setTimeout(()=>{
                     this.player_quality_update = 'none';
-                }, 15 * 1000); // 15 sec
+                }, 5 * 1000); // 5 sec
                 this.player_quality_update = this.player_hls_level > level.index ? 'down' : 'up';
             }
             this.player_hls_level = level.index;

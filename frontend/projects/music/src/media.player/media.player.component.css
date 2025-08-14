@@ -524,12 +524,12 @@
 }
 .audio-info .quality{
     position: relative;
-    width: var(--space-6);
-    height: var(--space-6);
+    width: var(--space-5);
+    height: var(--space-5);
 }
 .audio-info .quality-update {
     position: relative;
-    width: var(--space-4);
+    width: var(--space-5);
     height: var(--space-5);
 }
 .audio-info .quality::before, .audio-info .quality-update::before {

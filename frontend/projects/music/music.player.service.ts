@@ -74,7 +74,7 @@ export class MusicPlayerService {
 
         if (Hls.isSupported()) {
             this.hls = new Hls({
-                startLevel: 0,                
+                startLevel: -1, // Start with auto quality selection   
                 autoStartLoad: true,             // Start loading immediately
                 enableWorker: true,              // Disable worker for immediate processing
                 maxBufferLength: 120,        // Increase from 5 to 10 seconds
@@ -114,6 +114,7 @@ export class MusicPlayerService {
 
             this.hls.on(Hls.Events.LEVEL_SWITCHED, (event, data) => {
                 // console.log('HLS level switched to:', data.level);
+                if(this.current_song_data && this.current_song_data.downloaded) return; // don't emit for downloaded songs
                 this.hls_level_changed.emit({index: data.level, details: this.hls?.levels[data.level]});
 
             });
@@ -137,6 +138,7 @@ export class MusicPlayerService {
 
     private load_source_to_hls(hls_data: any): void {
         if (this.hls) {
+            console.log(`Loading HLS playlist from URL: ${hls_data.playlist_url}`);
             this.hls.loadSource(hls_data.playlist_url);
             this.hls.startLoad();
         } else if (this.audio_element) {
@@ -298,8 +300,6 @@ export class MusicPlayerService {
     private async load_track(track_key: string, track_data?: Song_Data | null): Promise<void> {
         if (!this.audio_element) throw new Error("Audio element is not set.");
 
-        this.unload_audio();
-
         this.song_changed.emit();
         this.loading = true;
         this.started_playing = false;
@@ -416,8 +416,6 @@ export class MusicPlayerService {
 
         this.setup_media_session();
 
-        URL.revokeObjectURL(this.audio_element.src); // Clean up previous audio source
-
         // Cancel any existing load_audio operation
         if (this.loadAudioController) {
             this.loadAudioController.abort();
@@ -444,6 +442,7 @@ export class MusicPlayerService {
                 const array_buffer = await blob.arrayBuffer();
                 if( array_buffer.byteLength > 0) {
                     // fresh url with fresh blob
+                    this.unload_audio();
                     source_url = URL.createObjectURL(new Blob([array_buffer]));
                     is_local_content = true; // Local content, safe to use audio context
 
@@ -459,6 +458,7 @@ export class MusicPlayerService {
                     return;
                 }
                 this.load_source_to_hls(hls_stream_data!);
+                // this.hls.startLoad(); // Ensure HLS starts loading if applicable
 
                 is_local_content = false; // External content, likely CORS restricted
                 return; // Don't use audio context for external content
@@ -500,17 +500,24 @@ export class MusicPlayerService {
     private unload_audio(): void {
         if (!this.audio_element) return;
 
-        this.audio_element.pause();
+        // this.audio_element.pause();
+        if(this.audio_element.src === '') return; // No source to unload
+        
+        // Only revoke blob URLs, not regular HTTP/HTTPS URLs
+        if (this.audio_element.src.startsWith('blob:')) {
+            URL.revokeObjectURL(this.audio_element.src);
+        }
+        
         this.audio_element.src = '';
         this.audio_element.load();
 
         // Reset HLS if it exists
         if (this.hls) {
-            this.hls.loadSource('');
+            // this.hls.loadSource('');
+            // console.log("Unloading HLS stream...");
+            this.hls.stopLoad();
+            // this.hls.detachMedia();
         }
-
-        // Reset current song data
-        this.current_song_data = null;
     }
 
     async load_and_play_track(track_key: string, track_data?: Song_Data): Promise<void> {
@@ -528,7 +535,7 @@ export class MusicPlayerService {
 
         const song_data = this.playlist_song_data_map.get(track_key) || await this.media.get_song_data(track_key);
 
-        console.log("Requesting Preload...:", track_key);
+        // console.log("Requesting Preload...:", track_key);
         if((this.next_song && this.media.song_key(this.next_song) === track_key) || song_data?.downloaded) {
             this.preloaded_next_song = true; // for visualization
             return; // Already preloaded
@@ -540,7 +547,7 @@ export class MusicPlayerService {
 
         this.preloaded_next_song = true;
 
-        console.log("Preloaded next track:", this.next_song, "with data:", this.next_song_data);
+        // console.log("Preloaded next track:", this.next_song, "with data:", this.next_song_data);
     }
 
     private async intialize_audio_enviroment(): Promise<void> {
