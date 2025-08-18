@@ -46,8 +46,8 @@ export class YoutubeSubscriptionService{
         this.youtubeService.getFullChannel(channelId)
                     .pipe(take(1))
                     .subscribe(data => {
-                        let uploadsId = data.contentDetails.relatedPlaylists.uploads;
-                        let iconUrl = data.snippet.thumbnails.high.url;
+                        let uploadsId = data.uploadsId;
+                        let iconUrl = data.iconUrl;
 
                         let subcription: SubscriptionData = {channelId: channelId, uploadsId: uploadsId, iconUrl: iconUrl, initialized: false}
                         this._allSubscriptions.push(subcription);
@@ -66,6 +66,9 @@ export class YoutubeSubscriptionService{
         .pipe(take(1))
         .subscribe(uploads => {
             let subcriptionUploads: SubscriptionUploads = {uploadsId: channel.uploadsId, uploads: uploads.results, nextPageToken: uploads.nextPageToken, isLoadingUploads: false};
+            for(let video = 0; video < uploads.results.length; video++){
+                uploads.results[video].channelThumbnailUrl = channel.iconUrl;
+            }
             this._allChannelUploads.push(subcriptionUploads);
             this.channelUploadsListSubject.next(this._allChannelUploads);
         });
@@ -74,7 +77,7 @@ export class YoutubeSubscriptionService{
     public isLastLoadedUpload(playlistId: string, videoId: string): boolean{
         for(let channel = 0; channel < this.allSubscriptions.length; channel++){
             if(this._allChannelUploads[channel].uploadsId === playlistId){
-                return this._allChannelUploads[channel].uploads[this._allChannelUploads[channel].uploads.length - 1].contentDetails.videoId === videoId;
+                return this._allChannelUploads[channel].uploads[this._allChannelUploads[channel].uploads.length - 1].id === videoId;
             }
         }
         return false;

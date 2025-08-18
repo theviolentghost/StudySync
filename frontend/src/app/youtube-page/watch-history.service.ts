@@ -67,8 +67,8 @@ export class WatchHistoryService {
     }
 
     addSavedVideoToWatchHistory(length: number): void{
-        let videoId = this.currentVideo.contentDetails.videoId;
-        let historyData: VideoHistory = {length: length, currentPosition: 0, watchedAt: new Date().toISOString(), thumbnailUrl: this.currentVideo.snippet.thumbnails.high.url, title: this.currentVideo.snippet.title, channelName: this.currentVideo.snippet.channelTitle, channelId: this.currentVideo.snippet.channelId};
+        let videoId = this.currentVideo.id;
+        let historyData: VideoHistory = {length: length, currentPosition: 0, watchedAt: new Date().toISOString(), thumbnailUrl: this.currentVideo.videoThumbnailUrl, title: this.currentVideo.title, channelTitle: this.currentVideo.channelTitle, channelId: this.currentVideo.channelId};
 
         if(this.wasWatched(videoId)) this.allWatchHistory.delete(videoId);
         this.allWatchHistory.set(videoId, historyData);
@@ -76,7 +76,7 @@ export class WatchHistoryService {
     }
 
     updateVideoProgress(currentPosition: number): void{
-        let videoId = this.currentVideo.contentDetails.videoId;
+        let videoId = this.currentVideo.id;
         let historyData = this.allWatchHistory.get(videoId);
         historyData.currentPosition = currentPosition;
         this.storeSingleVideo(videoId, historyData);

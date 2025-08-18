@@ -87,6 +87,7 @@
         "vm": "^0.1.0",
         "youtube-dl-exec": "^3.0.22",
         "youtube-search-without-api-key": "^2.0.7",
+        "youtubei.js": "^15.0.1",
         "yt-dlp-wrap": "^2.3.12",
         "yt-stream": "^1.7.4",
         "ytdl-core": "^4.11.5",

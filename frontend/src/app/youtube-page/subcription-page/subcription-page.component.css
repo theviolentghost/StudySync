@@ -96,6 +96,10 @@
     background-color: transparent;
     border-radius: 24px;
     cursor: pointer;
+    background-color: transparent;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
 }
 
 .video_details{

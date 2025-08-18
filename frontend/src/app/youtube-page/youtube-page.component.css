@@ -1,3 +1,7 @@
+*{
+    color: var(--color-text);
+}
+
 .sync_navigation{
     margin: 0;
     padding: 0;
@@ -15,7 +19,6 @@
     margin: 12px 0px 12px 24px;
     width: 24px;
     height: 24px;
-    /* border: solid 1px white; */
     display: inline;
     background-color: transparent;
     cursor: pointer;

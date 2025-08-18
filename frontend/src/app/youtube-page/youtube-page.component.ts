@@ -82,12 +82,7 @@ export class YoutubePageComponent {
 
     this.oldSearch = this.seachInput;
 
-    this.youtubeService.searchVideos(this.seachInput, 15, null)
-    .pipe(take(1))
-    .subscribe(data => {
-      this.youtubeService.saveNextSearchToken(data.nextPageToken);
-      this.youtubeService.replaceSearchList(data.results);
-    });
+    this.youtubeService.searchForVideos(this.seachInput);
 
     this.navigateToSearchResults();
   }

@@ -5,26 +5,26 @@
         <div id="video_player" class="video_player"></div>
 
         <div class="video_info">
-            <p class="video_title">{{ playingVideo.snippet.title }}</p>
+            <p class="video_title">{{ playingVideo.title }}</p>
 
             <div class="video_menu">
                 <div class="channel_container">
-                    <button class="video_channel_icon" (click)="navigateToChannel(playingVideo.snippet.channelId)"></button>
+                    <button class="video_channel_icon" [ngStyle]="{'background-image': 'url('+ playingVideo.channelThumbnailUrl + ')'}" (click)="navigateToChannel(playingVideo.channelId)"></button>
 
                     <div class="channel_data">
-                        <p class="channel_name">{{ playingVideo.snippet.channelTitle }}</p>
+                        <p class="channel_name">{{ playingVideo.channelTitle }}</p>
                         <p class="channel_subscriber_count">sub count</p>
                     </div>
                 </div>
 
-                <div  (click)="toggleIsSubscribed(playingVideo.snippet.channelId); $event.stopPropagation();" [ngClass]="{'subscribe_button_unclicked': !isSubscribedToChannel(playingVideo.snippet.channelId), 'subscribe_button_clicked':isSubscribedToChannel(playingVideo.snippet.channelId)}">{{isSubscribedToChannel(playingVideo.snippet.channelId) ? "Subscribed" : "Subscribe"}}</div>
+                <div  (click)="toggleIsSubscribed(playingVideo.channelId); $event.stopPropagation();" [ngClass]="{'subscribe_button_unclicked': !isSubscribedToChannel(playingVideo.channelId), 'subscribe_button_clicked':isSubscribedToChannel(playingVideo.channelId)}">{{isSubscribedToChannel(playingVideo.channelId) ? "Subscribed" : "Subscribe"}}</div>
             </div>    
 
             <div class="video_description">
                 <p> 
-                    <span>views</span><br>
-                    <span>{{ timeAgo(playingVideo.snippet.publishedAt) }}</span><br> 
-                    {{ playingVideo.snippet.description }}
+                    <span>{{ playingVideo.viewCount }}</span><br>
+                    <span>{{ playingVideo.uploadDate }}</span><br> 
+                    {{ playingVideo.description }}
                 </p>
             </div>
         </div>

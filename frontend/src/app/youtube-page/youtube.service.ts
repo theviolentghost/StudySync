@@ -39,14 +39,11 @@ export class YoutubeService {
         private watchHistoryService: WatchHistoryService
     ) { }
 
-    searchVideos(query: string, maxResults: number = 10, nextPageToken): Observable<any> {
+    searchVideos(query: string, nextPageToken: string): Observable<any> {
         let params = new HttpParams()
             .set('q', query)
-            .set('maxResults', maxResults);
+            .set('nextPageToken', nextPageToken);
 
-        if (nextPageToken) {
-            params = new HttpParams().set('nextPageToken', nextPageToken).set('q', query).set('maxResults', maxResults);
-        }
         return this.http.get<YouTubeSearchResponse>(`/youtube_search`, { params });
     }
 
@@ -56,13 +53,6 @@ export class YoutubeService {
 
         return this.http.get<YouTubeChannel>(`/youtube_full_channel`, { params });
     }
-
-    // getChannelPlaylists(id: string): Observable<any>{
-    //     let params = new HttpParams()
-    //         .set('id', id);
-
-    //     return this.http.get<YouTubeSearchResponse>(`/youtube_get_channel_playlists`, { params });
-    // }
 
     getPlaylistVideos(id: string, nextPageToken: string): Observable<any>{
         let params = new HttpParams()
@@ -105,7 +95,7 @@ export class YoutubeService {
     }
 
     public playNewVideo(video: PlaylistVideo):void{
-        let videoId = video.contentDetails.videoId;
+        let videoId = video.id;
 
         if(!this.isMinimized) {
             this.navigateToPlayer();
@@ -133,13 +123,25 @@ export class YoutubeService {
         this.searchResultsSubject.next(this.searchList);
     }
 
+    searchForVideos(query: string): void{
+        this.searchVideos(query, '')
+            .pipe(take(1))
+            .subscribe(data => {
+                this.replaceSearchList(data.results);
+                this.saveNextSearchToken(data.nextPageToken);
+        });
+    }
+
     addToSearchList(): void{
-        this.searchVideos(this._currentSearchQuery, 15, this.nextSearchPageToken)
-        .pipe(take(1))
-        .subscribe(results => {
-            this.saveNextSearchToken(results.nextPageToken);
-            this.searchList.push(...results.results);
-            this.searchResultsSubject.next(this.searchList);
+        this.searchVideos(this.currentSearchQuery, this.nextSearchPageToken)
+            .pipe(take(1))
+            .subscribe(data => {
+                console.log(data);
+                for(let video = 0; video < data.results.length; video++){
+                    this.searchList.push(data.results[video]);
+                }
+                this.searchResultsSubject.next(this.searchList);
+                this.saveNextSearchToken(data.nextPageToken);
         });
     }
 
@@ -158,7 +160,7 @@ export class YoutubeService {
 
     addToUploadList(): void{
         if(!this.uploadsPageToken) return;
-        this.getPlaylistVideos(this.channelSubject.value.contentDetails.relatedPlaylists.uploads, this.uploadsPageToken)
+        this.getPlaylistVideos(this.channelSubject.value.uploadsId, this.uploadsPageToken)
             .pipe(take(1))
             .subscribe(uploads => {
                 this.saveUploadsPageToken(uploads.nextPageToken);
@@ -177,7 +179,7 @@ export class YoutubeService {
                 this.saveCurrentChannel(data);
         
                 let nextPageToken = '';
-                this.getPlaylistVideos(data.contentDetails.relatedPlaylists.uploads, nextPageToken)
+                this.getPlaylistVideos(data.uploadsId, nextPageToken)
                 .pipe(take(1))
                 .subscribe(uploads => {
                     this.saveUploadsPageToken(uploads.nextPageToken);
@@ -223,6 +225,13 @@ export class YoutubeService {
         if (seconds > 0) return seconds === 1 ? "1 second ago" : `${seconds} seconds ago`;
 
         return "just now";
+    }
+
+    formatVideoDuration(totalSeconds: number): string {
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60).toString().padStart(2, '0');
+        const seconds = Math.floor(totalSeconds % 60).toString().padStart(2, '0');
+        return `${hours}:${minutes}:${seconds}`;
     }
 }
 

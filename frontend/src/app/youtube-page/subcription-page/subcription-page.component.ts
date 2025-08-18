@@ -59,7 +59,7 @@ export class SubcriptionPageComponent {
           this.sortedUploads.push(allChannelUploads[channel].uploads[video]);
         }
       } 
-      this.sortedUploads.sort((a, b) => new Date(b.contentDetails.videoPublishedAt).getTime() - new Date(a.contentDetails.videoPublishedAt).getTime());
+      //this.sortedUploads.sort((a, b) => new Date(b.contentDetails.videoPublishedAt).getTime() - new Date(a.contentDetails.videoPublishedAt).getTime());
     });
   }
 

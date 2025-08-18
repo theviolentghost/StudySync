@@ -4,7 +4,7 @@ export interface VideoHistory{
     watchedAt: string;
     thumbnailUrl: string;
     title: string;
-    channelName: string;
+    channelTitle: string;
     channelId: string;
 }
 

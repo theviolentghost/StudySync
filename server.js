@@ -474,14 +474,13 @@ app.put('/user/file/:fileId',
 
 app.get('/youtube_search', async (req, res) => {
     const query = req.query.q;
-    const maxResults = req.query.maxResults || 5;
-    const nextPageToken = req.query.nextPageToken || '';
+    const nextPageToken = req.query.nextPageToken;
 
     if (!query) {
         return res.status(400).json({ error: 'Search query is required' });
     }
     try {
-        const results = await youtubeSearch.search(query,  maxResults, nextPageToken);
+        const results = await youtubeSearch.search(query, nextPageToken);
 
         res.json(results);
     } catch (error) {

@@ -45,11 +45,15 @@
     height: 32px;
     min-width: 32px;
     min-height: 32px;
-    display: block;
+    display: inline;
     border: solid 1px var(--color-background-200);
     background-color: transparent;
     border-radius: 32px;
     cursor: pointer;
+    background-color: transparent;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
 }
 
 .channel_icon{

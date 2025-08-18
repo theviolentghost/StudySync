@@ -1,52 +1,10 @@
-import { google } from 'googleapis';
+
 import 'dotenv/config';
-import { exec } from 'child_process';
+import { Innertube } from 'youtubei.js';
 
- 
-const youtube = google.youtube({
-  version: 'v3',
-  auth: process.env.YOUTUBE_API_KEY,
-});
+const yt = await Innertube.create();
 
-// async function youtubeSearch(query, maxResults, nextPageToken) {
-//     if (!query || query.trim() === '') {
-//         console.error('Query must be a non-empty string');
-//         return {
-//             results: [],
-//             nextPageToken: null
-//         };
-//     }
-
-//     let results = [];
-//     let response;
-
-//     if(nextPageToken){
-//         response = await youtube.search.list({
-//             part: 'snippet',
-//             q: query,
-//             type: ['video, channel'],
-//             maxResults: maxResults,
-//             pageToken: nextPageToken,
-//         });
-//     } else {
-//         response = await youtube.search.list({
-//         part: 'snippet',
-//         q: query,
-//         type: ['video, channel'],
-//         maxResults: maxResults,
-//     });
-//     }
-
-//     results = results.concat(response.data.items);
-//     nextPageToken = response.data.nextPageToken;
-
-//     return {
-//         results,
-//         nextPageToken
-//     };
-// }
-
-async function search(query, maxResults, nextPageToken) {
+async function search(query, nextPageToken) {
     if (!query || query.trim() === '') {
         console.error('Query must be a non-empty string');
         return {
@@ -56,8 +14,7 @@ async function search(query, maxResults, nextPageToken) {
     }
 
     try {
-        //return await youtubeSearch(query, maxResults, nextPageToken);
-        return await youtubeSearch(query);
+        return await youtubeSearch(query, nextPageToken);
     } catch (error) {
         console.error('Error searching YouTube:', error);
         return { 
@@ -67,24 +24,81 @@ async function search(query, maxResults, nextPageToken) {
     }
 }
 
-function youtubeSearch(query) {
-  const cmd = `yt-dlp "ytsearch10:${query} --dump-json`;
+async function youtubeSearch(query, nextPageToken) {
+  let searchData;
+  let results;
+  let newNextPageToken;
+  if(!nextPageToken){
+    searchData = await yt.actions.execute('/search', {
+      query: query
+    });
+    results = searchData?.data.contents.twoColumnSearchResultsRenderer.primaryContents.sectionListRenderer.contents[0].itemSectionRenderer.contents;
+    if(!results.length) return;
+    newNextPageToken = searchData.data.contents.twoColumnSearchResultsRenderer.primaryContents.sectionListRenderer?.contents[1]?.continuationItemRenderer.continuationEndpoint.continuationCommand.token || '';
+  }else{
+    searchData = await yt.actions.execute('/search', {
+      continuation: nextPageToken
+    });
+    results = searchData?.data.onResponseReceivedCommands?.[0]?.appendContinuationItemsAction.continuationItems[0].itemSectionRenderer.contents;
+    if(!results.length) return;
+    newNextPageToken = searchData.data.onResponseReceivedCommands[0]?.appendContinuationItemsAction.continuationItems[1]?.continuationItemRenderer.continuationEndpoint.continuationCommand.token || '';
+  }
 
-  exec(cmd, (err, stdout, stderr) => {
-    if (err) {
-      console.error("Error:", err);
-      return;
+  let returnResults = [];
+  for(let result = 0; result < results.length; result++){
+
+    let channelData = results[result]?.channelRenderer;
+    let videoData = results[result]?.videoRenderer;
+    if(!channelData && !videoData) continue;
+
+    let returnObject = {
+      id: null,
+      title: null,
+      channelTitle: null,
+      channelId: null,
+      duration: null,
+      viewCount: null,
+      uploadDate: null,
+      videoThumbnailUrl: null,
+      channelThumbnailUrl: null,
+      description: null
+    };
+
+    try{
+      if(channelData){
+        returnObject.id = channelData.channelId;
+        returnObject.title = channelData.title.simpleText;
+        returnObject.channelTitle = channelData.subscriberCountText.simpleText;
+        returnObject.channelId = channelData.channelId;
+        returnObject.channelThumbnailUrl = channelData.thumbnail.thumbnails[channelData.thumbnail.thumbnails.length - 1].url;
+        returnObject.viewCount = channelData.videoCountText.simpleText;
+      }
+      if(videoData){
+        returnObject.id = videoData.videoId;
+        returnObject.title = videoData.title.runs[0].text;
+        returnObject.channelTitle = videoData.ownerText.runs[0].text;
+        returnObject.channelId = videoData.channelThumbnailSupportedRenderers.channelThumbnailWithLinkRenderer.navigationEndpoint.browseEndpoint.browseId;
+        returnObject.channelThumbnailUrl = videoData.channelThumbnailSupportedRenderers.channelThumbnailWithLinkRenderer.thumbnail.thumbnails[0].url;
+        returnObject.videoThumbnailUrl = videoData.thumbnail.thumbnails[videoData.thumbnail.thumbnails.length - 1].url;
+        returnObject.duration = videoData.lengthText.simpleText;
+        returnObject.viewCount = videoData.shortViewCountText.simpleText;
+        returnObject.uploadDate = videoData.publishedTimeText.simpleText;
+        returnObject.description = videoData.detailedMetadataSnippets?.[0]?.snippetText?.runs[0]?.text || '';
+      }
+    }catch(err){
+      continue;
     }
 
-    const results = stdout
-      .split('\n')
-      .filter(Boolean)
-      .map(line => JSON.parse(line));
-    
-    console.log(results);
-  });
+    returnResults.push(returnObject);
+  }
+  return {results: returnResults, nextPageToken: newNextPageToken};
+}
+
+async function getSearchSuggestions(query) {
+  return suggestions = await yt.getSearchSuggestions(query);
 }
 
 export default {
-    search: search,
+  getSearchSuggestions: getSearchSuggestions,
+  search: search,
 };

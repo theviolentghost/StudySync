@@ -148,6 +148,7 @@ export class VideoPlayerComponent implements OnInit, OnDestroy {
 
     clickBlocker.addEventListener('mousemove' , () => {
       this.player.elements.container.dispatchEvent(new MouseEvent('mousemove', { bubbles: true }));
+      this.hideControls();
     });
 
     clickBlocker.addEventListener('click' , () => {
@@ -162,12 +163,11 @@ export class VideoPlayerComponent implements OnInit, OnDestroy {
   }
 
   hideControls(): void{
-    if(this.isHidingControls) return;
-
+    clearTimeout(this.isHidingControls);
     this.isHidingControls = setTimeout(() => {
+      this.isHidingControls = null;
       if(this.isPaused) return;
       this.controlsVisible = false;
-      this.isHidingControls = false;
     } ,3000);
   }
 

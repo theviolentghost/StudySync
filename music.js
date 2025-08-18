@@ -12,24 +12,24 @@ import axios from 'axios';
 import stream from './stream.js';
 
 // start python server 
-const pythonServer = spawn('./.venv/bin/gunicorn', [
-        '-w', '2',
-        '-b', '0.0.0.0:54321',
-        'server:app'
-    ], {
-    cwd: process.cwd(), 
-    env: process.env,
-    stdio: 'inherit' 
-});
+// const pythonServer = spawn('./.venv/bin/gunicorn', [
+//         '-w', '2',
+//         '-b', '0.0.0.0:54321',
+//         'server:app'
+//     ], {
+//     cwd: process.cwd(), 
+//     env: process.env,
+//     stdio: 'inherit' 
+// });
 
-// Optionally, handle exit or errors
-pythonServer.on('error', (err) => {
-    console.error('Failed to start Python server:', err);
-});
+// // Optionally, handle exit or errors
+// pythonServer.on('error', (err) => {
+//     console.error('Failed to start Python server:', err);
+// });
 
-pythonServer.on('exit', (code) => {
-    console.log(`Python server exited with code ${code}`);
-});
+// pythonServer.on('exit', (code) => {
+//     console.log(`Python server exited with code ${code}`);
+// });
 
 const Downloader = new YtDlp({
     cwd: process.cwd(),
