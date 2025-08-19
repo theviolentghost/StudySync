@@ -5,7 +5,7 @@ import { RouterModule, Router } from '@angular/router';
 import { YouTubeSearchResponse, SearchResultItem } from './video-search-result.model';
 import { YouTubeChannel } from './youtube-channel-search-results.model';
 import { max, take } from 'rxjs/operators';
-import { Playlist, PlaylistVideo } from './youtube-playlist-results.model';
+import { FullVideoData, Playlist, PlaylistVideo } from './youtube-playlist-results.model';
 import { WatchHistoryService } from './watch-history.service';
 
 @Injectable({
@@ -17,6 +17,8 @@ export class YoutubeService {
     private searchList: SearchResultItem[];
     private searchResultsSubject = new BehaviorSubject<SearchResultItem[] | null>(null);
     searchResults$: Observable<SearchResultItem[] | null> = this.searchResultsSubject.asObservable();
+    private searchSuggestionsSubject = new BehaviorSubject<string[] | null>(null);
+    searchSuggestions$: Observable<string[] | null> = this.searchSuggestionsSubject.asObservable();
 
     private videoIdSubject = new BehaviorSubject<string | null>(null);
     videoId$: Observable<string | null> = this.videoIdSubject.asObservable();
@@ -47,6 +49,13 @@ export class YoutubeService {
         return this.http.get<YouTubeSearchResponse>(`/youtube_search`, { params });
     }
 
+    getFullSearchSuggestions(query: string): Observable<any> {
+        let params = new HttpParams()
+            .set('q', query);
+
+        return this.http.get<string[]>(`/youtube_get_search_suggestions`, { params });
+    }
+
     getFullChannel(id: string): Observable<any>{
         let params = new HttpParams()
             .set('id', id);
@@ -60,6 +69,13 @@ export class YoutubeService {
             .set('nextPageToken', nextPageToken);
 
         return this.http.get<YouTubeSearchResponse>(`/youtube_get_playlist_videos`, { params });
+    }
+
+    getFullVideoData(videoId: string): Observable<any>{
+        let params = new HttpParams()
+            .set('videoId', videoId);
+
+        return this.http.get<FullVideoData>(`/youtube_get_video_data`, { params });
     }
 
     get isDisplayingVideo(): boolean{
@@ -108,10 +124,27 @@ export class YoutubeService {
         }
         this.videoIdSubject.next(videoId);
         this.watchHistoryService.saveCurrentVideo(video);
+
+        this.getFullVideoData(videoId)
+            .pipe(take(1))
+            .subscribe(data => {
+                console.log(data);
+            });
     }
 
     public removeVideoPlaying(): void{
         this.videoIdSubject.next('');
+    }
+
+    getSearchSuggestions(query: string): void{
+        let results;
+        this.getFullSearchSuggestions(query)
+            .pipe(take(1))
+            .subscribe(data => {
+                results = data;
+                results = results.splice(0,5);
+                this.searchSuggestionsSubject.next(results);
+        });
     }
 
     saveNextSearchToken(token: string): void{
@@ -136,7 +169,6 @@ export class YoutubeService {
         this.searchVideos(this.currentSearchQuery, this.nextSearchPageToken)
             .pipe(take(1))
             .subscribe(data => {
-                console.log(data);
                 for(let video = 0; video < data.results.length; video++){
                     this.searchList.push(data.results[video]);
                 }

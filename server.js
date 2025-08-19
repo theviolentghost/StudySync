@@ -539,6 +539,36 @@ app.get('/youtube_get_playlist_videos', async (req, res) => {
     }
 });
 
+app.get('/youtube_get_search_suggestions', async (req, res) => {
+    const query = req.query.q;
+
+    if(!query) return [];
+
+    try{
+        const results = await youtubeSearch.getSearchSuggestions(query);
+
+        res.json(results);
+    }catch(error){
+        console.error('error getting search suggestions', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+app.get('/youtube_get_video_data', async (req, res) => {
+    const videoId = req.query.videoId;
+
+    if(!videoId) return;
+
+    try{
+        const results = await youtubePlaylist.getVideoData(videoId);
+
+        res.json(results);
+    }catch(error){
+        console.error('error getting video data', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 
 // app.post('/newton/chat',
 //     Authentication.newton.validateChatAuthorization,

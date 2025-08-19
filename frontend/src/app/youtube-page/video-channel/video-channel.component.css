@@ -66,6 +66,7 @@
     cursor: pointer;
     align-items: center;
     text-align: center;
+    color: var(--color-text);
 }
 
 .subscribe_button_clicked{
@@ -80,6 +81,7 @@
     outline-offset: -1px;
     cursor: pointer;
     text-align: center;
+    color: var(--color-text);
 }
 
 .channel_video_grid{

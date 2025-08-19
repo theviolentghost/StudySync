@@ -126,6 +126,7 @@ export class VideoPlayerComponent implements OnInit, OnDestroy {
       this.isPaused = true;
       this.showControls();
 
+      if(!this.initilizedVideoHistory) return;
       this.watchHistoryService.updateVideoProgress(this.player.currentTime);
     });
 

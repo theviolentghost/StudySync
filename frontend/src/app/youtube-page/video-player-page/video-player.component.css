@@ -109,6 +109,7 @@
     cursor: pointer;
     align-self: center;
     text-align: center;
+    color: var(--color-text);
 }
 
 .subscribe_button_clicked{
@@ -125,6 +126,7 @@
     cursor: pointer;
     align-self: center;
     text-align: center;
+    color: var(--color-text);
 }
 
 .recommended_videos{

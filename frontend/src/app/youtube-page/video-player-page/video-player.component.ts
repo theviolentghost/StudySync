@@ -1,8 +1,8 @@
-import { Component, AfterViewInit, HostListener, OnDestroy} from '@angular/core';
+import { Component, HostListener, OnDestroy} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { YoutubeService } from '../youtube.service';
-import { PlaylistVideo } from '../youtube-playlist-results.model';
+import { FullVideoData, PlaylistVideo } from '../youtube-playlist-results.model';
 import { WatchHistoryService } from '../watch-history.service';
 import { YoutubeSubscriptionService } from '../youtube-subscription.service';
 
@@ -18,6 +18,7 @@ export class VideoPlayerPageComponent {
   isSubscribed = false;
 
   playingVideo: PlaylistVideo;
+  fullVideoData: FullVideoData;
 
   constructor(private router: Router,
     private youtubeService: YoutubeService,

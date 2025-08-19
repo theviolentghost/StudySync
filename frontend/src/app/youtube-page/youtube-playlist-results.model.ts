@@ -16,3 +16,9 @@ export interface PlaylistVideo{
   description: string
   uploadDate: string;
 }
+
+export interface FullVideoData{
+  basicVideoData: PlaylistVideo;
+  relatedVideos: PlaylistVideo[];
+  channelSubs: string;
+}

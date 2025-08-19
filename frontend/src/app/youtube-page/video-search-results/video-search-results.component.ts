@@ -109,7 +109,6 @@ export class VideoSearchResultsComponent {
 
   playNewVideo(video: SearchResultItem){
     let playlistVideo: PlaylistVideo = video;
-    console.log(playlistVideo);
 
     this.youtubeService.playNewVideo(playlistVideo);
   }

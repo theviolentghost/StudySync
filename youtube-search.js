@@ -88,14 +88,14 @@ async function youtubeSearch(query, nextPageToken) {
     }catch(err){
       continue;
     }
-
     returnResults.push(returnObject);
   }
   return {results: returnResults, nextPageToken: newNextPageToken};
 }
 
 async function getSearchSuggestions(query) {
-  return suggestions = await yt.getSearchSuggestions(query);
+  let suggestions = await yt.getSearchSuggestions(query);
+  return suggestions;
 }
 
 export default {
