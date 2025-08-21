@@ -27,7 +27,7 @@ export class YoutubePageComponent {
   constructor(private router: Router,
     private youtubeService: YoutubeService
   ) {
-    this.router.navigate(['/youtubeHome', { 
+    this.router.navigate(['/youtube', { 
         outlets: { 
             youtube: ['select'] 
         } 
@@ -68,7 +68,7 @@ export class YoutubePageComponent {
   }
 
   public navigateToHome(): void {
-    this.router.navigate(['/youtubeHome', { 
+    this.router.navigate(['/youtube', { 
         outlets: { 
             youtube: ['select'] 
         } 
@@ -76,7 +76,7 @@ export class YoutubePageComponent {
   }
 
   public navigateToSubscriptionPage(): void {
-    this.router.navigate(['/youtubeHome', { 
+    this.router.navigate(['/youtube', { 
         outlets: { 
             youtube: ['subscription-page'] 
         } 
@@ -84,7 +84,7 @@ export class YoutubePageComponent {
   }
 
   public navigateToSearchResults(): void {
-    this.router.navigate(['/youtubeHome', { 
+    this.router.navigate(['/youtube', { 
         outlets: { 
             youtube: ['search-results'] 
         } 
@@ -92,7 +92,7 @@ export class YoutubePageComponent {
   }
 
   public navigateToLibraryPage(): void{
-    this.router.navigate(['/youtubeHome', { 
+    this.router.navigate(['/youtube', { 
         outlets: { 
             youtube: ['library-page'] 
         } 

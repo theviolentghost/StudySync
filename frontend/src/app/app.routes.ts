@@ -55,7 +55,7 @@ export const routes: Routes = [
         component: ContactComponent,
     },
     {
-        path: 'youtubeHome',
+        path: 'youtube',
         component: YoutubePageComponent,
         children: [
             {

@@ -68,7 +68,7 @@ export class LibraryPageComponent {
   }
 
   playNewVideo(video: HistoryVideo): void{
-    let newVideo: PlaylistVideo = {id:video.id, title: video.videoData.title, duration: this.youtubeService.formatVideoDuration(video.videoData.length), channelId: video.videoData.channelId, channelTitle: video.videoData.channelTitle, viewCount: '', channelThumbnailUrl: '', videoThumbnailUrl: video.videoData.thumbnailUrl, description: '', uploadDate: ''};
+    let newVideo: PlaylistVideo = {id:video.id, title: video.videoData.title, duration: this.youtubeService.formatVideoDuration(video.videoData.length), channelId: video.videoData.channelId, channelTitle: video.videoData.channelTitle, viewCount: '', channelThumbnailUrl: video.videoData.channelThumbnailUrl, videoThumbnailUrl: video.videoData.videoThumbnailUrl, description: '', uploadDate: ''};
 
     this.youtubeService.playNewVideo(newVideo);
   }

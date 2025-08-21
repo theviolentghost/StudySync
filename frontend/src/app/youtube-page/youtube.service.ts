@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { BehaviorSubject, Observable, firstValueFrom } from 'rxjs';
-import { RouterModule, Router } from '@angular/router';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { Router } from '@angular/router';
 import { YouTubeSearchResponse, SearchResultItem } from './video-search-result.model';
 import { YouTubeChannel } from './youtube-channel-search-results.model';
-import { max, take } from 'rxjs/operators';
-import { FullVideoData, Playlist, PlaylistVideo } from './youtube-playlist-results.model';
+import { take } from 'rxjs/operators';
+import { FullVideoData, PlaylistVideo } from './youtube-playlist-results.model';
 import { WatchHistoryService } from './watch-history.service';
 
 @Injectable({
@@ -19,6 +19,8 @@ export class YoutubeService {
     searchResults$: Observable<SearchResultItem[] | null> = this.searchResultsSubject.asObservable();
     private searchSuggestionsSubject = new BehaviorSubject<string[] | null>(null);
     searchSuggestions$: Observable<string[] | null> = this.searchSuggestionsSubject.asObservable();
+    private fullPlayingVideoDataSubject = new BehaviorSubject<FullVideoData | null>(null);
+    fullPlayingVideoData$: Observable<FullVideoData | null> = this.fullPlayingVideoDataSubject.asObservable();
 
     private videoIdSubject = new BehaviorSubject<string | null>(null);
     videoId$: Observable<string | null> = this.videoIdSubject.asObservable();
@@ -128,7 +130,7 @@ export class YoutubeService {
         this.getFullVideoData(videoId)
             .pipe(take(1))
             .subscribe(data => {
-                console.log(data);
+                this.fullPlayingVideoDataSubject.next(data);
             });
     }
 
@@ -219,7 +221,7 @@ export class YoutubeService {
                 });
             });
 
-        this.router.navigate(['/youtubeHome', { 
+        this.router.navigate(['/youtube', { 
             outlets: { 
                 youtube: ['channel-view'] 
             } 
@@ -227,7 +229,7 @@ export class YoutubeService {
     }
 
     public navigateToPlayer(): void {
-        this.router.navigate(['/youtubeHome', { 
+        this.router.navigate(['/youtube', { 
             outlets: { 
                 youtube: ['player'] 
             } 

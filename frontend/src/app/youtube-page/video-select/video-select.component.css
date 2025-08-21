@@ -1,9 +1,8 @@
 .youtube_video_grid{
     width: 100%;
-    left: 72px;
+    padding: 0px 24px 12px 72px;
     top: 0;
     display: grid;
-    position: absolute;
     grid-template-columns: repeat(3, 1fr);
     gap: 16px;
     text-overflow: ellipsis;

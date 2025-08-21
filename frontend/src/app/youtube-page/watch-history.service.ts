@@ -68,7 +68,7 @@ export class WatchHistoryService {
 
     addSavedVideoToWatchHistory(length: number): void{
         let videoId = this.currentVideo.id;
-        let historyData: VideoHistory = {length: length, currentPosition: 0, watchedAt: new Date().toISOString(), thumbnailUrl: this.currentVideo.videoThumbnailUrl, title: this.currentVideo.title, channelTitle: this.currentVideo.channelTitle, channelId: this.currentVideo.channelId};
+        let historyData: VideoHistory = {length: length, currentPosition: 0, watchedAt: new Date().toISOString(), videoThumbnailUrl: this.currentVideo.videoThumbnailUrl, title: this.currentVideo.title, channelTitle: this.currentVideo.channelTitle, channelId: this.currentVideo.channelId, channelThumbnailUrl: this.currentVideo.channelThumbnailUrl};
 
         if(this.wasWatched(videoId)) this.allWatchHistory.delete(videoId);
         this.allWatchHistory.set(videoId, historyData);

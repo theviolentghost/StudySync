@@ -9,11 +9,11 @@
 
             <div class="video_menu">
                 <div class="channel_container">
-                    <button class="video_channel_icon" [ngStyle]="{'background-image': 'url('+ playingVideo.channelThumbnailUrl + ')'}" (click)="navigateToChannel(playingVideo.channelId)"></button>
+                    <button class="video_channel_icon" [ngStyle]="{'background-image': 'url('+ fullVideoData?.basicVideoData?.channelThumbnailUrl || playingVideo.channelThumbnailUrl + ')'}" (click)="navigateToChannel(playingVideo.channelId)"></button>
 
                     <div class="channel_data">
-                        <p class="channel_name">{{ playingVideo.channelTitle }}</p>
-                        <p class="channel_subscriber_count">sub count</p>
+                        <p class="channel_name">{{ fullVideoData?.basicVideoData?.channelTitle || playingVideo.channelTitle }}</p>
+                        <p class="channel_subscriber_count">{{ fullVideoData?.channelSubs || '' }}</p>
                     </div>
                 </div>
 
@@ -22,25 +22,25 @@
 
             <div class="video_description">
                 <p> 
-                    <span>{{ playingVideo.viewCount }}</span><br>
-                    <span>{{ playingVideo.uploadDate }}</span><br> 
-                    {{ playingVideo.description }}
+                    <span>{{ fullVideoData?.basicVideoData?.viewCount || playingVideo.viewCount }}</span><br>
+                    <span>{{ fullVideoData?.basicVideoData?.uploadDate || playingVideo.uploadDate }}</span><br> 
+                    {{ fullVideoData?.basicVideoData?.description || playingVideo.description }}
                 </p>
             </div>
         </div>
     </div>
 
     <div class="recommended_videos">
-        <button class="recommeded_video" *ngFor="let video of videos">
-            <div class="recommended_thumbnail"></div>
+        <button class="recommeded_video" (click)="playNewVideo(video)" *ngFor="let video of fullVideoData?.relatedVideos">
+            <div class="recommended_thumbnail" [ngStyle]="{'background-image': 'url('+ video.videoThumbnailUrl + ')'}"></div>
 
             <div class="recommended_text">
-                <p class="recommended_title">title</p>
+                <p class="recommended_title">{{ video.title }}</p>
                 <div class="channel_container">
-                    <button class="channel_icon" (click)="navigateToChannel('')"></button>
-                    <p class="recommended_caption">channel</p>
+                    <button class="channel_icon" [ngStyle]="{'background-image': 'url('+ video.channelThumbnailUrl + ')'}" (click)="navigateToChannel(video.channelId)"></button>
+                    <p class="recommended_caption">{{ video.channelTitle }}</p>
                 </div>
-                <p class="recommended_caption">veiws and date</p>
+                <p class="recommended_caption">{{ video.viewCount }} - {{ video.uploadDate }}</p>
             </div>
         </button>
     </div>

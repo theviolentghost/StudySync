@@ -11,7 +11,7 @@ export interface PlaylistVideo{
   channelId: string;
   channelTitle: string;
   viewCount: string;
-  channelThumbnailUrl?: string;
+  channelThumbnailUrl: string;
   videoThumbnailUrl: string
   description: string
   uploadDate: string;

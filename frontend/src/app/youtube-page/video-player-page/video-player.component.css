@@ -6,16 +6,15 @@
 .page_container{
     display: flex;
     flex-direction: row;
-    padding: 0px 12px 12px 0px;
-    width: 103%;
-    position: absolute;
+    padding: 0px 24px 12px 72px;
+    width: 100%;
     text-overflow: ellipsis;
 }
 
 .video_container{
     width: 70%;
     max-width: 70%;
-    min-width: 500px;
+    /* min-width: 500px; */
     height: calc(100vh - 96px);
     display: flex;
     flex-direction: column;
@@ -66,6 +65,9 @@
     background-color: transparent;
     border-radius: 24px;
     cursor: pointer;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
 }
 
 .channel_name{
@@ -130,7 +132,7 @@
 }
 
 .recommended_videos{
-    padding: 0px 24px;
+    padding-left: 24px;
     width: 30%;
     height: calc(100vh - 48px);
     display: flex;
@@ -146,6 +148,8 @@
     text-decoration: none;
     background-color: transparent;
     text-align: left;
+    width: 100%;
+    aspect-ratio: 3;
 }
 
 .recommeded_video:hover{
@@ -156,18 +160,23 @@
 
 .recommended_thumbnail{
     background-color: #bbb;
-    height: 7em;
     aspect-ratio: 16/9;
+    height: 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
 }
 
 .recommended_text{
     padding: 0px 8px;
+    color: var(--color-text);
 }
 
 .recommended_title{
     height: auto;
     max-height: 2.3em;
     text-wrap: wrap;
+    overflow: hidden;
 }
 
 .recommended_caption{
@@ -175,6 +184,7 @@
     font-size: 12px;
     color: #bbb;
     text-wrap: wrap;
+    overflow: hidden;
 }
 
 .channel_container{
