@@ -316,13 +316,4 @@ export class VideoPlayerComponent implements OnInit, OnDestroy {
     this.youtubeService.removeVideoPlaying();
     this.youtubeService.expandPlayer();
   }
-
-  getEmbedUrl(id: string): SafeResourceUrl {
-    if (!id) {
-      return this.sanitizer.bypassSecurityTrustResourceUrl('https://www.youtube.com/embed/');
-    }
-    return this.sanitizer.bypassSecurityTrustResourceUrl(`https://www.youtube.com/embed/${id}?enablejsapi=1&controls=1`);
-  }
-
-
 }
